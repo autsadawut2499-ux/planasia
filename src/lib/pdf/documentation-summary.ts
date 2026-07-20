@@ -1,7 +1,8 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import type { Locale } from "@/lib/geo/countries";
+import type { Locale, UnitSystem } from "@/lib/geo/countries";
 import type { DesignExportBundle } from "@/lib/design/export-documentation";
 import { formatBudgetThb } from "@/lib/design/budget-targets";
+import { formatArea, formatDimension, formatRoomSize } from "@/lib/units/format";
 
 const PAGE = { width: 595.28, height: 841.89 };
 const MARGIN = 48;
@@ -63,8 +64,10 @@ function labels(locale: Locale) {
 export async function generateDocumentationSummaryPdf(
   bundle: DesignExportBundle,
   locale: Locale = "en",
+  unitSystem: UnitSystem = "metric",
 ): Promise<Uint8Array> {
   const L = labels(locale);
+  const unitOpts = { unitSystem, metricDecimals: 1 };
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -104,7 +107,7 @@ export async function generateDocumentationSummaryPdf(
   y -= 6;
 
   drawHeading(L.area, 12);
-  drawLine(`${costBalance.grossAreaSqm} m² (target ${costBalance.targetAreaSqm || "—"} m²)`);
+  drawLine(`${formatArea(costBalance.grossAreaSqm, unitOpts)} (target ${costBalance.targetAreaSqm ? formatArea(costBalance.targetAreaSqm, unitOpts) : "—"})`);
   drawLine(`${L.budget}: ${formatBudgetThb(costBalance.totalEstimatedThb)}`);
   if (costBalance.maxBudgetThb > 0) {
     drawLine(
@@ -127,7 +130,7 @@ export async function generateDocumentationSummaryPdf(
   y -= 6;
 
   drawHeading(L.materials, 12);
-  drawLine(`${formatBudgetThb(materialEstimate.totalThb)} (${materialEstimate.grossAreaSqm} m²)`);
+  drawLine(`${formatBudgetThb(materialEstimate.totalThb)} (${formatArea(materialEstimate.grossAreaSqm, unitOpts)})`);
   for (const line of materialEstimate.lines.slice(0, 10)) {
     drawLine(
       `• ${line.category} / ${line.material}: ${line.quantity} ${line.unit} — ฿${line.totalThb.toLocaleString()}`,
@@ -139,13 +142,13 @@ export async function generateDocumentationSummaryPdf(
   drawHeading(L.openings, 12);
   drawLine(`${doorWindowSchedule.length} items`);
   for (const row of doorWindowSchedule.slice(0, 12)) {
-    drawLine(`• ${row.type} — ${row.room} (${row.wall}, ${row.widthM}m, F${row.floor})`, 9);
+    drawLine(`• ${row.type} — ${row.room} (${row.wall}, ${formatDimension(row.widthM, unitOpts)}, F${row.floor})`, 9);
   }
   y -= 6;
 
   drawHeading(L.rooms, 12);
   for (const room of editorState.rooms) {
-    drawLine(`• ${room.name} ${room.width}×${room.depth}m (F${room.floor})`, 9);
+    drawLine(`• ${room.name} ${formatRoomSize(room.width, room.depth, unitOpts)} (F${room.floor})`, 9);
   }
 
   page.drawText(L.generated, {

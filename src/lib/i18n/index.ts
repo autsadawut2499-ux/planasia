@@ -286,6 +286,14 @@ export type TranslationKey =
   | "editor.exportDownloadPdf"
   | "editor.exportPdfSuccess"
   | "editor.exportPdfFailed"
+  | "job.exportTitle"
+  | "job.queued"
+  | "job.processing"
+  | "job.completed"
+  | "job.failed"
+  | "job.download"
+  | "job.jobId"
+  | "job.rateLimited"
   | "cost.inputTitle"
   | "cost.maxBudget"
   | "cost.targetArea"
@@ -616,6 +624,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "editor.exportDownloadPdf": "Download PDF summary",
     "editor.exportPdfSuccess": "PDF summary downloaded",
     "editor.exportPdfFailed": "Could not generate PDF summary",
+    "job.exportTitle": "Export in progress",
+    "job.queued": "Queued — position {n} in line",
+    "job.processing": "Generating your file…",
+    "job.completed": "Export ready!",
+    "job.failed": "Export failed",
+    "job.download": "Download file",
+    "job.jobId": "Job ID",
+    "job.rateLimited": "Too many requests — please wait and try again",
     "cost.inputTitle": "Budget & area targets",
     "cost.maxBudget": "Max budget (THB)",
     "cost.targetArea": "Target usable area (m²)",
@@ -945,6 +961,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "editor.exportDownloadPdf": "ดาวน์โหลด PDF สรุป",
     "editor.exportPdfSuccess": "ดาวน์โหลด PDF สรุปแล้ว",
     "editor.exportPdfFailed": "สร้าง PDF สรุปไม่สำเร็จ",
+    "job.exportTitle": "กำลังส่งออกไฟล์",
+    "job.queued": "อยู่ในคิว — ลำดับที่ {n}",
+    "job.processing": "กำลังสร้างไฟล์…",
+    "job.completed": "ส่งออกเสร็จแล้ว!",
+    "job.failed": "ส่งออกไม่สำเร็จ",
+    "job.download": "ดาวน์โหลดไฟล์",
+    "job.jobId": "รหัสงาน",
+    "job.rateLimited": "คำขอมากเกินไป — รอสักครู่แล้วลองใหม่",
     "cost.inputTitle": "งบประมาณและพื้นที่เป้าหมาย",
     "cost.maxBudget": "งบประมาณสูงสุด (บาท)",
     "cost.targetArea": "พื้นที่ใช้สอยเป้าหมาย (ตร.ม.)",
@@ -1274,6 +1298,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "editor.exportDownloadPdf": "Download PDF",
     "editor.exportPdfSuccess": "PDF downloaded",
     "editor.exportPdfFailed": "PDF export failed",
+    "job.exportTitle": "Export in progress",
+    "job.queued": "Queued — position {n}",
+    "job.processing": "Generating file…",
+    "job.completed": "Export ready!",
+    "job.failed": "Export failed",
+    "job.download": "Download file",
+    "job.jobId": "Job ID",
+    "job.rateLimited": "Too many requests — try again later",
     "cost.inputTitle": "Budget & area targets",
     "cost.maxBudget": "Max budget (THB)",
     "cost.targetArea": "Target area (m²)",
@@ -1603,6 +1635,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "editor.exportDownloadPdf": "Tải PDF tóm tắt",
     "editor.exportPdfSuccess": "Đã tải PDF tóm tắt",
     "editor.exportPdfFailed": "Không tạo được PDF",
+    "job.exportTitle": "Đang xuất tệp",
+    "job.queued": "Đang chờ — vị trí {n}",
+    "job.processing": "Đang tạo tệp…",
+    "job.completed": "Xuất tệp xong!",
+    "job.failed": "Xuất tệp thất bại",
+    "job.download": "Tải tệp",
+    "job.jobId": "Mã công việc",
+    "job.rateLimited": "Quá nhiều yêu cầu — thử lại sau",
     "cost.inputTitle": "Ngân sách & diện tích mục tiêu",
     "cost.maxBudget": "Ngân sách tối đa (THB)",
     "cost.targetArea": "Diện tích sử dụng (m²)",

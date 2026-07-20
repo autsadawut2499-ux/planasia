@@ -1,9 +1,26 @@
 import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from "pdf-lib";
 import type { HousePlanDocument, PlanRoom } from "@/lib/plans/schema";
+import type { UnitSystem } from "@/lib/geo/countries";
+import {
+  formatArea,
+  formatDimension,
+  formatElevation,
+  formatRoomSize,
+  formatSetback,
+  formatSizePair,
+  formatSpan,
+  PDF_LABEL_SIZE,
+  PDF_NOTE_SIZE,
+  type UnitFormatOptions,
+} from "@/lib/units/format";
 
 const A3_LANDSCAPE = { width: 1190.55, height: 841.89 };
 const MARGIN = 40;
 const TITLE_BLOCK_H = 90;
+
+export interface PdfExportOptions {
+  unitSystem?: UnitSystem;
+}
 
 interface DrawContext {
   page: PDFPage;
@@ -14,6 +31,7 @@ interface DrawContext {
   title: string;
   titleTh: string;
   scale: string;
+  unitOpts: UnitFormatOptions;
 }
 
 function drawTitleBlock(ctx: DrawContext) {
@@ -120,12 +138,13 @@ function drawFloorPlan(
   rooms: PlanRoom[],
   area: { x: number; y: number; width: number; height: number },
   scaleLabel: string,
+  unitOpts: UnitFormatOptions,
 ) {
   const maxX = Math.max(...rooms.map((r) => r.x + r.width), 1);
   const maxY = Math.max(...rooms.map((r) => r.y + r.depth), 1);
   const scale = Math.min(area.width / maxX, area.height / maxY) * 0.85;
 
-  page.drawText(scaleLabel, { x: area.x, y: area.y + area.height + 8, size: 8, font });
+  page.drawText(scaleLabel, { x: area.x, y: area.y + area.height + 8, size: PDF_NOTE_SIZE, font });
 
   for (const room of rooms) {
     const rx = area.x + room.x * scale;
@@ -142,12 +161,12 @@ function drawFloorPlan(
       borderWidth: 1,
     });
 
-    const label = `${room.name}\n${room.width.toFixed(1)}×${room.depth.toFixed(1)}m`;
+    const label = `${room.name}\n${formatRoomSize(room.width, room.depth, unitOpts)}`;
     label.split("\n").forEach((line, i) => {
       page.drawText(line, {
         x: rx + 4,
         y: ry + rh / 2 - i * 10,
-        size: 7,
+        size: PDF_LABEL_SIZE,
         font: i === 0 ? fontBold : font,
       });
     });
@@ -163,16 +182,25 @@ async function addSheet(
   title: string,
   titleTh: string,
   scale: string,
+  unitOpts: UnitFormatOptions,
   render: (ctx: DrawContext, area: ReturnType<typeof contentArea>) => void,
 ) {
   const page = pdf.addPage([A3_LANDSCAPE.width, A3_LANDSCAPE.height]);
-  const ctx: DrawContext = { page, font, fontBold, doc, sheetNo, title, titleTh, scale };
+  const ctx: DrawContext = { page, font, fontBold, doc, sheetNo, title, titleTh, scale, unitOpts };
   drawTitleBlock(ctx);
   render(ctx, contentArea());
 }
 
 /** Generate a complete multi-sheet PDF permit drawing set */
-export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Array> {
+export async function generatePlanPdf(
+  doc: HousePlanDocument,
+  options: PdfExportOptions = {},
+): Promise<Uint8Array> {
+  const unitOpts: UnitFormatOptions = {
+    unitSystem: options.unitSystem ?? "metric",
+    metricDecimals: 1,
+  };
+
   const pdf = await PDFDocument.create();
   pdf.setTitle(`${doc.project.projectName || "House Plan"} — Planasia`);
   pdf.setAuthor("Planasia AI");
@@ -181,12 +209,12 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-  await addSheet(pdf, font, fontBold, doc, "A0.00", "Drawing Index", "สารบัญแบบ", "N/A", (ctx, area) => {
+  await addSheet(pdf, font, fontBold, doc, "A0.00", "Drawing Index", "สารบัญแบบ", "N/A", unitOpts, (ctx, area) => {
     const lines = doc.index.map((e) => `${e.sheetNo}  [${e.category}]  ${e.title} / ${e.titleTh}  (${e.scale})`);
     drawTextLines(ctx.page, ctx.font, lines, area.x, area.y + area.height, 8, 12);
   });
 
-  await addSheet(pdf, font, fontBold, doc, "A1.00", "Site Plan", "แผนผังบริเวณ", "1:500", (ctx, area) => {
+  await addSheet(pdf, font, fontBold, doc, "A1.00", "Site Plan", "แผนผังบริเวณ", "1:500", unitOpts, (ctx, area) => {
     const sp = doc.sitePlan;
     const scale = Math.min(area.width / sp.plotWidth, area.height / sp.plotDepth) * 0.8;
     const ox = area.x + 20;
@@ -212,20 +240,20 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
     });
 
     const notes = [
-      `Plot: ${sp.plotWidth}×${sp.plotDepth} m`,
-      `Setbacks — Front: ${sp.setbacks.front}m  Rear: ${sp.setbacks.rear}m  L: ${sp.setbacks.left}m  R: ${sp.setbacks.right}m`,
+      `Plot: ${formatSizePair(sp.plotWidth, sp.plotDepth, unitOpts)}`,
+      `Setbacks — Front: ${formatSetback(sp.setbacks.front, unitOpts)}  Rear: ${formatSetback(sp.setbacks.rear, unitOpts)}  L: ${formatSetback(sp.setbacks.left, unitOpts)}  R: ${formatSetback(sp.setbacks.right, unitOpts)}`,
       `Road: ${sp.roadSide}  |  Entrance: ${sp.entrance}`,
       "N ↑",
     ];
-    drawTextLines(ctx.page, ctx.font, notes, ox + sp.plotWidth * scale + 20, area.y + area.height, 8, 14);
+    drawTextLines(ctx.page, ctx.font, notes, ox + sp.plotWidth * scale + 20, area.y + area.height, PDF_NOTE_SIZE, 14);
   });
 
   for (let i = 0; i < doc.floorPlans.length; i++) {
     const fp = doc.floorPlans[i];
     const sheetNo = `A2.${String(i).padStart(2, "0")}`;
-    await addSheet(pdf, font, fontBold, doc, sheetNo, fp.label, fp.labelTh, fp.scale, (ctx, area) => {
-      drawFloorPlan(ctx.page, ctx.font, ctx.fontBold, fp.rooms, area, fp.scale);
-      ctx.page.drawText(`Gross area: ${fp.grossArea.toFixed(1)} m²`, {
+    await addSheet(pdf, font, fontBold, doc, sheetNo, fp.label, fp.labelTh, fp.scale, unitOpts, (ctx, area) => {
+      drawFloorPlan(ctx.page, ctx.font, ctx.fontBold, fp.rooms, area, fp.scale, unitOpts);
+      ctx.page.drawText(`Gross area: ${formatArea(fp.grossArea, unitOpts)}`, {
         x: area.x,
         y: area.y - 10,
         size: 8,
@@ -234,7 +262,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
     });
   }
 
-  await addSheet(pdf, font, fontBold, doc, "A3.00", "Roof Plan", "แปลนหลังคา", "1:100", (ctx, area) => {
+  await addSheet(pdf, font, fontBold, doc, "A3.00", "Roof Plan", "แปลนหลังคา", "1:100", unitOpts, (ctx, area) => {
     const rp = doc.roofPlan;
     drawTextLines(
       ctx.page,
@@ -253,7 +281,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
     );
   });
 
-  await addSheet(pdf, font, fontBold, doc, "A4.00", "Elevations", "รูปด้าน", "1:100", (ctx, area) => {
+  await addSheet(pdf, font, fontBold, doc, "A4.00", "Elevations", "รูปด้าน", "1:100", unitOpts, (ctx, area) => {
     const colW = area.width / 2 - 10;
     doc.elevations.forEach((el, idx) => {
       const col = idx % 2;
@@ -270,14 +298,14 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
         borderWidth: 0.5,
       });
       ctx.page.drawText(`${el.label} / ${el.labelTh}`, { x, y, size: 9, font: ctx.fontBold });
-      ctx.page.drawText(`Height: ${el.height} m`, { x, y: y - 14, size: 8, font: ctx.font });
+      ctx.page.drawText(`Height: ${formatDimension(el.height, unitOpts)}`, { x, y: y - 14, size: PDF_NOTE_SIZE, font: ctx.font });
       el.finishNotes.forEach((n, ni) => {
         ctx.page.drawText(`• ${n}`, { x, y: y - 28 - ni * 12, size: 7, font: ctx.font });
       });
     });
   });
 
-  await addSheet(pdf, font, fontBold, doc, "A5.00", "Sections", "รูปตัด", "1:100", (ctx, area) => {
+  await addSheet(pdf, font, fontBold, doc, "A5.00", "Sections", "รูปตัด", "1:100", unitOpts, (ctx, area) => {
     doc.sections.forEach((sec, idx) => {
       const y = area.y + area.height - idx * 160;
       ctx.page.drawText(`${sec.label} (${sec.id}) / ${sec.labelTh}`, {
@@ -291,7 +319,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
         ctx.font,
         [
           `Cut: ${sec.cutDirection}`,
-          ...sec.floorLevels.map((l) => `  ${l.name}: +${l.elevation.toFixed(2)} m`),
+          ...sec.floorLevels.map((l) => `  ${l.name}: +${formatElevation(l.elevation, unitOpts)}`),
           ...sec.notes.map((n) => `  • ${n}`),
         ],
         area.x,
@@ -309,7 +337,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
       openings: "A8.00",
     };
     const sheetNo = sheetMap[detail.id] ?? "A6.00";
-    await addSheet(pdf, font, fontBold, doc, sheetNo, detail.title, detail.titleTh, "1:20", (ctx, area) => {
+    await addSheet(pdf, font, fontBold, doc, sheetNo, detail.title, detail.titleTh, "1:20", unitOpts, (ctx, area) => {
       drawTextLines(
         ctx.page,
         ctx.font,
@@ -323,7 +351,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
   }
 
   if (doc.planOptions.includeStructural) {
-    await addSheet(pdf, font, fontBold, doc, "S1.00", "Foundation & Pile Plan", "แปลนฐานรากและเสาเข็ม", "1:100", (ctx, area) => {
+    await addSheet(pdf, font, fontBold, doc, "S1.00", "Foundation & Pile Plan", "แปลนฐานรากและเสาเข็ม", "1:100", unitOpts, (ctx, area) => {
       const st = doc.structural;
       drawTextLines(
         ctx.page,
@@ -341,11 +369,11 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
       );
     });
 
-    await addSheet(pdf, font, fontBold, doc, "S2.00", "Floor/Beam Plans", "แปลนโครงสร้างพื้น-คาน", "1:100", (ctx, area) => {
+    await addSheet(pdf, font, fontBold, doc, "S2.00", "Floor/Beam Plans", "แปลนโครงสร้างพื้น-คาน", "1:100", unitOpts, (ctx, area) => {
       drawTextLines(
         ctx.page,
         ctx.font,
-        doc.structural.beamSpans.map((b) => `${b.id}: span ${b.span}m — ${b.size} mm`),
+        doc.structural.beamSpans.map((b) => `${b.id}: span ${formatSpan(b.span, unitOpts)} — ${b.size} mm`),
         area.x,
         area.y + area.height,
         9,
@@ -353,11 +381,11 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
       );
     });
 
-    await addSheet(pdf, font, fontBold, doc, "S3.00", "Roof Structure", "แปลนโครงสร้างหลังคา", "1:100", (ctx, area) => {
+    await addSheet(pdf, font, fontBold, doc, "S3.00", "Roof Structure", "แปลนโครงสร้างหลังคา", "1:100", unitOpts, (ctx, area) => {
       drawTextLines(
         ctx.page,
         ctx.font,
-        ["Truss / rafter layout per roof plan", `Roof type: ${doc.roofPlan.type}`, "Purlin spacing: 1.0m", "Ridge beam: RC or timber per span"],
+        ["Truss / rafter layout per roof plan", `Roof type: ${doc.roofPlan.type}`, `Purlin spacing: ${formatDimension(1.0, unitOpts)}`, "Ridge beam: RC or timber per span"],
         area.x,
         area.y + area.height,
         9,
@@ -365,7 +393,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
       );
     });
 
-    await addSheet(pdf, font, fontBold, doc, "S4.00", "Structural Details", "แบบขยายโครงสร้าง", "1:20", (ctx, area) => {
+    await addSheet(pdf, font, fontBold, doc, "S4.00", "Structural Details", "แบบขยายโครงสร้าง", "1:20", unitOpts, (ctx, area) => {
       drawTextLines(
         ctx.page,
         ctx.font,
@@ -377,7 +405,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
       );
     });
 
-    await addSheet(pdf, font, fontBold, doc, "S5.00", "Structural Calculation Report", "รายการคำนวณโครงสร้าง", "N/A", (ctx, area) => {
+    await addSheet(pdf, font, fontBold, doc, "S5.00", "Structural Calculation Report", "รายการคำนวณโครงสร้าง", "N/A", unitOpts, (ctx, area) => {
       drawTextLines(ctx.page, ctx.font, doc.structural.calculationSummary, area.x, area.y + area.height, 9, 16);
       ctx.page.drawText("Signed by licensed structural engineer: _________________________", {
         x: area.x,
@@ -400,6 +428,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
         `Sanitary Plan Floor ${sn.floor}`,
         `แปลนระบบสุขาภิบาล ชั้น ${sn.floor}`,
         "1:100",
+        unitOpts,
         (ctx, area) => {
           drawTextLines(
             ctx.page,
@@ -434,6 +463,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
         `Electrical Plan Floor ${el.floor}`,
         `แปลนระบบไฟฟ้า ชั้น ${el.floor}`,
         "1:100",
+        unitOpts,
         (ctx, area) => {
           drawTextLines(
             ctx.page,
@@ -456,7 +486,7 @@ export async function generatePlanPdf(doc: HousePlanDocument): Promise<Uint8Arra
       );
     }
 
-    await addSheet(pdf, font, fontBold, doc, "E9.00", "Single Line Diagram", "แผนผังระบบสายไฟ", "N/A", (ctx, area) => {
+    await addSheet(pdf, font, fontBold, doc, "E9.00", "Single Line Diagram", "แผนผังระบบสายไฟ", "N/A", unitOpts, (ctx, area) => {
       const sld = doc.electrical[0]?.singleLineDiagram ?? [];
       drawTextLines(
         ctx.page,

@@ -30,7 +30,7 @@ export function DocumentationPreviewModal({
   project,
   editorState,
 }: DocumentationPreviewModalProps) {
-  const { locale, translate } = useApp();
+  const { locale, unitSystem, translate } = useApp();
   const { success: toastSuccess, error: toastError } = useToast();
   const { fetchExport } = useDesignExport();
   const [bundle, setBundle] = useState<DesignExportBundle | null>(null);
@@ -74,7 +74,7 @@ export function DocumentationPreviewModal({
     if (!bundle) return;
     setPdfLoading(true);
     try {
-      const bytes = await generateDocumentationSummaryPdf(bundle, locale);
+      const bytes = await generateDocumentationSummaryPdf(bundle, locale, unitSystem);
       downloadPdfBytes(bytes, documentationPdfFilename(slug));
       toastSuccess(translate("editor.exportPdfSuccess"));
     } catch {
