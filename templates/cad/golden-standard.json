@@ -1,0 +1,368 @@
+{
+  "id": "smart-a-golden",
+  "name": "Smart A Residential — Golden Standard",
+  "nameTh": "แบบบ้าน Smart A — มาตรฐานต้นแบบความสมบูรณ์",
+  "purpose": "PRIMARY platform guideline for complete permit-ready house drawing sets",
+  "sourcePath": "smart-a-golden/",
+  "forSale": false,
+  "sheetSize": "A3",
+  "modelType": "TYPE E",
+  "disciplines": ["A", "S", "SN", "E", "ME", "AC"],
+  "requiredCategories": [
+    {
+      "id": "index",
+      "discipline": "A",
+      "sheetCode": "A0.00",
+      "title": "Drawing Index & Sheet List",
+      "titleTh": "สารบัญและรายการประกอบแบบ",
+      "required": true,
+      "smartAFile": "สารบัญและรายการประกอบแบบ.dwg",
+      "status": "present"
+    },
+    {
+      "id": "site-plan",
+      "discipline": "A",
+      "sheetCode": "A1.00",
+      "title": "Site Plan / Layout",
+      "titleTh": "แผนผังบริเวณ",
+      "required": true,
+      "smartAFile": "Lay out.dwg",
+      "status": "present"
+    },
+    {
+      "id": "floor-plan",
+      "discipline": "A",
+      "sheetCode": "A2.00",
+      "title": "Floor Plan",
+      "titleTh": "แปลนพื้น",
+      "required": true,
+      "smartAFile": "Plan.dwg",
+      "status": "present"
+    },
+    {
+      "id": "roof-plan",
+      "discipline": "A",
+      "sheetCode": "A3.00",
+      "title": "Roof Plan",
+      "titleTh": "แปลนหลังคา",
+      "required": true,
+      "smartAFile": null,
+      "status": "auto-fill",
+      "autoFillNote": "Derived from Plan + Structure roof data per Smart A TYPE E standards"
+    },
+    {
+      "id": "elevations",
+      "discipline": "A",
+      "sheetCode": "A4.00",
+      "title": "Elevations (All Sides)",
+      "titleTh": "รูปด้านทุกด้าน",
+      "required": true,
+      "smartAFile": "Elevation.dwg",
+      "status": "present"
+    },
+    {
+      "id": "sections",
+      "discipline": "A",
+      "sheetCode": "A5.00",
+      "title": "Sections",
+      "titleTh": "รูปตัด",
+      "required": true,
+      "smartAFile": "Section.dwg",
+      "status": "present"
+    },
+    {
+      "id": "detail-wc",
+      "discipline": "A",
+      "sheetCode": "A6.00",
+      "title": "Bathroom Detail",
+      "titleTh": "แบบขยายห้องน้ำ",
+      "required": true,
+      "smartAFile": "Detail wc.dwg",
+      "status": "present"
+    },
+    {
+      "id": "detail-stair",
+      "discipline": "A",
+      "sheetCode": "A7.00",
+      "title": "Stair Detail",
+      "titleTh": "แบบขยายบันได",
+      "required": true,
+      "smartAFile": "Detail stair.dwg",
+      "status": "present"
+    },
+    {
+      "id": "detail-door-window",
+      "discipline": "A",
+      "sheetCode": "A8.00",
+      "title": "Door & Window Schedule",
+      "titleTh": "แบบขยายประตูและหน้าต่าง",
+      "required": true,
+      "smartAFile": "Detail door&windows.dwg",
+      "status": "present"
+    },
+    {
+      "id": "detail-fence",
+      "discipline": "A",
+      "sheetCode": "A9.00",
+      "title": "Fence & Grill Detail",
+      "titleTh": "แบบขยายรั้วและระเบียง",
+      "required": false,
+      "smartAFile": "Detail fence&grill.dwg",
+      "status": "present"
+    },
+    {
+      "id": "structure-plan",
+      "discipline": "S",
+      "sheetCode": "S1.00",
+      "title": "Structural Plan TYPE E",
+      "titleTh": "แปลนโครงสร้าง",
+      "required": true,
+      "smartAFile": "Plan Structure TYPE E =  SMART A.dwg",
+      "status": "present"
+    },
+    {
+      "id": "structure-detail",
+      "discipline": "S",
+      "sheetCode": "S2.00",
+      "title": "Structural Detail TYPE E",
+      "titleTh": "แบบขยายโครงสร้าง",
+      "required": true,
+      "smartAFile": "Detail Structure TYPE E =  SMART A.dwg",
+      "status": "present"
+    },
+    {
+      "id": "footing-column",
+      "discipline": "S",
+      "sheetCode": "S3.00",
+      "title": "Footing & Column Detail",
+      "titleTh": "แบบขยายฐานรากและเสา",
+      "required": true,
+      "smartAFile": "Detail Footing&Column TYPE E =  SMART A.dwg",
+      "status": "present"
+    },
+    {
+      "id": "roof-structure",
+      "discipline": "S",
+      "sheetCode": "S4.00",
+      "title": "Roof Structure Plan",
+      "titleTh": "แปลนโครงสร้างหลังคา",
+      "required": true,
+      "smartAFile": null,
+      "status": "auto-fill",
+      "autoFillNote": "Generated from structural TYPE E + roof plan reference"
+    },
+    {
+      "id": "structural-calc",
+      "discipline": "S",
+      "sheetCode": "S5.00",
+      "title": "Structural Calculation Report",
+      "titleTh": "รายการคำนวณโครงสร้าง",
+      "required": true,
+      "smartAFile": null,
+      "status": "auto-fill",
+      "autoFillNote": "Engineering summary per Smart A TYPE E loads; PE stamp placeholder"
+    },
+    {
+      "id": "sanitary-01",
+      "discipline": "SN",
+      "sheetCode": "SN-01",
+      "title": "Sanitary Plans 01-03",
+      "titleTh": "แปลนระบบสุขาภิบาล 01-03",
+      "required": true,
+      "smartAFile": "SN-01 to 03.dwg",
+      "status": "present"
+    },
+    {
+      "id": "sanitary-04",
+      "discipline": "SN",
+      "sheetCode": "SN-04",
+      "title": "Sanitary Plan 04",
+      "titleTh": "แปลนระบบสุขาภิบาล 04",
+      "required": true,
+      "smartAFile": "SN-04.dwg",
+      "status": "present"
+    },
+    {
+      "id": "sanitary-05",
+      "discipline": "SN",
+      "sheetCode": "SN-05",
+      "title": "Sanitary Plan 05",
+      "titleTh": "แปลนระบบสุขาภิบาล 05",
+      "required": true,
+      "smartAFile": "SN-05.dwg",
+      "status": "present"
+    },
+    {
+      "id": "sanitary-06",
+      "discipline": "SN",
+      "sheetCode": "SN-06",
+      "title": "Sanitary Plan 06 / Septic",
+      "titleTh": "แปลนระบบบำบัดน้ำเสีย",
+      "required": true,
+      "smartAFile": "SN-06.dwg",
+      "status": "present"
+    },
+    {
+      "id": "sanitary-07",
+      "discipline": "SN",
+      "sheetCode": "SN-07",
+      "title": "Sanitary Plan 07",
+      "titleTh": "แปลนระบบสุขาภิบาล 07",
+      "required": true,
+      "smartAFile": "SN-07.dwg",
+      "status": "present"
+    },
+    {
+      "id": "sanitary-rain",
+      "discipline": "SN",
+      "sheetCode": "SN-08",
+      "title": "Rainwater Drainage 08-09",
+      "titleTh": "ระบบระบายน้ำฝน",
+      "required": true,
+      "smartAFile": "SN-08 TO 09.dwg",
+      "status": "present"
+    },
+    {
+      "id": "electrical-01",
+      "discipline": "E",
+      "sheetCode": "E-01",
+      "title": "Electrical & Lighting Plan",
+      "titleTh": "แปลนระบบไฟฟ้าและแสงสว่าง",
+      "required": true,
+      "smartAFile": "E-01.dwg",
+      "status": "present"
+    },
+    {
+      "id": "electrical-02",
+      "discipline": "E",
+      "sheetCode": "E-02",
+      "title": "Power Plan",
+      "titleTh": "แปลนระบบไฟฟ้ากำลัง",
+      "required": true,
+      "smartAFile": "e-02.dwg",
+      "status": "present"
+    },
+    {
+      "id": "electrical-sld",
+      "discipline": "E",
+      "sheetCode": "E-03",
+      "title": "Single Line Diagram 03-06",
+      "titleTh": "แผนผังระบบสายไฟ",
+      "required": true,
+      "smartAFile": "e-03-06 SMART A.dwg",
+      "status": "present"
+    },
+    {
+      "id": "electrical-07",
+      "discipline": "E",
+      "sheetCode": "E-07",
+      "title": "Consumer Unit / Meter",
+      "titleTh": "ตู้ควบคุมและมิเตอร์ไฟฟ้า",
+      "required": true,
+      "smartAFile": "E-07.dwg",
+      "status": "present"
+    },
+    {
+      "id": "mep-00",
+      "discipline": "ME",
+      "sheetCode": "ME-00",
+      "title": "MEP Index / Overview",
+      "titleTh": "สารบัญระบบ MEP",
+      "required": true,
+      "smartAFile": "ME-00.dwg",
+      "status": "present"
+    },
+    {
+      "id": "mep-01",
+      "discipline": "ME",
+      "sheetCode": "ME-01",
+      "title": "Mechanical Plan 01",
+      "titleTh": "แปลนระบบเครื่องกล 01",
+      "required": true,
+      "smartAFile": "ME-01.dwg",
+      "status": "present"
+    },
+    {
+      "id": "mep-02",
+      "discipline": "ME",
+      "sheetCode": "ME-02",
+      "title": "Mechanical Plan 02",
+      "titleTh": "แปลนระบบเครื่องกล 02",
+      "required": true,
+      "smartAFile": "ME-02.dwg",
+      "status": "present"
+    },
+    {
+      "id": "ac-01",
+      "discipline": "AC",
+      "sheetCode": "AC-01",
+      "title": "Air Conditioning 01-02",
+      "titleTh": "แปลนระบบปรับอากาศ 01-02",
+      "required": true,
+      "smartAFile": "AC-01 TO 02.dwg",
+      "status": "present"
+    },
+    {
+      "id": "ac-03",
+      "discipline": "AC",
+      "sheetCode": "AC-03",
+      "title": "Air Conditioning 03",
+      "titleTh": "แปลนระบบปรับอากาศ 03",
+      "required": true,
+      "smartAFile": "AC-03.dwg",
+      "status": "present"
+    },
+    {
+      "id": "titleblock",
+      "discipline": "A",
+      "sheetCode": "TB",
+      "title": "A3 Title Block",
+      "titleTh": "กรอบชื่อแบบ A3",
+      "required": true,
+      "smartAFile": "titleblockA3.dwg",
+      "status": "present"
+    }
+  ],
+  "supportFiles": [
+    "Content.dwg",
+    "titleblockA3-ee-Smart A.dwg",
+    "xref-Smart A_A3.dwg",
+    "xref-Smart A_plan.dwg"
+  ],
+  "completenessSummary": {
+    "totalRequired": 28,
+    "presentInSmartA": 25,
+    "autoFill": 3,
+    "optionalPresent": 1
+  },
+  "autoFillCategories": ["roof-plan", "roof-structure", "structural-calc"],
+  "goldenCadIds": [
+    "golden-index",
+    "golden-site",
+    "golden-plan",
+    "golden-elevation",
+    "golden-section",
+    "golden-detail-wc",
+    "golden-detail-stair",
+    "golden-detail-door",
+    "golden-structure-plan",
+    "golden-structure-detail",
+    "golden-footing",
+    "golden-sn-01",
+    "golden-sn-04",
+    "golden-sn-05",
+    "golden-sn-06",
+    "golden-sn-07",
+    "golden-sn-rain",
+    "golden-e-01",
+    "golden-e-02",
+    "golden-e-sld",
+    "golden-e-07",
+    "golden-me-00",
+    "golden-me-01",
+    "golden-me-02",
+    "golden-ac-01",
+    "golden-ac-03",
+    "golden-titleblock"
+  ]
+}

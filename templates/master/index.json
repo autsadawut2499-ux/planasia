@@ -1,0 +1,72 @@
+{
+  "purpose": "INTERNAL REFERENCE ONLY — not for Store sale",
+  "disclaimer": {
+    "en": "These files are reference templates and drawing patterns for AI. They are NOT sold on the Store.",
+    "th": "ไฟล์เหล่านี้เป็นตัวอย่างเทมเพลตและแพทเทิร์นสำหรับ AI ศึกษาเท่านั้น ไม่ได้นำไปขายบนสโตร์"
+  },
+  "standard": "กรมโยธาธิการและผังเมือง — กฎกระทรวงฉบับที่ 10 (พ.ศ. 2528) [reference pattern only]",
+  "sheetSize": "A3",
+  "usage": "reference-pattern",
+  "storePolicy": "Government sample plans must never be listed as Store products. Store sells user+AI co-created designs only.",
+  "referencePatterns": [
+    { "id": "family1", "file": "family1.pdf", "floors": 1, "category": "family", "forSale": false },
+    { "id": "family2", "file": "family2.pdf", "floors": 1, "category": "family", "forSale": false },
+    { "id": "family3", "file": "family3.pdf", "floors": 1, "category": "family", "forSale": false },
+    { "id": "family4", "file": "family4.pdf", "floors": 2, "category": "family", "forSale": false },
+    { "id": "family5", "file": "family5.pdf", "floors": 2, "category": "family", "forSale": false },
+    { "id": "family6", "file": "family6.pdf", "floors": 1, "category": "family", "forSale": false },
+    { "id": "family7", "file": "family7.pdf", "floors": 2, "category": "family", "forSale": false },
+    { "id": "family8", "file": "family8.pdf", "floors": 2, "category": "family", "forSale": false },
+    { "id": "family9", "file": "family9 (1).pdf", "floors": 2, "category": "family", "forSale": false },
+    {
+      "id": "thai-care-1",
+      "file": "บ้านห่วงใยไทยประชาสุขใจ 1.pdf",
+      "floors": 1,
+      "category": "thai-contemporary",
+      "earthquakeResistant": false,
+      "forSale": false
+    },
+    {
+      "id": "thai-care-2",
+      "file": "บ้านห่วงใยไทยประชาสุขใจ 2 (ต้านทานแผ่นดินไหว).pdf",
+      "floors": 2,
+      "category": "thai-contemporary",
+      "earthquakeResistant": true,
+      "forSale": false
+    },
+    {
+      "id": "disaster-resistant-1",
+      "file": "บ้านต้านภัยพิบัติแผ่นดินไหว 1.pdf",
+      "floors": 1,
+      "category": "disaster-resistant",
+      "earthquakeResistant": true,
+      "forSale": false
+    },
+    {
+      "id": "thai-modern-4",
+      "file": "บ้านครอบครัวไทยร่วมสมัย 4 (ต้านทานแผ่นดินไหว).pdf",
+      "floors": 2,
+      "category": "thai-contemporary",
+      "earthquakeResistant": true,
+      "forSale": false
+    },
+    {
+      "id": "thai-modern-5",
+      "file": "บ้านครอบครัวไทยร่วมสมัย 5 (ต้านทานแผ่นดินไหว).pdf",
+      "floors": 2,
+      "category": "thai-contemporary",
+      "earthquakeResistant": true,
+      "forSale": false
+    }
+  ],
+  "drawingSet": [
+    "A0.00 INDEX",
+    "A1.00 Site Plan (1:500)",
+    "A2.00 Floor Plans (1:100)",
+    "A3.00-A4.00 Elevations & Sections",
+    "A5.00 Bathroom Details",
+    "A6.00 Door & Window Details",
+    "A7.00 Stair Details",
+    "S1.00 Structural Plan"
+  ]
+}

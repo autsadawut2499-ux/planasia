@@ -1,0 +1,979 @@
+{
+  "purpose": "INTERNAL CAD REFERENCE ONLY — not for Store sale",
+  "disclaimer": {
+    "en": "Professional As-Built and sample DWG files for AI/CAD pattern learning. Never sold on Store.",
+    "th": "ไฟล์ DWG ตัวอย่างมาตรฐานสำหรับ AI เรียนรู้โครงสร้างและสัดส่วนแบบ ไม่ได้นำไปขายบนสโตร์"
+  },
+  "usage": "reference-cad-pattern",
+  "storePolicy": "CAD reference files must never be listed as Store products.",
+  "source": "Smart A Golden Standard + Khon Kaen Airport As-Built + civil/residential sets",
+  "goldenStandard": "smart-a-golden",
+  "sheetSize": "A3",
+  "forSale": false,
+  "referencePatterns": [
+    {
+      "id": "cad-airport-sn",
+      "file": "airport-asbuilt/AsBuiltงานระบบสุขาภิบาลสนามบินขอนแก่น.dwg",
+      "category": "airport-asbuilt",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "as-built",
+        "khon-kaen-airport"
+      ],
+      "sizeBytes": 16198929
+    },
+    {
+      "id": "cad-airport-a",
+      "file": "airport-asbuilt/AsBuiltงานสถาปัตยกรรมสนามบินขอนแก่น.dwg",
+      "category": "airport-asbuilt",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "as-built",
+        "khon-kaen-airport"
+      ],
+      "sizeBytes": 19269025
+    },
+    {
+      "id": "cad-airport-s",
+      "file": "airport-asbuilt/AsBuiltงานโครงสร้างสนามบินขอนแก่น.dwg",
+      "category": "airport-asbuilt",
+      "discipline": "S",
+      "forSale": false,
+      "tags": [
+        "as-built",
+        "khon-kaen-airport"
+      ],
+      "sizeBytes": 26940656
+    },
+    {
+      "id": "cad-airport-e",
+      "file": "airport-asbuilt/AsBuiltระบบไฟฟ้าสนามบินขอนแก่น.dwg",
+      "category": "airport-asbuilt",
+      "discipline": "E",
+      "forSale": false,
+      "tags": [
+        "as-built",
+        "khon-kaen-airport"
+      ],
+      "sizeBytes": 182238722
+    },
+    {
+      "id": "cad-house-2f-4b3ba",
+      "file": "civil-samples/2ชั้น 4นอน3น้ำ.dwg",
+      "category": "civil-residential",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "house",
+        "2-storey"
+      ],
+      "floors": 2,
+      "bedrooms": 4,
+      "bathrooms": 3,
+      "sizeBytes": 1688392
+    },
+    {
+      "id": "cad-house-3b1ba",
+      "file": "civil-samples/3ห้องนอน 1 ห้องน้ำ.dwg",
+      "category": "civil-residential",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "house"
+      ],
+      "floors": 1,
+      "bedrooms": 3,
+      "bathrooms": 1,
+      "sizeBytes": 831201
+    },
+    {
+      "id": "cad-building-5f",
+      "file": "civil-samples/5ชั้น.dwg",
+      "category": "civil-commercial",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "multi-storey"
+      ],
+      "floors": 5,
+      "sizeBytes": 6316485
+    },
+    {
+      "id": "cad-module-6m",
+      "file": "civil-samples/6metre.dwg",
+      "category": "civil-infrastructure",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "module"
+      ],
+      "sizeBytes": 1532386
+    },
+    {
+      "id": "cad-carpark-2",
+      "file": "civil-samples/Car park 2 cars.dwg",
+      "category": "civil-infrastructure",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "parking"
+      ],
+      "sizeBytes": 1251348
+    },
+    {
+      "id": "cad-sermon-hall",
+      "file": "civil-samples/dwg_ศาลาการเปรียญ.dwg",
+      "category": "civil-religious",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "temple"
+      ],
+      "sizeBytes": 5384976
+    },
+    {
+      "id": "cad-fianl-xiii-",
+      "file": "civil-samples/FIANL-XIII-.dwg",
+      "category": "civil-other",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [],
+      "sizeBytes": 4276360
+    },
+    {
+      "id": "cad-restaurant",
+      "file": "civil-samples/FINAL-ร้านอาหาร.dwg",
+      "category": "civil-commercial",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "restaurant"
+      ],
+      "sizeBytes": 3849168
+    },
+    {
+      "id": "cad-fire-exit",
+      "file": "civil-samples/Fire Exit.dwg",
+      "category": "civil-infrastructure",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "fire-exit"
+      ],
+      "sizeBytes": 914721
+    },
+    {
+      "id": "cad-guard-house",
+      "file": "civil-samples/Guard house.dwg",
+      "category": "civil-infrastructure",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "guard-house"
+      ],
+      "floors": 1,
+      "sizeBytes": 404130
+    },
+    {
+      "id": "cad-home-006",
+      "file": "civil-samples/HOME006.dwg",
+      "category": "civil-residential",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "house"
+      ],
+      "sizeBytes": 2962662
+    },
+    {
+      "id": "cad-home-007",
+      "file": "civil-samples/HOME007.dwg",
+      "category": "civil-residential",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "house"
+      ],
+      "sizeBytes": 3884621
+    },
+    {
+      "id": "cad-pavilion",
+      "file": "civil-samples/Pavilion.dwg",
+      "category": "civil-infrastructure",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "pavilion"
+      ],
+      "sizeBytes": 991961
+    },
+    {
+      "id": "cad-suction-pumps",
+      "file": "civil-samples/suction-pumps.dwg",
+      "category": "civil-mep",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "pump",
+        "sanitary"
+      ],
+      "sizeBytes": 407745
+    },
+    {
+      "id": "cad-sump-pump",
+      "file": "civil-samples/Sump-Pump-Installation.dwg",
+      "category": "civil-mep",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "pump",
+        "drainage"
+      ],
+      "sizeBytes": 449412
+    },
+    {
+      "id": "cad-t.h.a-9_10_49",
+      "file": "civil-samples/T.H.A 9_10_49.dwg",
+      "category": "civil-other",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [],
+      "sizeBytes": 4159840
+    },
+    {
+      "id": "cad-temple",
+      "file": "civil-samples/TEMPLE.dwg",
+      "category": "civil-religious",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "temple"
+      ],
+      "sizeBytes": 633270
+    },
+    {
+      "id": "cad-toilet-block",
+      "file": "civil-samples/toilet.dwg",
+      "category": "civil-infrastructure",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "sanitary",
+        "toilet"
+      ],
+      "sizeBytes": 1077994
+    },
+    {
+      "id": "cad-warehouse-office",
+      "file": "civil-samples/โกดัง และสำนักงาน.dwg",
+      "category": "civil-industrial",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "warehouse",
+        "office"
+      ],
+      "sizeBytes": 1589497
+    },
+    {
+      "id": "cad-warehouse-18x16",
+      "file": "civil-samples/โกดัง18x16.dwg",
+      "category": "civil-industrial",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "warehouse"
+      ],
+      "sizeBytes": 629294
+    },
+    {
+      "id": "cad-res-content",
+      "file": "residential-mirror/Content.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "blocks"
+      ],
+      "sheetType": "content",
+      "sizeBytes": 225603
+    },
+    {
+      "id": "cad-res-detail-balcony",
+      "file": "residential-mirror/Detail-Bacony.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "balcony"
+      ],
+      "sheetType": "detail",
+      "sizeBytes": 673346
+    },
+    {
+      "id": "cad-res-detail-door",
+      "file": "residential-mirror/Detail-Door&Window.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "door",
+        "window"
+      ],
+      "sheetType": "detail",
+      "sizeBytes": 457022
+    },
+    {
+      "id": "cad-res-detail-stair",
+      "file": "residential-mirror/Detail-Stair.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "stair"
+      ],
+      "sheetType": "detail",
+      "sizeBytes": 445659
+    },
+    {
+      "id": "cad-res-detail-wc",
+      "file": "residential-mirror/Detail-Wc..dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "bathroom"
+      ],
+      "sheetType": "detail",
+      "sizeBytes": 918750
+    },
+    {
+      "id": "cad-res-elevation",
+      "file": "residential-mirror/Elevation.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "residential"
+      ],
+      "sheetType": "elevation",
+      "sizeBytes": 462687
+    },
+    {
+      "id": "cad-res-site",
+      "file": "residential-mirror/Lay-Out.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "residential"
+      ],
+      "sheetType": "site-plan",
+      "sizeBytes": 245650
+    },
+    {
+      "id": "cad-res-plan",
+      "file": "residential-mirror/Plan.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "residential",
+        "complete-set"
+      ],
+      "sheetType": "floor-plan",
+      "sizeBytes": 548324
+    },
+    {
+      "id": "cad-res-section",
+      "file": "residential-mirror/Section.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "residential"
+      ],
+      "sheetType": "section",
+      "sizeBytes": 1124327
+    },
+    {
+      "id": "cad-res-titleblock",
+      "file": "residential-mirror/titleblockA3.dwg",
+      "category": "residential-set",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "title-block",
+        "a3"
+      ],
+      "sheetType": "title-block",
+      "sizeBytes": 65576
+    },
+    {
+      "id": "golden-ac-01",
+      "file": "smart-a-golden/AC-01 TO 02.dwg",
+      "category": "golden-standard",
+      "discipline": "AC",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "hvac"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 876405
+    },
+    {
+      "id": "golden-ac-03",
+      "file": "smart-a-golden/AC-03.dwg",
+      "category": "golden-standard",
+      "discipline": "AC",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "hvac"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 592632
+    },
+    {
+      "id": "golden-content",
+      "file": "smart-a-golden/Content.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "smart-a"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 238016
+    },
+    {
+      "id": "golden-detail-door",
+      "file": "smart-a-golden/Detail door&windows.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "door"
+      ],
+      "sheetType": "detail",
+      "goldenStandard": true,
+      "sizeBytes": 387689
+    },
+    {
+      "id": "golden-detail-fence",
+      "file": "smart-a-golden/Detail fence&grill.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "sheetType": "detail",
+      "goldenStandard": true,
+      "sizeBytes": 261568
+    },
+    {
+      "id": "golden-footing",
+      "file": "smart-a-golden/Detail Footing&Column TYPE E =  SMART A.dwg",
+      "category": "golden-standard",
+      "discipline": "S",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "type-e"
+      ],
+      "sheetType": "detail",
+      "goldenStandard": true,
+      "sizeBytes": 170831
+    },
+    {
+      "id": "golden-detail-stair",
+      "file": "smart-a-golden/Detail stair.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "stair"
+      ],
+      "sheetType": "detail",
+      "goldenStandard": true,
+      "sizeBytes": 323875
+    },
+    {
+      "id": "golden-structure-detail",
+      "file": "smart-a-golden/Detail Structure TYPE E =  SMART A.dwg",
+      "category": "golden-standard",
+      "discipline": "S",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "type-e"
+      ],
+      "sheetType": "detail",
+      "goldenStandard": true,
+      "sizeBytes": 2186810
+    },
+    {
+      "id": "golden-detail-wc",
+      "file": "smart-a-golden/Detail wc.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "bathroom"
+      ],
+      "sheetType": "detail",
+      "goldenStandard": true,
+      "sizeBytes": 775694
+    },
+    {
+      "id": "golden-e-01",
+      "file": "smart-a-golden/E-01.dwg",
+      "category": "golden-standard",
+      "discipline": "E",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 323885
+    },
+    {
+      "id": "golden-e-02",
+      "file": "smart-a-golden/e-02.dwg",
+      "category": "golden-standard",
+      "discipline": "E",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 351955
+    },
+    {
+      "id": "golden-e-sld",
+      "file": "smart-a-golden/e-03-06 SMART A.dwg",
+      "category": "golden-standard",
+      "discipline": "E",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "sheetType": "single-line",
+      "goldenStandard": true,
+      "sizeBytes": 257318
+    },
+    {
+      "id": "golden-e-07",
+      "file": "smart-a-golden/E-07.dwg",
+      "category": "golden-standard",
+      "discipline": "E",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 118609
+    },
+    {
+      "id": "golden-elevation",
+      "file": "smart-a-golden/Elevation.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "sheetType": "elevation",
+      "goldenStandard": true,
+      "sizeBytes": 436895
+    },
+    {
+      "id": "golden-site",
+      "file": "smart-a-golden/Lay out.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "sheetType": "site-plan",
+      "goldenStandard": true,
+      "sizeBytes": 237540
+    },
+    {
+      "id": "golden-me-00",
+      "file": "smart-a-golden/ME-00.dwg",
+      "category": "golden-standard",
+      "discipline": "ME",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "mep"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 584159
+    },
+    {
+      "id": "golden-me-01",
+      "file": "smart-a-golden/ME-01.dwg",
+      "category": "golden-standard",
+      "discipline": "ME",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "mep"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 506046
+    },
+    {
+      "id": "golden-me-02",
+      "file": "smart-a-golden/ME-02.dwg",
+      "category": "golden-standard",
+      "discipline": "ME",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "mep"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 497356
+    },
+    {
+      "id": "golden-structure-plan",
+      "file": "smart-a-golden/Plan Structure TYPE E =  SMART A.dwg",
+      "category": "golden-standard",
+      "discipline": "S",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "type-e"
+      ],
+      "sheetType": "structure-plan",
+      "goldenStandard": true,
+      "sizeBytes": 463451
+    },
+    {
+      "id": "golden-plan",
+      "file": "smart-a-golden/Plan.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "sheetType": "floor-plan",
+      "goldenStandard": true,
+      "sizeBytes": 391425
+    },
+    {
+      "id": "golden-section",
+      "file": "smart-a-golden/Section.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "sheetType": "section",
+      "goldenStandard": true,
+      "sizeBytes": 838615
+    },
+    {
+      "id": "golden-sn-01",
+      "file": "smart-a-golden/SN-01 to 03.dwg",
+      "category": "golden-standard",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 490906
+    },
+    {
+      "id": "golden-sn-04",
+      "file": "smart-a-golden/SN-04.dwg",
+      "category": "golden-standard",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 377974
+    },
+    {
+      "id": "golden-sn-05",
+      "file": "smart-a-golden/SN-05.dwg",
+      "category": "golden-standard",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 558593
+    },
+    {
+      "id": "golden-sn-06",
+      "file": "smart-a-golden/SN-06.dwg",
+      "category": "golden-standard",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 560797
+    },
+    {
+      "id": "golden-sn-07",
+      "file": "smart-a-golden/SN-07.dwg",
+      "category": "golden-standard",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "golden-standard"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 476726
+    },
+    {
+      "id": "golden-sn-rain",
+      "file": "smart-a-golden/SN-08 TO 09.dwg",
+      "category": "golden-standard",
+      "discipline": "SN",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "rainwater"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 1776911
+    },
+    {
+      "id": "golden-titleblocka3-ee-smart-a",
+      "file": "smart-a-golden/titleblockA3-ee-Smart A.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "smart-a"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 70655
+    },
+    {
+      "id": "golden-titleblock",
+      "file": "smart-a-golden/titleblockA3.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "a3"
+      ],
+      "sheetType": "title-block",
+      "goldenStandard": true,
+      "sizeBytes": 64620
+    },
+    {
+      "id": "golden-xref-smart-a_a3",
+      "file": "smart-a-golden/xref-Smart A_A3.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "smart-a"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 77798
+    },
+    {
+      "id": "golden-xref-smart-a_plan",
+      "file": "smart-a-golden/xref-Smart A_plan.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "smart-a"
+      ],
+      "goldenStandard": true,
+      "sizeBytes": 201668
+    },
+    {
+      "id": "golden-index",
+      "file": "smart-a-golden/สารบัญและรายการประกอบแบบ.dwg",
+      "category": "golden-standard",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "golden-standard",
+        "smart-a"
+      ],
+      "sheetType": "index",
+      "goldenStandard": true,
+      "sizeBytes": 957404
+    },
+    {
+      "id": "cad-signboard-1",
+      "file": "symbols/Signboard 1.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 743797
+    },
+    {
+      "id": "cad-signboard-2",
+      "file": "symbols/Signboard 2.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 649922
+    },
+    {
+      "id": "cad-signboard-3",
+      "file": "symbols/Signboard 3.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 440619
+    },
+    {
+      "id": "cad-signboard-4",
+      "file": "symbols/Signboard 4.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 237224
+    },
+    {
+      "id": "cad-signboard-5",
+      "file": "symbols/Signboard 5.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 295274
+    },
+    {
+      "id": "cad-signboard-6",
+      "file": "symbols/Signboard 6.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 215609
+    },
+    {
+      "id": "cad-signboard-7",
+      "file": "symbols/Signboard 7.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 366419
+    },
+    {
+      "id": "cad-signboard-8",
+      "file": "symbols/Signboard 8.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "signboard"
+      ],
+      "sizeBytes": 245877
+    },
+    {
+      "id": "cad-symbols",
+      "file": "symbols/Symbols.dwg",
+      "category": "symbols",
+      "discipline": "A",
+      "forSale": false,
+      "tags": [
+        "symbols",
+        "legend"
+      ],
+      "sizeBytes": 2586527
+    }
+  ],
+  "disciplineSets": {
+    "goldenStandard": [
+      "golden-index",
+      "golden-site",
+      "golden-plan",
+      "golden-elevation",
+      "golden-section",
+      "golden-detail-wc",
+      "golden-detail-stair",
+      "golden-detail-door",
+      "golden-structure-plan",
+      "golden-structure-detail",
+      "golden-footing",
+      "golden-sn-01",
+      "golden-sn-04",
+      "golden-sn-05",
+      "golden-sn-06",
+      "golden-sn-07",
+      "golden-sn-rain",
+      "golden-e-01",
+      "golden-e-02",
+      "golden-e-sld",
+      "golden-e-07",
+      "golden-me-00",
+      "golden-me-01",
+      "golden-me-02",
+      "golden-ac-01",
+      "golden-ac-03",
+      "golden-titleblock"
+    ],
+    "airport": [
+      "cad-airport-a",
+      "cad-airport-s",
+      "cad-airport-sn",
+      "cad-airport-e"
+    ],
+    "residentialComplete": [
+      "cad-res-site",
+      "cad-res-plan",
+      "cad-res-elevation",
+      "cad-res-section",
+      "cad-res-detail-balcony",
+      "cad-res-detail-stair",
+      "cad-res-detail-wc",
+      "cad-res-detail-door",
+      "cad-res-titleblock"
+    ]
+  }
+}
