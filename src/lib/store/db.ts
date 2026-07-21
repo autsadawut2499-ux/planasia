@@ -4,7 +4,8 @@ import type { StorePriceBreakdown } from "@/lib/store/pricing";
 import type { ViewerIdentity } from "@/lib/user/identity";
 import { filterListingsForViewer } from "@/lib/store/visibility";
 import { buildListingSlug, ensureUniqueSlug } from "@/lib/seo/slug";
-import { readJsonBlob, writeJsonBlob } from "@/lib/storage/runtime";
+import { readJsonBlob, useMemoryPersistence, writeJsonBlob } from "@/lib/storage/runtime";
+import { isRedisKvEnabled } from "@/lib/storage/redis-kv";
 
 export interface StoreListing {
   id: string;
@@ -102,18 +103,26 @@ function normalizeListing(raw: StoreListing): StoreListing {
 
 let seeded = false;
 
+function seedListings(): StoreListing[] {
+  return assignSlugs(SEED.map(normalizeListing));
+}
+
 async function ensureFile(): Promise<StoreListing[]> {
   const existing = await readJsonBlob<StoreListing[] | null>(LISTINGS_FILE, null);
   if (existing && existing.length > 0) {
     return assignSlugs(existing.map(normalizeListing));
   }
+
+  const initial = seedListings();
+
   if (!seeded) {
     seeded = true;
-    const initial = assignSlugs(SEED.map(normalizeListing));
-    await writeJsonBlob(LISTINGS_FILE, initial);
-    return initial;
+    if (isRedisKvEnabled() || useMemoryPersistence()) {
+      await writeJsonBlob(LISTINGS_FILE, initial);
+    }
   }
-  return assignSlugs(SEED.map(normalizeListing));
+
+  return initial;
 }
 
 async function writeAll(listings: StoreListing[]): Promise<void> {
