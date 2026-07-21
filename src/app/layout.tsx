@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, Prompt } from "next/font/google";
 import { LocaleHtmlLang } from "@/components/i18n/LocaleHtmlLang";
 import { AppProvider } from "@/context/AppContext";
@@ -59,7 +60,9 @@ export default function RootLayout({
             <LocaleHtmlLang />
             <ToastProvider>
               <PwaProvider>
-                <ThemeProvider>{children}</ThemeProvider>
+                <Suspense fallback={null}>
+                  <ThemeProvider>{children}</ThemeProvider>
+                </Suspense>
               </PwaProvider>
             </ToastProvider>
           </AppProvider>

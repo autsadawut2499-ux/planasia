@@ -4,7 +4,7 @@ export interface SheetPreview {
   sheetNo: string;
   title: string;
   titleTh: string;
-  category: "A" | "S" | "SN" | "E";
+  category: "A" | "S" | "SN" | "E" | "ME" | "AC";
   scale: string;
   /** SVG markup for the drawing area (title block rendered separately in UI) */
   svg: string;
@@ -123,7 +123,7 @@ export function buildSheetPreviews(doc: HousePlanDocument): SheetPreview[] {
       sheetNo: entry.sheetNo,
       title: entry.title,
       titleTh: entry.titleTh,
-      category: entry.category as SheetPreview["category"],
+      category: entry.category,
       scale: entry.scale,
       svg: "",
     });

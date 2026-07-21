@@ -41,7 +41,7 @@ export interface SheetPreviewItem {
   sheetNo: string;
   title: string;
   titleTh: string;
-  category: "A" | "S" | "SN" | "E";
+  category: "A" | "S" | "SN" | "E" | "ME" | "AC";
   scale: string;
   svg: string;
 }

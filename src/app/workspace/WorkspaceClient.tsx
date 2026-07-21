@@ -426,7 +426,6 @@ export default function WorkspacePage() {
       setDownloadTokens((prev) => ({ ...prev, [format]: downloadToken }));
       setPaymentModal(null);
       setStage("unlocked");
-      setActiveView("floorplan");
       setPreview((prev) => {
         void publishToStore(pid, prev.perspectiveUrl, prev.floorPlans);
         return { ...prev, watermarked: false };

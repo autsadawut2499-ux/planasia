@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, ChevronLeft, ChevronRight, Home, LayoutGrid, Share2, Sparkles } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { useToast } from "@/context/ToastContext";
 import { useProjectValidation } from "@/hooks/useProjectValidation";
@@ -66,24 +66,6 @@ export function PreviewCanvas({
     return computeCostBalance(editorState, budgetTargets, project ?? undefined);
   }, [editorState, budgetTargets, project]);
 
-  const imageUrl = useMemo(() => {
-    switch (activeView) {
-      case "render3d":
-        return preview.perspectiveUrl;
-      case "facade":
-        return preview.facadeUrl;
-      case "floorplan":
-        return preview.floorPlans[floorIndex] ?? preview.floorPlans[0] ?? "";
-      default:
-        return "";
-    }
-  }, [activeView, preview, floorIndex]);
-
-  const hasAnyImage =
-    Boolean(preview.perspectiveUrl) ||
-    Boolean(preview.facadeUrl) ||
-    preview.floorPlans.length > 0;
-
   const views = (["render3d", "facade"] as const).map((id) => ({
     id,
     label: translate(VIEW_META[id].labelKey),
@@ -93,15 +75,45 @@ export function PreviewCanvas({
         : Boolean(preview.facadeUrl),
   }));
 
-  const viewIndex = views.findIndex((v) => v.id === activeView);
+  const resolvedView: AiPreviewView = views.some((v) => v.id === activeView)
+    ? activeView
+    : "render3d";
+
+  const imageUrl = useMemo(() => {
+    switch (resolvedView) {
+      case "render3d":
+        return preview.perspectiveUrl;
+      case "facade":
+        return preview.facadeUrl;
+      case "floorplan":
+        return preview.floorPlans[floorIndex] ?? preview.floorPlans[0] ?? "";
+      default:
+        return "";
+    }
+  }, [resolvedView, preview, floorIndex]);
+
+  const hasAnyImage =
+    Boolean(preview.perspectiveUrl) ||
+    Boolean(preview.facadeUrl) ||
+    preview.floorPlans.length > 0;
+
+  const viewIndex = views.findIndex((v) => v.id === resolvedView);
 
   const cycleView = useCallback(
     (direction: -1 | 1) => {
+      if (views.length === 0) return;
       const next = (viewIndex + direction + views.length) % views.length;
-      onViewChange(views[next].id);
+      const target = views[next];
+      if (target) onViewChange(target.id);
     },
     [viewIndex, views, onViewChange],
   );
+
+  useEffect(() => {
+    if (activeView !== resolvedView) {
+      onViewChange(resolvedView);
+    }
+  }, [activeView, resolvedView, onViewChange]);
 
   const handleShare = useCallback(async () => {
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -123,7 +135,7 @@ export function PreviewCanvas({
     }
   }, [translate, toastSuccess, toastError]);
 
-  const ActiveIcon = VIEW_META[activeView].icon;
+  const ActiveIcon = VIEW_META[resolvedView].icon;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -166,11 +178,11 @@ export function PreviewCanvas({
             <div className="relative w-full overflow-hidden rounded-xl">
               <img
                 src={imageUrl}
-                alt={translate(VIEW_META[activeView].labelKey)}
+                alt={translate(VIEW_META[resolvedView].labelKey)}
                 className="mx-auto max-h-[calc(100vh-280px)] w-full object-contain"
               />
             </div>
-            {activeView === "floorplan" && floors === 2 && preview.floorPlans.length > 1 && (
+            {resolvedView === "floorplan" && floors === 2 && preview.floorPlans.length > 1 && (
               <div className="mt-3 flex gap-2">
                 {preview.floorPlans.map((_, i) => (
                   <button
@@ -199,7 +211,7 @@ export function PreviewCanvas({
               <span className="text-xs font-medium uppercase tracking-wide">{translate("workspace.aiZone")}</span>
             </div>
             <h3 className="text-base font-semibold text-text-primary">
-              {translate(VIEW_META[activeView].labelKey)}
+              {translate(VIEW_META[resolvedView].labelKey)}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-text-muted">{translate("workspace.aiPreviewEmpty")}</p>
           </div>
@@ -225,7 +237,7 @@ export function PreviewCanvas({
                 type="button"
                 onClick={() => onViewChange(v.id)}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 ${
-                  activeView === v.id
+                  resolvedView === v.id
                     ? "bg-gradient-to-r from-accent to-violet text-white shadow-md shadow-accent/25"
                     : v.available
                       ? "text-text-muted hover:text-text-primary"

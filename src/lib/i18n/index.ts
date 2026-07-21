@@ -70,6 +70,9 @@ export type TranslationKey =
   | "workspace.sheetStructural"
   | "workspace.sheetSanitary"
   | "workspace.sheetElectrical"
+  | "workspace.sheetMechanical"
+  | "workspace.sheetAc"
+  | "workspace.sheetOther"
   | "workspace.sheetPreviewTitle"
   | "workspace.sheetPreviewHint"
   | "workspace.watermarkHint"
@@ -445,6 +448,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "workspace.sheetStructural": "Structural",
     "workspace.sheetSanitary": "Sanitary",
     "workspace.sheetElectrical": "Electrical",
+    "workspace.sheetMechanical": "Mechanical",
+    "workspace.sheetAc": "Air Conditioning",
+    "workspace.sheetOther": "Drawing Sheet",
     "workspace.sheetPreviewTitle": "Drawing Sheet Preview",
     "workspace.sheetPreviewHint": "Scroll to review all sheets. Watermarked preview — pay to download clean files.",
     "workspace.watermarkHint": "Preview only — watermarked to protect your design.",
@@ -822,6 +828,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "workspace.sheetStructural": "โครงสร้าง",
     "workspace.sheetSanitary": "สุขาภิบาล",
     "workspace.sheetElectrical": "ไฟฟ้า",
+    "workspace.sheetMechanical": "เครื่องกล",
+    "workspace.sheetAc": "ปรับอากาศ",
+    "workspace.sheetOther": "แบบแปลน",
     "workspace.sheetPreviewTitle": "ตัวอย่างชุดแบบแปลน",
     "workspace.sheetPreviewHint": "เลื่อนดูแบบทั้งหมด ตัวอย่างมีลายน้ำ — ชำระเงินเพื่อดาวน์โหลดไฟล์สะอาด",
     "workspace.watermarkHint": "ตัวอย่างเท่านั้น — มีลายน้ำเพื่อป้องกันการคัดลอก",
@@ -1199,6 +1208,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "workspace.sheetStructural": "Structural",
     "workspace.sheetSanitary": "Sanitary",
     "workspace.sheetElectrical": "Electrical",
+    "workspace.sheetMechanical": "Mechanical",
+    "workspace.sheetAc": "Air Conditioning",
+    "workspace.sheetOther": "Drawing Sheet",
     "workspace.sheetPreviewTitle": "Drawing Sheet Preview",
     "workspace.sheetPreviewHint": "Scroll to review all sheets. Watermarked preview — pay to download clean files.",
     "workspace.watermarkHint": "Preview only — watermarked to protect your design.",
@@ -1576,6 +1588,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     "workspace.sheetStructural": "Structural",
     "workspace.sheetSanitary": "Sanitary",
     "workspace.sheetElectrical": "Electrical",
+    "workspace.sheetMechanical": "Mechanical",
+    "workspace.sheetAc": "Air Conditioning",
+    "workspace.sheetOther": "Drawing Sheet",
     "workspace.sheetPreviewTitle": "Drawing Sheet Preview",
     "workspace.sheetPreviewHint": "Scroll to review all sheets. Watermarked preview — pay to download clean files.",
     "workspace.watermarkHint": "Preview only — watermarked to protect your design.",

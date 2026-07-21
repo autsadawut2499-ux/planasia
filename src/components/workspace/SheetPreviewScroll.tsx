@@ -10,7 +10,13 @@ const CATEGORY_LABEL: Record<SheetPreviewItem["category"], TranslationKey> = {
   S: "workspace.sheetStructural",
   SN: "workspace.sheetSanitary",
   E: "workspace.sheetElectrical",
+  ME: "workspace.sheetMechanical",
+  AC: "workspace.sheetAc",
 };
+
+function categoryLabel(category: SheetPreviewItem["category"]): TranslationKey {
+  return CATEGORY_LABEL[category] ?? "workspace.sheetOther";
+}
 
 interface SheetPreviewScrollProps {
   sheets: SheetPreviewItem[];
@@ -60,11 +66,10 @@ export function SheetPreviewScroll({
             key={sheet.sheetNo}
             className="overflow-hidden rounded-lg border border-white/10 bg-white shadow-lg"
           >
-            {/* Title block */}
             <div className="flex items-start justify-between border-b border-black/10 bg-neutral-50 px-4 py-3 text-black">
               <div>
                 <p className="text-xs font-medium text-neutral-500">
-                  {translate(CATEGORY_LABEL[sheet.category])}
+                  {translate(categoryLabel(sheet.category))}
                 </p>
                 <h3 className="text-sm font-bold">
                   {locale === "th" ? sheet.titleTh : sheet.title}
@@ -79,7 +84,6 @@ export function SheetPreviewScroll({
               </div>
             </div>
 
-            {/* Drawing area with watermark */}
             <div className="relative aspect-[1.414/1] w-full bg-white">
               <div
                 className="absolute inset-0 p-4"
