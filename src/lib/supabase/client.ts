@@ -11,7 +11,9 @@ export function isSupabaseConfigured(): boolean {
 /** Server-side Supabase client (service role — never expose to the browser). */
 export function getSupabaseAdmin(): SupabaseClient {
   if (!isSupabaseConfigured()) {
-    throw new Error("Supabase is not configured");
+    throw new Error(
+      "Supabase is required. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+    );
   }
   if (!adminClient) {
     adminClient = createClient(

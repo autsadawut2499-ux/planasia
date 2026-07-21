@@ -1,12 +1,7 @@
-import type { StoreListingSource } from "@/lib/templates/policy";
-import type { ProjectInput } from "@/lib/ai/types";
-import type { StorePriceBreakdown } from "@/lib/store/pricing";
 import type { ViewerIdentity } from "@/lib/user/identity";
 import { filterListingsForViewer } from "@/lib/store/visibility";
 import { buildListingSlug, ensureUniqueSlug } from "@/lib/seo/slug";
-import { readJsonBlob, useMemoryPersistence, writeJsonBlob } from "@/lib/storage/runtime";
-import { isRedisKvEnabled } from "@/lib/storage/redis-kv";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import type { StoreListing } from "@/lib/store/listing-types";
 import {
   supabaseGetAllListings,
   supabaseGetListingById,
@@ -14,34 +9,9 @@ import {
   supabaseGetListingBySlug,
   supabaseSeedIfEmpty,
   supabaseUpsertListing,
-} from "@/lib/store/supabase-store";
+} from "@/lib/supabase/store-listings";
 
-export interface StoreListing {
-  id: string;
-  slug: string;
-  planId: string;
-  ownerId: string;
-  creatorBrowserId: string;
-  creatorSessionUserId?: string;
-  creatorIp?: string;
-  creatorWorkspaceSessionId?: string;
-  name: string;
-  description: string;
-  beds: number;
-  baths: number;
-  floors: 1 | 2;
-  area: string;
-  style: string;
-  image: string;
-  floorPlanUrls: string[];
-  price: number;
-  priceBreakdown?: StorePriceBreakdown;
-  projectSnapshot?: ProjectInput;
-  source: StoreListingSource;
-  createdAt: string;
-}
-
-const LISTINGS_FILE = "store-listings.json";
+export type { StoreListing } from "@/lib/store/listing-types";
 
 const SEED: StoreListing[] = [
   {
@@ -111,100 +81,42 @@ function normalizeListing(raw: StoreListing): StoreListing {
 }
 
 let seeded = false;
-let supabaseSeeded = false;
 
 function seedListings(): StoreListing[] {
   return assignSlugs(SEED.map(normalizeListing));
 }
 
-async function ensureSupabaseListings(): Promise<StoreListing[]> {
-  if (!supabaseSeeded) {
-    supabaseSeeded = true;
+async function ensureListings(): Promise<StoreListing[]> {
+  if (!seeded) {
+    seeded = true;
     await supabaseSeedIfEmpty(seedListings());
   }
   return supabaseGetAllListings();
 }
 
-async function ensureFile(): Promise<StoreListing[]> {
-  const existing = await readJsonBlob<StoreListing[] | null>(LISTINGS_FILE, null);
-  if (existing && existing.length > 0) {
-    return assignSlugs(existing.map(normalizeListing));
-  }
-
-  const initial = seedListings();
-
-  if (!seeded) {
-    seeded = true;
-    if (isRedisKvEnabled() || useMemoryPersistence()) {
-      await writeJsonBlob(LISTINGS_FILE, initial);
-    }
-  }
-
-  return initial;
-}
-
-async function writeAll(listings: StoreListing[]): Promise<void> {
-  await writeJsonBlob(LISTINGS_FILE, listings);
-}
-
-async function loadAllListings(): Promise<StoreListing[]> {
-  if (isSupabaseConfigured()) {
-    return ensureSupabaseListings();
-  }
-  return ensureFile();
-}
-
 export async function getListings(viewer?: ViewerIdentity): Promise<StoreListing[]> {
-  const all = await loadAllListings();
+  const all = await ensureListings();
   if (!viewer) return all;
   return filterListingsForViewer(all, viewer);
 }
 
 export async function getListingById(id: string): Promise<StoreListing | null> {
-  if (isSupabaseConfigured()) {
-    return supabaseGetListingById(id);
-  }
-  const all = await ensureFile();
-  return all.find((item) => item.id === id || item.planId === id) ?? null;
+  return supabaseGetListingById(id);
 }
 
 export async function getListingBySlug(slug: string): Promise<StoreListing | null> {
-  if (isSupabaseConfigured()) {
-    return supabaseGetListingBySlug(slug);
-  }
-  const all = await ensureFile();
-  return (
-    all.find((item) => item.slug === slug || item.id === slug || item.planId === slug) ?? null
-  );
+  return supabaseGetListingBySlug(slug);
 }
 
 /** All listings for sitemap generation (no privacy filter — public SEO URLs). */
 export async function getAllListingsForSitemap(): Promise<StoreListing[]> {
-  return loadAllListings();
+  return ensureListings();
 }
 
 export async function getListingByPlanId(planId: string): Promise<StoreListing | null> {
-  if (isSupabaseConfigured()) {
-    return supabaseGetListingByPlanId(planId);
-  }
-  const all = await ensureFile();
-  return all.find((item) => item.planId === planId) ?? null;
+  return supabaseGetListingByPlanId(planId);
 }
 
 export async function addListing(listing: StoreListing): Promise<StoreListing> {
-  const normalized = normalizeListing(listing);
-
-  if (isSupabaseConfigured()) {
-    return supabaseUpsertListing(normalized);
-  }
-
-  const all = await ensureFile();
-  const idx = all.findIndex((item) => item.id === normalized.id || item.planId === normalized.planId);
-  if (idx >= 0) {
-    all[idx] = normalized;
-  } else {
-    all.unshift(normalized);
-  }
-  await writeAll(all);
-  return normalized;
+  return supabaseUpsertListing(normalizeListing(listing));
 }

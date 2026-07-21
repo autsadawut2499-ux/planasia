@@ -3,13 +3,17 @@ import { notFound } from "next/navigation";
 import { ListingJsonLd } from "@/components/seo/ListingJsonLd";
 import { buildListingMetadata } from "@/lib/seo/metadata";
 import { getAllListingsForSitemap, getListingBySlug } from "@/lib/store/db";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import StoreListingPageClient from "./StoreListingPageClient";
+
+export const dynamicParams = true;
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateStaticParams() {
+  if (!isSupabaseConfigured()) return [];
   const listings = await getAllListingsForSitemap();
   return listings.map((listing) => ({ slug: listing.slug }));
 }

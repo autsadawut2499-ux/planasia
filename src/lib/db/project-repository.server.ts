@@ -2,19 +2,13 @@ import type { ProjectRecord } from "@/lib/db/schema";
 import type { BuildingSpecifications } from "@/lib/db/schema/building-specifications";
 import type { ProjectInput } from "@/lib/ai/types";
 import { buildBuildingSpec } from "@/lib/db/building-spec-factory";
-import { readDocument, writeDocument } from "@/lib/storage/runtime";
+import { loadProjectRecord, saveProjectRecord } from "@/lib/supabase/projects";
 
 export function createProjectId(): string {
   return `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export async function saveProjectRecord(record: ProjectRecord): Promise<void> {
-  await writeDocument("projects", record.id, record);
-}
-
-export async function loadProjectRecord(id: string): Promise<ProjectRecord | null> {
-  return readDocument<ProjectRecord>("projects", id);
-}
+export { saveProjectRecord, loadProjectRecord };
 
 export function createProjectRecord(input: ProjectInput, id?: string): ProjectRecord {
   const now = new Date().toISOString();

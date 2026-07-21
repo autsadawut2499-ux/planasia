@@ -1,6 +1,10 @@
 import type { DesignEditorState } from "./editor-types";
 import type { ProjectInput } from "@/lib/ai/types";
-import { readDocument, writeDocument, deleteDocument } from "@/lib/storage/runtime";
+import {
+  deleteDesignDraft as supabaseDeleteDesignDraft,
+  loadDesignDraft as supabaseLoadDesignDraft,
+  saveDesignDraft as supabaseSaveDesignDraft,
+} from "@/lib/supabase/drafts";
 
 export interface DesignDraftRecord {
   id: string;
@@ -21,15 +25,15 @@ export function draftFilePath(ownerKey: string): string {
 }
 
 export async function saveDesignDraft(record: DesignDraftRecord): Promise<void> {
-  await writeDocument("design-drafts", ownerDocId(record.ownerKey), record);
+  await supabaseSaveDesignDraft(record);
 }
 
 export async function loadDesignDraft(ownerKey: string): Promise<DesignDraftRecord | null> {
-  return readDocument<DesignDraftRecord>("design-drafts", ownerDocId(ownerKey));
+  return supabaseLoadDesignDraft(ownerKey);
 }
 
 export async function deleteDesignDraft(ownerKey: string): Promise<void> {
-  await deleteDocument("design-drafts", ownerDocId(ownerKey));
+  await supabaseDeleteDesignDraft(ownerKey);
 }
 
 export function createDraftId(): string {

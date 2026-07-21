@@ -1,5 +1,10 @@
 import { randomBytes } from "crypto";
-import { readJsonBlob, writeJsonBlob } from "@/lib/storage/runtime";
+import {
+  findGrantByStripeSession,
+  findGrantsByStripeSession,
+  findValidGrant as supabaseFindValidGrant,
+  storeDownloadGrant as supabaseStoreDownloadGrant,
+} from "@/lib/supabase/download-grants";
 
 export interface DownloadGrant {
   token: string;
@@ -9,16 +14,6 @@ export interface DownloadGrant {
   stripeSessionId?: string;
   createdAt: string;
   expiresAt: string;
-}
-
-const TOKENS_FILE = "download-tokens.json";
-
-async function loadTokens(): Promise<DownloadGrant[]> {
-  return readJsonBlob<DownloadGrant[]>(TOKENS_FILE, []);
-}
-
-async function saveTokens(tokens: DownloadGrant[]): Promise<void> {
-  await writeJsonBlob(TOKENS_FILE, tokens);
 }
 
 export function createDownloadToken(
@@ -41,28 +36,14 @@ export function createDownloadToken(
 }
 
 export async function storeDownloadGrant(grant: DownloadGrant): Promise<void> {
-  const tokens = await loadTokens();
-  tokens.push(grant);
-  await saveTokens(tokens);
+  await supabaseStoreDownloadGrant(grant);
 }
 
 export async function findValidGrant(token: string): Promise<DownloadGrant | null> {
-  const tokens = await loadTokens();
-  const grant = tokens.find((t) => t.token === token);
-  if (!grant) return null;
-  if (new Date(grant.expiresAt) < new Date()) return null;
-  return grant;
+  return supabaseFindValidGrant(token);
 }
 
-export async function findGrantByStripeSession(sessionId: string): Promise<DownloadGrant | null> {
-  const tokens = await loadTokens();
-  return tokens.find((t) => t.stripeSessionId === sessionId) ?? null;
-}
-
-export async function findGrantsByStripeSession(sessionId: string): Promise<DownloadGrant[]> {
-  const tokens = await loadTokens();
-  return tokens.filter((t) => t.stripeSessionId === sessionId);
-}
+export { findGrantByStripeSession, findGrantsByStripeSession };
 
 export async function fulfillCartDownloads(
   items: { planId: string }[],

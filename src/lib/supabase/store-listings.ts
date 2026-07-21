@@ -1,4 +1,4 @@
-import type { StoreListing } from "@/lib/store/db";
+import type { StoreListing } from "@/lib/store/listing-types";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
 
 interface StoreListingRow {

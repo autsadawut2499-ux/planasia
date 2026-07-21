@@ -2,11 +2,20 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { listingStorePath } from "@/lib/seo/slug";
 import { getAllListingsForSitemap } from "@/lib/store/db";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
-  const listings = await getAllListingsForSitemap();
   const now = new Date();
+
+  let listings: Awaited<ReturnType<typeof getAllListingsForSitemap>> = [];
+  if (isSupabaseConfigured()) {
+    try {
+      listings = await getAllListingsForSitemap();
+    } catch {
+      listings = [];
+    }
+  }
 
   return [
     {

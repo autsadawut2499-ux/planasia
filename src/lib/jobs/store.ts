@@ -2,65 +2,44 @@ import { randomBytes } from "crypto";
 import type { ExportJob, ExportJobFormat } from "@/lib/jobs/types";
 import type { UnitSystem } from "@/lib/geo/countries";
 import {
-  binaryExists,
-  readBinary,
-  readDocument,
-  readQueue,
-  writeBinary,
-  writeDocument,
-  writeQueue,
-} from "@/lib/storage/runtime";
-
-const QUEUE_NAME = "jobs/queue.json";
-const RESULTS_SUBDIR = "jobs/results";
+  dequeueExportJobId,
+  enqueueExportJobId,
+  exportResultExists,
+  getExportQueuePosition,
+  loadExportJob,
+  readExportResult,
+  refreshExportQueuePositions,
+  saveExportJob,
+  writeExportResult,
+} from "@/lib/supabase/export-jobs";
 
 export function resultPath(jobId: string, format: ExportJobFormat): string {
   const ext = format === "pdf" ? "pdf" : "dxf";
-  return `${RESULTS_SUBDIR}/${jobId}.${ext}`;
-}
-
-function resultFilename(jobId: string, format: ExportJobFormat): string {
-  return `${jobId}.${format === "pdf" ? "pdf" : "dxf"}`;
+  return `jobs/results/${jobId}.${ext}`;
 }
 
 export async function saveJob(job: ExportJob): Promise<void> {
-  await writeDocument("jobs", job.id, job);
+  await saveExportJob(job);
 }
 
 export async function loadJob(id: string): Promise<ExportJob | null> {
-  return readDocument<ExportJob>("jobs", id);
+  return loadExportJob(id);
 }
 
 export async function enqueueJobId(id: string): Promise<number> {
-  const queue = await readQueue(QUEUE_NAME);
-  queue.push(id);
-  await writeQueue(QUEUE_NAME, queue);
-  return queue.length;
+  return enqueueExportJobId(id);
 }
 
 export async function dequeueJobId(): Promise<string | null> {
-  const queue = await readQueue(QUEUE_NAME);
-  if (queue.length === 0) return null;
-  const [next, ...rest] = queue;
-  await writeQueue(QUEUE_NAME, rest);
-  return next;
+  return dequeueExportJobId();
 }
 
 export async function getQueuePosition(jobId: string): Promise<number> {
-  const queue = await readQueue(QUEUE_NAME);
-  const idx = queue.indexOf(jobId);
-  return idx === -1 ? 0 : idx + 1;
+  return getExportQueuePosition(jobId);
 }
 
 export async function refreshQueuePositions(): Promise<void> {
-  const queue = await readQueue(QUEUE_NAME);
-  for (let i = 0; i < queue.length; i++) {
-    const job = await loadJob(queue[i]);
-    if (job && job.status === "queued") {
-      job.queuePosition = i + 1;
-      await saveJob(job);
-    }
-  }
+  return refreshExportQueuePositions();
 }
 
 export function createJob(params: {
@@ -84,13 +63,11 @@ export function createJob(params: {
 }
 
 export async function resultExists(jobId: string, format: ExportJobFormat): Promise<boolean> {
-  return binaryExists(RESULTS_SUBDIR, resultFilename(jobId, format));
+  return exportResultExists(jobId, format);
 }
 
 export async function readResult(jobId: string, format: ExportJobFormat): Promise<Buffer> {
-  const buf = await readBinary(RESULTS_SUBDIR, resultFilename(jobId, format));
-  if (!buf) throw new Error("Export result not found");
-  return buf;
+  return readExportResult(jobId, format);
 }
 
 export async function writeResult(
@@ -98,5 +75,5 @@ export async function writeResult(
   format: ExportJobFormat,
   data: Buffer | Uint8Array | string,
 ): Promise<void> {
-  await writeBinary(RESULTS_SUBDIR, resultFilename(jobId, format), data);
+  await writeExportResult(jobId, format, data);
 }

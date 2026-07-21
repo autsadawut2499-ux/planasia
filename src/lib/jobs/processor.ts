@@ -1,7 +1,3 @@
-import { findValidGrant } from "@/lib/payments/tokens";
-import { loadPlanDocument } from "@/lib/plans/store";
-import { generatePlanPdf } from "@/lib/pdf/generator";
-import { generatePlanDxf } from "@/lib/cad/generator";
 import type { ExportJob } from "@/lib/jobs/types";
 import {
   dequeueJobId,
@@ -12,37 +8,12 @@ import {
   saveJob,
   writeResult,
 } from "@/lib/jobs/store";
-import {
-  isRedisQueueEnabled,
-  redisDequeue,
-  redisEnqueue,
-  redisQueuePosition,
-} from "@/lib/jobs/redis-queue";
+import { findValidGrant } from "@/lib/payments/tokens";
+import { loadPlanDocument } from "@/lib/plans/store";
+import { generatePlanPdf } from "@/lib/pdf/generator";
+import { generatePlanDxf } from "@/lib/cad/generator";
 
 let processing = false;
-
-async function enqueueId(jobId: string): Promise<number> {
-  if (isRedisQueueEnabled()) {
-    return redisEnqueue(jobId);
-  }
-  return enqueueJobId(jobId);
-}
-
-async function dequeueId(): Promise<string | null> {
-  if (isRedisQueueEnabled()) {
-    return redisDequeue();
-  }
-  return dequeueJobId();
-}
-
-async function updateQueuePosition(job: ExportJob): Promise<void> {
-  if (isRedisQueueEnabled()) {
-    job.queuePosition = await redisQueuePosition(job.id);
-  } else {
-    job.queuePosition = await getQueuePosition(job.id);
-  }
-  await saveJob(job);
-}
 
 async function processJob(jobId: string): Promise<void> {
   const job = await loadJob(jobId);
@@ -101,7 +72,7 @@ export async function drainExportQueue(): Promise<void> {
   processing = true;
   try {
     for (;;) {
-      const nextId = await dequeueId();
+      const nextId = await dequeueJobId();
       if (!nextId) break;
       await processJob(nextId);
       await refreshQueuePositions();
@@ -112,7 +83,7 @@ export async function drainExportQueue(): Promise<void> {
 }
 
 export async function enqueueExportJob(job: ExportJob): Promise<ExportJob> {
-  const position = await enqueueId(job.id);
+  const position = await enqueueJobId(job.id);
   job.queuePosition = position;
   await saveJob(job);
   void drainExportQueue();
@@ -123,7 +94,8 @@ export async function getJobStatus(jobId: string): Promise<ExportJob | null> {
   const job = await loadJob(jobId);
   if (!job) return null;
   if (job.status === "queued") {
-    await updateQueuePosition(job);
+    job.queuePosition = await getQueuePosition(job.id);
+    await saveJob(job);
   }
   return job;
 }
