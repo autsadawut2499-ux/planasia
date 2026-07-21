@@ -1,12 +1,10 @@
-import { promises as fs } from "fs";
-import path from "path";
-
 import type { StoreListingSource } from "@/lib/templates/policy";
 import type { ProjectInput } from "@/lib/ai/types";
 import type { StorePriceBreakdown } from "@/lib/store/pricing";
 import type { ViewerIdentity } from "@/lib/user/identity";
 import { filterListingsForViewer } from "@/lib/store/visibility";
 import { buildListingSlug, ensureUniqueSlug } from "@/lib/seo/slug";
+import { readJsonBlob, writeJsonBlob } from "@/lib/storage/runtime";
 
 export interface StoreListing {
   id: string;
@@ -33,8 +31,7 @@ export interface StoreListing {
   createdAt: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "store-listings.json");
+const LISTINGS_FILE = "store-listings.json";
 
 const SEED: StoreListing[] = [
   {
@@ -103,21 +100,24 @@ function normalizeListing(raw: StoreListing): StoreListing {
   };
 }
 
+let seeded = false;
+
 async function ensureFile(): Promise<StoreListing[]> {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    const raw = await fs.readFile(DATA_FILE, "utf-8");
-    return assignSlugs((JSON.parse(raw) as StoreListing[]).map(normalizeListing));
-  } catch {
-    const seeded = assignSlugs(SEED.map(normalizeListing));
-    await fs.writeFile(DATA_FILE, JSON.stringify(seeded, null, 2), "utf-8");
-    return seeded;
+  const existing = await readJsonBlob<StoreListing[] | null>(LISTINGS_FILE, null);
+  if (existing && existing.length > 0) {
+    return assignSlugs(existing.map(normalizeListing));
   }
+  if (!seeded) {
+    seeded = true;
+    const initial = assignSlugs(SEED.map(normalizeListing));
+    await writeJsonBlob(LISTINGS_FILE, initial);
+    return initial;
+  }
+  return assignSlugs(SEED.map(normalizeListing));
 }
 
 async function writeAll(listings: StoreListing[]): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(DATA_FILE, JSON.stringify(listings, null, 2), "utf-8");
+  await writeJsonBlob(LISTINGS_FILE, listings);
 }
 
 export async function getListings(viewer?: ViewerIdentity): Promise<StoreListing[]> {

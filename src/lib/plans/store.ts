@@ -1,29 +1,12 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
 import type { HousePlanDocument } from "./schema";
-
-const PLANS_DIR = path.join(process.cwd(), "data", "plans");
-
-async function ensureDir() {
-  await mkdir(PLANS_DIR, { recursive: true });
-}
-
-function planPath(id: string) {
-  return path.join(PLANS_DIR, `${id}.json`);
-}
+import { readDocument, writeDocument } from "@/lib/storage/runtime";
 
 export async function savePlanDocument(doc: HousePlanDocument): Promise<void> {
-  await ensureDir();
-  await writeFile(planPath(doc.id), JSON.stringify(doc, null, 2), "utf-8");
+  await writeDocument("plans", doc.id, doc);
 }
 
 export async function loadPlanDocument(id: string): Promise<HousePlanDocument | null> {
-  try {
-    const raw = await readFile(planPath(id), "utf-8");
-    return JSON.parse(raw) as HousePlanDocument;
-  } catch {
-    return null;
-  }
+  return readDocument<HousePlanDocument>("plans", id);
 }
 
 export function createPlanId(): string {

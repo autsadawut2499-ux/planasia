@@ -1,35 +1,19 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
 import type { ProjectRecord } from "@/lib/db/schema";
+import type { BuildingSpecifications } from "@/lib/db/schema/building-specifications";
 import type { ProjectInput } from "@/lib/ai/types";
 import { buildBuildingSpec } from "@/lib/db/building-spec-factory";
-
-const PROJECTS_DIR = path.join(process.cwd(), "data", "projects");
-
-async function ensureDir() {
-  await mkdir(PROJECTS_DIR, { recursive: true });
-}
-
-function projectPath(id: string) {
-  return path.join(PROJECTS_DIR, `${id}.json`);
-}
+import { readDocument, writeDocument } from "@/lib/storage/runtime";
 
 export function createProjectId(): string {
   return `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export async function saveProjectRecord(record: ProjectRecord): Promise<void> {
-  await ensureDir();
-  await writeFile(projectPath(record.id), JSON.stringify(record, null, 2), "utf-8");
+  await writeDocument("projects", record.id, record);
 }
 
 export async function loadProjectRecord(id: string): Promise<ProjectRecord | null> {
-  try {
-    const raw = await readFile(projectPath(id), "utf-8");
-    return JSON.parse(raw) as ProjectRecord;
-  } catch {
-    return null;
-  }
+  return readDocument<ProjectRecord>("projects", id);
 }
 
 export function createProjectRecord(input: ProjectInput, id?: string): ProjectRecord {
@@ -38,22 +22,43 @@ export function createProjectRecord(input: ProjectInput, id?: string): ProjectRe
   return {
     id: id ?? createProjectId(),
     projectTypeCode: buildingSpec.projectTypeCode,
-    input: { ...input, buildingSpec, projectTypeCode: buildingSpec.projectTypeCode },
     buildingSpec,
+    input,
     createdAt: now,
     updatedAt: now,
   };
 }
 
 export async function upsertProjectFromInput(
-  input: ProjectInput,
-  existingId?: string,
+  project: ProjectInput & { buildingSpec: BuildingSpecifications },
+  id?: string,
 ): Promise<ProjectRecord> {
-  const existing = existingId ? await loadProjectRecord(existingId) : null;
-  const record = createProjectRecord(input, existing?.id);
-  if (existing) {
-    record.createdAt = existing.createdAt;
+  const now = new Date().toISOString();
+  const { buildingSpec, ...input } = project;
+
+  if (id) {
+    const existing = await loadProjectRecord(id);
+    if (existing) {
+      const record: ProjectRecord = {
+        ...existing,
+        projectTypeCode: buildingSpec.projectTypeCode,
+        input,
+        buildingSpec,
+        updatedAt: now,
+      };
+      await saveProjectRecord(record);
+      return record;
+    }
   }
+
+  const record: ProjectRecord = {
+    id: id ?? createProjectId(),
+    projectTypeCode: buildingSpec.projectTypeCode,
+    buildingSpec,
+    input,
+    createdAt: now,
+    updatedAt: now,
+  };
   await saveProjectRecord(record);
   return record;
 }

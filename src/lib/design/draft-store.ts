@@ -1,7 +1,6 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
 import type { DesignEditorState } from "./editor-types";
 import type { ProjectInput } from "@/lib/ai/types";
+import { readDocument, writeDocument, deleteDocument } from "@/lib/storage/runtime";
 
 export interface DesignDraftRecord {
   id: string;
@@ -13,33 +12,24 @@ export interface DesignDraftRecord {
   updatedAt: string;
 }
 
-const DRAFTS_DIR = path.join(process.cwd(), "data", "design-drafts");
-
-async function ensureDir() {
-  await mkdir(DRAFTS_DIR, { recursive: true });
+function ownerDocId(ownerKey: string): string {
+  return ownerKey.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
-export function draftFilePath(ownerKey: string) {
-  const safe = ownerKey.replace(/[^a-zA-Z0-9_-]/g, "_");
-  return path.join(DRAFTS_DIR, `${safe}.json`);
-}
-
-function draftPath(ownerKey: string) {
-  return draftFilePath(ownerKey);
+export function draftFilePath(ownerKey: string): string {
+  return `design-drafts/${ownerDocId(ownerKey)}.json`;
 }
 
 export async function saveDesignDraft(record: DesignDraftRecord): Promise<void> {
-  await ensureDir();
-  await writeFile(draftPath(record.ownerKey), JSON.stringify(record, null, 2), "utf-8");
+  await writeDocument("design-drafts", ownerDocId(record.ownerKey), record);
 }
 
 export async function loadDesignDraft(ownerKey: string): Promise<DesignDraftRecord | null> {
-  try {
-    const raw = await readFile(draftPath(ownerKey), "utf-8");
-    return JSON.parse(raw) as DesignDraftRecord;
-  } catch {
-    return null;
-  }
+  return readDocument<DesignDraftRecord>("design-drafts", ownerDocId(ownerKey));
+}
+
+export async function deleteDesignDraft(ownerKey: string): Promise<void> {
+  await deleteDocument("design-drafts", ownerDocId(ownerKey));
 }
 
 export function createDraftId(): string {

@@ -1,7 +1,6 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { randomBytes } from "crypto";
 import type { UpsellAddonId } from "@/lib/store/cart-pricing";
+import { readJsonBlob, writeJsonBlob } from "@/lib/storage/runtime";
 
 export interface CartOrderItem {
   listingId: string;
@@ -25,20 +24,14 @@ export interface CartOrder {
   createdAt: string;
 }
 
-const ORDERS_FILE = path.join(process.cwd(), "data", "cart-orders.json");
+const ORDERS_FILE = "cart-orders.json";
 
 async function loadOrders(): Promise<CartOrder[]> {
-  try {
-    const raw = await readFile(ORDERS_FILE, "utf-8");
-    return JSON.parse(raw) as CartOrder[];
-  } catch {
-    return [];
-  }
+  return readJsonBlob<CartOrder[]>(ORDERS_FILE, []);
 }
 
 async function saveOrders(orders: CartOrder[]): Promise<void> {
-  await mkdir(path.dirname(ORDERS_FILE), { recursive: true });
-  await writeFile(ORDERS_FILE, JSON.stringify(orders, null, 2), "utf-8");
+  await writeJsonBlob(ORDERS_FILE, orders);
 }
 
 export function createCartOrderId(): string {

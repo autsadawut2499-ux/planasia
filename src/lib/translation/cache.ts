@@ -1,8 +1,7 @@
 import { createHash } from "crypto";
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { readJsonBlob, writeJsonBlob } from "@/lib/storage/runtime";
 
-const CACHE_FILE = path.join(process.cwd(), "data", "translation-cache.json");
+const CACHE_FILE = "translation-cache.json";
 
 interface CacheEntry {
   translations: string[];
@@ -17,17 +16,11 @@ function cacheKey(targetLocale: string, texts: string[]): string {
 }
 
 async function loadCache(): Promise<CacheStore> {
-  try {
-    const raw = await readFile(CACHE_FILE, "utf-8");
-    return JSON.parse(raw) as CacheStore;
-  } catch {
-    return {};
-  }
+  return readJsonBlob<CacheStore>(CACHE_FILE, {});
 }
 
 async function saveCache(store: CacheStore): Promise<void> {
-  await mkdir(path.dirname(CACHE_FILE), { recursive: true });
-  await writeFile(CACHE_FILE, JSON.stringify(store, null, 2), "utf-8");
+  await writeJsonBlob(CACHE_FILE, store);
 }
 
 export async function getCachedTranslations(

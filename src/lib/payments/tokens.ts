@@ -1,6 +1,5 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { randomBytes } from "crypto";
+import { readJsonBlob, writeJsonBlob } from "@/lib/storage/runtime";
 
 export interface DownloadGrant {
   token: string;
@@ -12,20 +11,14 @@ export interface DownloadGrant {
   expiresAt: string;
 }
 
-const TOKENS_FILE = path.join(process.cwd(), "data", "download-tokens.json");
+const TOKENS_FILE = "download-tokens.json";
 
 async function loadTokens(): Promise<DownloadGrant[]> {
-  try {
-    const raw = await readFile(TOKENS_FILE, "utf-8");
-    return JSON.parse(raw) as DownloadGrant[];
-  } catch {
-    return [];
-  }
+  return readJsonBlob<DownloadGrant[]>(TOKENS_FILE, []);
 }
 
 async function saveTokens(tokens: DownloadGrant[]): Promise<void> {
-  await mkdir(path.dirname(TOKENS_FILE), { recursive: true });
-  await writeFile(TOKENS_FILE, JSON.stringify(tokens, null, 2), "utf-8");
+  await writeJsonBlob(TOKENS_FILE, tokens);
 }
 
 export function createDownloadToken(

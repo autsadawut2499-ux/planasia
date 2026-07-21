@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unlink } from "fs/promises";
 import {
   createDraftId,
-  draftFilePath,
+  deleteDesignDraft,
   loadDesignDraft,
   saveDesignDraft,
   type DesignDraftRecord,
@@ -72,7 +71,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await unlink(draftFilePath(key));
+    await deleteDesignDraft(key);
   } catch {
     /* no draft */
   }
