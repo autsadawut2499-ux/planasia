@@ -1,26 +1,46 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import {
+  Bath,
+  BedDouble,
+  Building2,
+  Landmark,
+  MapPin,
+  Palette,
+  PanelTop,
+  Plus,
+  SquareStack,
+  User,
+  Wallet,
+  Home,
+  ImageUp,
+  Layers,
+} from "lucide-react";
 import { useCallback, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { useToast } from "@/context/ToastContext";
-import { useCatalog } from "@/hooks/useCatalog";
 import { useProjectValidation } from "@/hooks/useProjectValidation";
-import { mergeBuildingSpecIntoProject } from "@/lib/db/building-spec-factory";
-import type { ProjectTypeCode } from "@/lib/db/schema/project-types";
 import {
-  ROOF_TYPES,
+  FLOOR_MATERIALS,
+  ROOF_MATERIALS,
   WALL_MATERIALS,
   type ProjectInput,
   type QuestionnaireInput,
   type QuestionnaireUploads,
 } from "@/lib/ai/types";
-import { fileToUploadRef, resizeUploadsForFloors } from "@/lib/upload/files";
-import { DesignDirectionCards, FloorToggle } from "./DesignDirectionCards";
-import { PermitCompliancePanel } from "./PermitCompliancePanel";
-import { ProjectTypeSelector } from "./ProjectTypeSelector";
+import { HOUSE_STYLES } from "@/lib/geo/countries";
+import {
+  appendFilesToSlot,
+  removeFileAtIndex,
+} from "@/lib/upload/files";
 import { UploadSlot } from "./UploadSlot";
-import { Tooltip } from "@/components/ui/Tooltip";
+import {
+  FireflyField,
+  FireflySidebarGroup,
+  FireflySidebarShell,
+  fireflyInputClass,
+  fireflySelectClass,
+} from "./SidebarAccordion";
 import { pickLocalizedLabel } from "@/lib/i18n/localized-text";
 
 interface QuestionnairePanelProps {
@@ -29,11 +49,15 @@ interface QuestionnairePanelProps {
   uploads: QuestionnaireUploads;
   onProjectChange: (updates: Partial<ProjectInput>) => void;
   onQuestionnaireChange: (updates: Partial<QuestionnaireInput>) => void;
-  onUploadsChange: (uploads: QuestionnaireUploads) => void;
+  onUploadsChange: (updates: Partial<QuestionnaireUploads>) => void;
   onSubmit: () => void;
   submitting?: boolean;
   canSubmit?: boolean;
+  embedded?: boolean;
 }
+
+const BED_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+const BATH_OPTIONS = [1, 2, 3, 4, 5, 6] as const;
 
 export function QuestionnairePanel({
   project,
@@ -45,41 +69,17 @@ export function QuestionnairePanel({
   onSubmit,
   submitting,
   canSubmit = true,
+  embedded = false,
 }: QuestionnairePanelProps) {
   const { locale, translate } = useApp();
-  const { loading: toastLoading, update: toastUpdate, error: toastError } = useToast();
-  const { projectTypes, loading: catalogLoading, getProjectType } = useCatalog();
-  const { result: validation, loading: permitLoading, error: permitError, validateNow } =
-    useProjectValidation(project);
-  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const { error: toastError } = useToast();
+  const { validateNow } = useProjectValidation(project);
+  const [collapsed, setCollapsed] = useState(false);
+  const [loadingSlot, setLoadingSlot] = useState<keyof QuestionnaireUploads | null>(null);
 
-  const projectTypeCode = project.projectTypeCode ?? "residential";
-  const isResidential = projectTypeCode === "residential";
-  const buildingSpec = validation?.buildingSpec ?? project.buildingSpec;
-
-  const handleProjectTypeChange = useCallback(
-    (code: ProjectTypeCode) => {
-      const meta = getProjectType(code);
-      const workspaceFloors = Math.min(2, Math.max(1, meta?.defaultFloors ?? project.floors)) as 1 | 2;
-      onProjectChange(
-        mergeBuildingSpecIntoProject(
-          {
-            ...project,
-            projectTypeCode: code,
-            floors: workspaceFloors,
-            foundation: workspaceFloors === 2 ? "pile" : project.foundation,
-          },
-          { projectTypeCode: code, numberOfFloors: workspaceFloors },
-        ),
-      );
-      if (workspaceFloors !== project.floors) {
-        onUploadsChange({
-          ...uploads,
-          floorPlans: resizeUploadsForFloors(uploads.floorPlans, workspaceFloors),
-        });
-      }
-    },
-    [getProjectType, onProjectChange, onUploadsChange, project, uploads],
+  const styleLabel = pickLocalizedLabel(
+    locale,
+    HOUSE_STYLES.find((s) => s.id === project.style)?.label ?? { en: project.style, th: project.style },
   );
 
   const handleSubmitWithValidation = useCallback(async () => {
@@ -97,435 +97,286 @@ export function QuestionnairePanel({
     onSubmit();
   }, [validateNow, project, onProjectChange, onSubmit, toastError, translate]);
 
-  const handleFloorsChange = useCallback(
-    (floors: 1 | 2) => {
-      onProjectChange({
-        floors,
-        foundation: floors === 2 ? "pile" : project.foundation,
-      });
-      onUploadsChange({
-        ...uploads,
-        floorPlans: resizeUploadsForFloors(uploads.floorPlans, floors),
-      });
+  const handleFloorsChange = (floors: 1 | 2) => {
+    onProjectChange({
+      floors,
+      foundation: floors === 2 ? "pile" : project.foundation,
+    });
+  };
+
+  const handleAddFiles = useCallback(
+    async (key: keyof QuestionnaireUploads, incoming: File[]) => {
+      setLoadingSlot(key);
+      try {
+        const next = await appendFilesToSlot(uploads[key], incoming);
+        onUploadsChange({ [key]: next });
+      } catch {
+        toastError(translate("toast.error"));
+      } finally {
+        setLoadingSlot(null);
+      }
     },
-    [onProjectChange, onUploadsChange, uploads, project.foundation],
+    [uploads, onUploadsChange, toastError, translate],
   );
 
-  const setFile = async (
-    key: keyof Pick<QuestionnaireUploads, "sitePlan" | "elevationSection" | "frontView3d">,
-    file: File | null,
-  ) => {
-    if (!file) {
-      onUploadsChange({ ...uploads, [key]: null });
-      return;
-    }
-    setUploadingKey(key);
-    const toastId = toastLoading(translate("toast.uploading"));
-    try {
-      const ref = await fileToUploadRef(file);
-      onUploadsChange({ ...uploads, [key]: ref });
-      if (key === "sitePlan") onQuestionnaireChange({ sitePlanHasDimensions: null });
-      if (key === "frontView3d") onQuestionnaireChange({ frontViewConfirmed: null });
-      toastUpdate(toastId, translate("toast.uploadSuccess"), "success");
-    } catch {
-      toastError(translate("toast.uploadError"));
-    } finally {
-      setUploadingKey(null);
-    }
-  };
+  const handleRemoveFile = useCallback(
+    (key: keyof QuestionnaireUploads, index: number) => {
+      onUploadsChange({ [key]: removeFileAtIndex(uploads[key], index) });
+    },
+    [uploads, onUploadsChange],
+  );
 
-  const setFloorFile = async (index: number, file: File | null) => {
-    if (!file) {
-      const next = [...uploads.floorPlans];
-      next[index] = null;
-      onUploadsChange({ ...uploads, floorPlans: next });
-      return;
-    }
-    const key = `floor-${index}`;
-    setUploadingKey(key);
-    const toastId = toastLoading(translate("toast.uploading"));
-    try {
-      const next = [...uploads.floorPlans];
-      next[index] = await fileToUploadRef(file);
-      onUploadsChange({ ...uploads, floorPlans: next });
-      toastUpdate(toastId, translate("toast.uploadSuccess"), "success");
-    } catch {
-      toastError(translate("toast.uploadError"));
-    } finally {
-      setUploadingKey(null);
-    }
-  };
+  const floorSummary = project.floors === 1 ? translate("sidebar.floor1") : translate("sidebar.floor2");
+  const uploadSummary = [
+    uploads.sitePlan.length,
+    uploads.elevationSection.length,
+    uploads.frontView3d.length,
+    uploads.floorPlans.length,
+  ].reduce((a, b) => a + b, 0);
 
-  return (
-    <aside className="flex h-full flex-col border-r border-white/8 bg-surface-raised/80 backdrop-blur-xl">
-      <div className="border-b border-white/8 px-5 py-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15">
-            <Sparkles className="h-4 w-4 text-accent" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-text-primary">
-              {translate("questionnaire.title")}
-            </h2>
-            <p className="text-[11px] text-text-muted">{translate("questionnaire.subtitle")}</p>
-          </div>
+  const submitButton = canSubmit ? (
+    <button
+      type="button"
+      onClick={() => void handleSubmitWithValidation()}
+      disabled={submitting}
+      className="flex w-full items-center justify-center gap-2 rounded-full bg-[#2680eb] py-2 text-[12px] font-medium text-white transition-colors hover:bg-[#1a6fd4] disabled:opacity-50"
+    >
+      <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+      {submitting ? translate("questionnaire.checking") : translate("questionnaire.submit")}
+    </button>
+  ) : null;
+
+  const menu = (
+    <>
+      <FireflySidebarGroup
+        icon={Home}
+        label={translate("sidebar.groupProject")}
+        summary={project.projectName || "—"}
+        defaultOpen
+      >
+        <FireflyField label={translate("sidebar.projectName")}>
+          <input
+            type="text"
+            value={project.projectName}
+            onChange={(e) => onProjectChange({ projectName: e.target.value })}
+            className={fireflyInputClass}
+            placeholder={translate("sidebar.projectName")}
+          />
+        </FireflyField>
+        <FireflyField label={translate("sidebar.ownerName")}>
+          <input
+            type="text"
+            value={project.ownerName}
+            onChange={(e) => onProjectChange({ ownerName: e.target.value })}
+            className={fireflyInputClass}
+          />
+        </FireflyField>
+        <FireflyField label={translate("sidebar.location")}>
+          <input
+            type="text"
+            value={project.location}
+            onChange={(e) => onProjectChange({ location: e.target.value })}
+            className={fireflyInputClass}
+          />
+        </FireflyField>
+      </FireflySidebarGroup>
+
+      <FireflySidebarGroup
+        icon={Building2}
+        label={translate("sidebar.groupBuilding")}
+        summary={`${floorSummary} · ${project.bedrooms}BR`}
+      >
+        <FireflyField label={translate("sidebar.floors")}>
+          <select
+            value={project.floors}
+            onChange={(e) => handleFloorsChange(Number(e.target.value) as 1 | 2)}
+            className={fireflySelectClass}
+          >
+            <option value={1}>{translate("sidebar.floor1")}</option>
+            <option value={2}>{translate("sidebar.floor2")}</option>
+          </select>
+        </FireflyField>
+        {project.floors === 2 && (
+          <p className="text-[10px] leading-snug text-amber-300/80">{translate("form.foundation.pileRequired")}</p>
+        )}
+        <div className="grid grid-cols-2 gap-2">
+          <FireflyField label={translate("sidebar.bedrooms")}>
+            <select
+              value={project.bedrooms}
+              onChange={(e) => onProjectChange({ bedrooms: Number(e.target.value) })}
+              className={fireflySelectClass}
+            >
+              {BED_OPTIONS.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </FireflyField>
+          <FireflyField label={translate("sidebar.bathrooms")}>
+            <select
+              value={project.bathrooms}
+              onChange={(e) => onProjectChange({ bathrooms: Number(e.target.value) })}
+              className={fireflySelectClass}
+            >
+              {BATH_OPTIONS.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </FireflyField>
         </div>
-      </div>
-
-      <div className="flex-1 space-y-6 overflow-y-auto p-5">
-        <section className="glass-panel p-4">
-          <p className="section-label">{translate("questionnaire.designDirection")}</p>
-          <DesignDirectionCards
-            questionnaire={questionnaire}
-            catalogStyle={project.style}
-            onChange={(updates) =>
-              onQuestionnaireChange({
-                designDirection: { ...questionnaire.designDirection, ...updates },
-              })
-            }
-            onStyleChange={(styleId) => {
-              onProjectChange({ style: styleId });
-              onQuestionnaireChange({
-                designDirection: { ...questionnaire.designDirection, catalogStyle: styleId },
+        <FireflyField label={translate("sidebar.budget")}>
+          <input
+            type="number"
+            min={0}
+            step={100_000}
+            value={project.maxBudgetThb ?? ""}
+            onChange={(e) => {
+              const maxBudgetThb = Number(e.target.value) || 0;
+              onProjectChange({
+                maxBudgetThb,
+                budget: maxBudgetThb > 0 ? String(maxBudgetThb) : project.budget,
               });
             }}
-            decorationStyle={questionnaire.decorationStyle}
-            colorTone={questionnaire.colorTone}
-            onDecorationChange={(v) => onQuestionnaireChange({ decorationStyle: v })}
-            onColorChange={(v) => {
-              onQuestionnaireChange({ colorTone: v });
-              onProjectChange({ colorPalette: v });
-            }}
+            placeholder="2500000"
+            className={fireflyInputClass}
           />
-        </section>
+        </FireflyField>
+        <FireflyField label={translate("sidebar.style")}>
+          <select
+            value={project.style}
+            onChange={(e) => {
+              onProjectChange({ style: e.target.value });
+              onQuestionnaireChange({
+                designDirection: { ...questionnaire.designDirection, catalogStyle: e.target.value },
+              });
+            }}
+            className={fireflySelectClass}
+          >
+            {HOUSE_STYLES.map((s) => (
+              <option key={s.id} value={s.id}>{pickLocalizedLabel(locale, s.label)}</option>
+            ))}
+          </select>
+        </FireflyField>
+      </FireflySidebarGroup>
 
-        <section className="glass-panel p-4">
-          <p className="section-label">{translate("questionnaire.preferences")}</p>
-          <div className="space-y-4">
-            <Field label={translate("questionnaire.projectType")}>
-              <ProjectTypeSelector
-                types={projectTypes}
-                value={projectTypeCode}
-                onChange={handleProjectTypeChange}
-                loading={catalogLoading}
-              />
-            </Field>
+      <FireflySidebarGroup icon={Layers} label={translate("sidebar.groupMaterials")} summary={styleLabel}>
+        <FireflyField label={translate("sidebar.wallMaterial")}>
+          <select
+            value={project.wallMaterial}
+            onChange={(e) => {
+              onProjectChange({ wallMaterial: e.target.value });
+              onQuestionnaireChange({ primaryMaterial: e.target.value });
+            }}
+            className={fireflySelectClass}
+          >
+            {WALL_MATERIALS.map((m) => (
+              <option key={m.value} value={m.value}>{pickLocalizedLabel(locale, m.label)}</option>
+            ))}
+          </select>
+        </FireflyField>
+        <FireflyField label={translate("sidebar.floorMaterial")}>
+          <select
+            value={project.floorMaterial}
+            onChange={(e) => onProjectChange({ floorMaterial: e.target.value })}
+            className={fireflySelectClass}
+          >
+            {FLOOR_MATERIALS.map((m) => (
+              <option key={m.value} value={m.value}>{pickLocalizedLabel(locale, m.label)}</option>
+            ))}
+          </select>
+        </FireflyField>
+        <FireflyField label={translate("sidebar.roofMaterial")}>
+          <select
+            value={project.roofMaterial}
+            onChange={(e) => onProjectChange({ roofMaterial: e.target.value })}
+            className={fireflySelectClass}
+          >
+            {ROOF_MATERIALS.map((m) => (
+              <option key={m.value} value={m.value}>{pickLocalizedLabel(locale, m.label)}</option>
+            ))}
+          </select>
+        </FireflyField>
+        <FireflyField label={translate("sidebar.foundation")}>
+          <select
+            value={project.foundation}
+            onChange={(e) => onProjectChange({ foundation: e.target.value as "pile" | "spread" })}
+            className={fireflySelectClass}
+            disabled={project.floors === 2}
+          >
+            <option value="spread">{translate("form.foundation.spread")}</option>
+            <option value="pile">{translate("form.foundation.pile")}</option>
+          </select>
+        </FireflyField>
+      </FireflySidebarGroup>
 
-            <Field label={translate("workspace.floors")}>
-              <FloorToggle value={project.floors} onChange={handleFloorsChange} />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={translate("workspace.roofType")}>
-                <select
-                  value={project.roofType}
-                  onChange={(e) => onProjectChange({ roofType: e.target.value })}
-                  className="dropdown-select text-xs"
-                >
-                  {ROOF_TYPES.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {pickLocalizedLabel(locale, r.label)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label={translate("questionnaire.primaryMaterial")}>
-                <select
-                  value={questionnaire.primaryMaterial || project.wallMaterial}
-                  onChange={(e) => {
-                    onQuestionnaireChange({ primaryMaterial: e.target.value });
-                    onProjectChange({ wallMaterial: e.target.value });
-                  }}
-                  className="dropdown-select text-xs"
-                >
-                  <option value="">{translate("questionnaire.selectMaterial")}</option>
-                  {WALL_MATERIALS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {pickLocalizedLabel(locale, m.label)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            {isResidential ? (
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={translate("form.bedrooms")}>
-                  <input
-                    type="number"
-                    min={1}
-                    max={8}
-                    value={project.bedrooms}
-                    onChange={(e) => onProjectChange({ bedrooms: Number(e.target.value) })}
-                    className="input-field text-xs"
-                  />
-                </Field>
-                <Field label={translate("form.bathrooms")}>
-                  <input
-                    type="number"
-                    min={1}
-                    max={6}
-                    value={project.bathrooms}
-                    onChange={(e) => onProjectChange({ bathrooms: Number(e.target.value) })}
-                    className="input-field text-xs"
-                  />
-                </Field>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={translate("questionnaire.parkingSpaces")}>
-                  <input
-                    type="number"
-                    min={0}
-                    max={99}
-                    value={buildingSpec?.parkingSpaces ?? ""}
-                    onChange={(e) =>
-                      onProjectChange(
-                        mergeBuildingSpecIntoProject(project, {
-                          parkingSpaces: Number(e.target.value) || 0,
-                        }),
-                      )
-                    }
-                    className="input-field text-xs"
-                  />
-                </Field>
-                {(projectTypeCode === "commercial" || projectTypeCode === "high_rise") && (
-                  <Field label={translate("questionnaire.elevators")}>
-                    <input
-                      type="number"
-                      min={0}
-                      max={20}
-                      value={buildingSpec?.elevatorCount ?? ""}
-                      onChange={(e) =>
-                        onProjectChange(
-                          mergeBuildingSpecIntoProject(project, {
-                            elevatorCount: Number(e.target.value) || 0,
-                          }),
-                        )
-                      }
-                      className="input-field text-xs"
-                    />
-                  </Field>
-                )}
-                {projectTypeCode === "warehouse" && (
-                  <Field label={translate("questionnaire.floorLoad")}>
-                    <input
-                      type="number"
-                      min={0}
-                      step={0.5}
-                      value={buildingSpec?.loadBearingCapacityKnSqm ?? ""}
-                      onChange={(e) =>
-                        onProjectChange(
-                          mergeBuildingSpecIntoProject(project, {
-                            loadBearingCapacityKnSqm: Number(e.target.value) || 0,
-                          }),
-                        )
-                      }
-                      className="input-field text-xs"
-                    />
-                  </Field>
-                )}
-              </div>
-            )}
-
-            {!isResidential && (
-              <p className="text-[11px] text-text-muted">{translate("questionnaire.nonResidentialNote")}</p>
-            )}
-
-            {project.floors === 2 && (
-              <p className="rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
-                {translate("form.foundation.pileRequired")}
-              </p>
-            )}
-
-            <Field label={translate("questionnaire.landSize")}>
-              <input
-                type="text"
-                value={questionnaire.landSize}
-                onChange={(e) => onQuestionnaireChange({ landSize: e.target.value })}
-                placeholder="e.g. 20×30 m"
-                className="input-field text-xs"
-              />
-            </Field>
-
-            <p className="section-label mt-2">{translate("cost.inputTitle")}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={translate("cost.maxBudget")}>
-                <input
-                  type="number"
-                  min={0}
-                  step={100_000}
-                  value={project.maxBudgetThb ?? ""}
-                  onChange={(e) => {
-                    const maxBudgetThb = Number(e.target.value) || 0;
-                    onProjectChange({
-                      maxBudgetThb,
-                      budget: maxBudgetThb > 0 ? String(maxBudgetThb) : project.budget,
-                    });
-                  }}
-                  placeholder="2500000"
-                  className="input-field text-xs"
-                />
-              </Field>
-              <Field label={translate("cost.targetArea")}>
-                <input
-                  type="number"
-                  min={0}
-                  step={5}
-                  value={project.targetAreaSqm ?? ""}
-                  onChange={(e) =>
-                    onProjectChange({ targetAreaSqm: Number(e.target.value) || 0 })
-                  }
-                  placeholder="120"
-                  className="input-field text-xs"
-                />
-              </Field>
-            </div>
-            <Field label={translate("cost.tierLabel")}>
-              <select
-                value={project.costTier ?? "standard"}
-                onChange={(e) =>
-                  onProjectChange({
-                    costTier: e.target.value as import("@/lib/design/cost-reference").CostTier,
-                  })
-                }
-                className="dropdown-select text-xs"
-              >
-                <option value="economy">{translate("cost.tierEconomy")}</option>
-                <option value="standard">{translate("cost.tierStandard")}</option>
-                <option value="premium">{translate("cost.tierPremium")}</option>
-              </select>
-            </Field>
-
-            <Field label={translate("questionnaire.constraints")}>
-              <textarea
-                value={questionnaire.specialConstraints}
-                onChange={(e) => onQuestionnaireChange({ specialConstraints: e.target.value })}
-                placeholder={translate("questionnaire.constraintsPlaceholder")}
-                rows={3}
-                className="input-field resize-none text-xs"
-              />
-            </Field>
-          </div>
-        </section>
-
-        <PermitCompliancePanel
-          report={validation?.permitCompliance ?? null}
-          loading={permitLoading}
-          error={permitError}
+      <FireflySidebarGroup
+        icon={ImageUp}
+        label={translate("sidebar.groupUploads")}
+        summary={uploadSummary > 0 ? `${uploadSummary}` : "—"}
+      >
+        <UploadSlot
+          label={translate("questionnaire.slot1")}
+          hint={translate("questionnaire.slot1Hint")}
+          tooltip={translate("questionnaire.slot1Tooltip")}
+          required
+          icon="site"
+          files={uploads.sitePlan}
+          loading={loadingSlot === "sitePlan"}
+          onAdd={(f) => handleAddFiles("sitePlan", f)}
+          onRemove={(i) => handleRemoveFile("sitePlan", i)}
         />
-
-        <section>
-          <p className="section-label">{translate("questionnaire.uploads")}</p>
-          <div className="grid gap-3">
-            <UploadSlot
-              label={translate("questionnaire.slot1")}
-              hint={translate("questionnaire.slot1Hint")}
-              tooltip={translate("questionnaire.slot1Tooltip")}
-              required
-              icon="site"
-              loading={uploadingKey === "sitePlan"}
-              fileName={uploads.sitePlan?.name}
-              previewUrl={uploads.sitePlan?.dataUrl}
-              onFile={(f) => void setFile("sitePlan", f)}
-            />
-            <UploadSlot
-              label={translate("questionnaire.slot2")}
-              hint={translate("questionnaire.slot2Hint")}
-              tooltip={translate("questionnaire.slot2Tooltip")}
-              required
-              icon="elevation"
-              loading={uploadingKey === "elevationSection"}
-              fileName={uploads.elevationSection?.name}
-              previewUrl={uploads.elevationSection?.dataUrl}
-              onFile={(f) => void setFile("elevationSection", f)}
-            />
-            <UploadSlot
-              label={translate("questionnaire.slot3")}
-              hint={translate("questionnaire.slot3Hint")}
-              tooltip={translate("questionnaire.slot3Tooltip")}
-              required
-              accept="image/*"
-              icon="3d"
-              loading={uploadingKey === "frontView3d"}
-              fileName={uploads.frontView3d?.name}
-              previewUrl={uploads.frontView3d?.dataUrl}
-              onFile={(f) => void setFile("frontView3d", f)}
-            />
-            <div className="space-y-3">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
-                {translate("questionnaire.slot4")}
-                <span className="text-red-400">*</span>
-                <Tooltip content={translate("questionnaire.slot4Tooltip")} />
-              </p>
-              <p className="text-[11px] text-text-muted">{translate("questionnaire.slot4Hint")}</p>
-              {uploads.floorPlans.map((fp, i) => (
-                <UploadSlot
-                  key={i}
-                  label={translate("questionnaire.slot4")}
-                  hint={translate("questionnaire.floorPlanUnit")}
-                  tooltip={translate("questionnaire.slot4Tooltip")}
-                  required
-                  icon="floor"
-                  slotIndex={i}
-                  loading={uploadingKey === `floor-${i}`}
-                  fileName={fp?.name}
-                  previewUrl={fp?.dataUrl}
-                  onFile={(f) => void setFloorFile(i, f)}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="glass-panel p-4">
-          <p className="section-label">{translate("workspace.projectName")}</p>
-          <div className="space-y-3">
-            <Field label={translate("workspace.projectName")}>
-              <input
-                type="text"
-                value={project.projectName}
-                onChange={(e) => onProjectChange({ projectName: e.target.value })}
-                className="input-field text-xs"
-              />
-            </Field>
-            <Field label={translate("workspace.location")}>
-              <input
-                type="text"
-                value={project.location}
-                onChange={(e) => onProjectChange({ location: e.target.value })}
-                className="input-field text-xs"
-              />
-            </Field>
-            <Field label={translate("form.ownerName")}>
-              <input
-                type="text"
-                value={project.ownerName}
-                onChange={(e) => onProjectChange({ ownerName: e.target.value })}
-                className="input-field text-xs"
-              />
-            </Field>
-          </div>
-        </section>
-
-        <button
-          type="button"
-          onClick={() => void handleSubmitWithValidation()}
-          disabled={submitting || !canSubmit}
-          className="btn-primary w-full py-3.5 disabled:opacity-50"
-        >
-          {submitting ? translate("questionnaire.checking") : translate("questionnaire.submit")}
-        </button>
-      </div>
-    </aside>
+        <UploadSlot
+          label={translate("questionnaire.slot2")}
+          hint={translate("questionnaire.slot2Hint")}
+          tooltip={translate("questionnaire.slot2Tooltip")}
+          required
+          icon="elevation"
+          files={uploads.elevationSection}
+          loading={loadingSlot === "elevationSection"}
+          onAdd={(f) => handleAddFiles("elevationSection", f)}
+          onRemove={(i) => handleRemoveFile("elevationSection", i)}
+        />
+        <UploadSlot
+          label={translate("questionnaire.slot3")}
+          hint={translate("questionnaire.slot3Hint")}
+          tooltip={translate("questionnaire.slot3Tooltip")}
+          required
+          icon="3d"
+          files={uploads.frontView3d}
+          loading={loadingSlot === "frontView3d"}
+          onAdd={(f) => handleAddFiles("frontView3d", f)}
+          onRemove={(i) => handleRemoveFile("frontView3d", i)}
+        />
+        <UploadSlot
+          label={translate("questionnaire.slot4")}
+          hint={translate("questionnaire.slot4Hint")}
+          tooltip={translate("questionnaire.slot4Tooltip")}
+          required
+          icon="floor"
+          files={uploads.floorPlans}
+          loading={loadingSlot === "floorPlans"}
+          onAdd={(f) => handleAddFiles("floorPlans", f)}
+          onRemove={(i) => handleRemoveFile("floorPlans", i)}
+        />
+      </FireflySidebarGroup>
+    </>
   );
-}
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  if (embedded) {
+    return (
+      <div className="bg-[#141414] py-1">
+        {menu}
+        {submitButton ? <div className="border-t border-white/[0.08] p-3">{submitButton}</div> : null}
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <label className="mb-1.5 block text-[11px] font-medium text-text-secondary">{label}</label>
-      {children}
-    </div>
+    <FireflySidebarShell
+      collapsed={collapsed}
+      onToggleCollapsed={() => setCollapsed((v) => !v)}
+      headerAction={submitButton}
+    >
+      {menu}
+    </FireflySidebarShell>
   );
 }

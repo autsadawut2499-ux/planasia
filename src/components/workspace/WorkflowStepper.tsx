@@ -23,11 +23,40 @@ function stepIndex(stage: WorkflowStage, optionsOpen: boolean): number {
 interface WorkflowStepperProps {
   stage: WorkflowStage;
   optionsOpen: boolean;
+  compact?: boolean;
 }
 
-export function WorkflowStepper({ stage, optionsOpen }: WorkflowStepperProps) {
+export function WorkflowStepper({ stage, optionsOpen, compact }: WorkflowStepperProps) {
   const { translate } = useApp();
   const current = stepIndex(stage, optionsOpen);
+
+  if (compact) {
+    return (
+      <div className="flex items-center justify-center gap-1.5 py-1">
+        {STEPS.map((step, i) => {
+          const done = i < current;
+          const active = i === current;
+          return (
+            <div key={step.key} className="flex items-center gap-1.5">
+              {i > 0 && <div className={`h-px w-3 ${done ? "bg-accent/40" : "bg-white/10"}`} aria-hidden />}
+              <span
+                title={translate(step.key as Parameters<typeof translate>[0])}
+                className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[10px] font-medium ${
+                  active
+                    ? "bg-white/15 text-white"
+                    : done
+                      ? "bg-accent/20 text-indigo-200"
+                      : "bg-white/5 text-white/35"
+                }`}
+              >
+                {done ? <Check className="h-3 w-3" /> : i + 1}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-white/8 bg-surface-raised/60 px-5 py-3 backdrop-blur-sm">

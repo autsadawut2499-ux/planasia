@@ -42,7 +42,7 @@ export function Hero() {
             href="#how-it-works"
             className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-8 py-4 text-base font-medium text-white/90 transition-colors hover:bg-white/5"
           >
-            {translate("nav.howItWorks")}
+            {translate("hero.ctaSecondary")}
           </a>
         </div>
       </div>

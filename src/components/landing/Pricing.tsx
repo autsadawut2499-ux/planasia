@@ -11,7 +11,11 @@ const PACKAGES = [
     id: "store",
     nameKey: "pricing.store" as const,
     price: PRICING.store.pdf,
-    featureKeys: ["pricing.feature.pdfPreview", "pricing.feature.instantDownload", "pricing.feature.storeCatalog"] as const,
+    featureKeys: [
+      "pricing.feature.pdfPreview",
+      "pricing.feature.instantDownload",
+      "pricing.feature.storeCatalog",
+    ] as const,
     highlighted: false,
   },
   {
@@ -19,10 +23,10 @@ const PACKAGES = [
     nameKey: "pricing.custom1" as const,
     price: PRICING.custom.pdf["1"],
     featureKeys: [
-      "pricing.feature.aiCustom",
-      "pricing.feature.oneFloorPdf",
-      "pricing.feature.a3Permit",
-      "pricing.feature.multiAiValidation",
+      "pricing.feature.customSpec1Story",
+      "pricing.feature.fullPdfA3",
+      "pricing.feature.permitReady",
+      "pricing.feature.structuralStandardReview",
     ] as const,
     highlighted: true,
   },
@@ -31,10 +35,10 @@ const PACKAGES = [
     nameKey: "pricing.custom2" as const,
     price: PRICING.custom.pdf["2"],
     featureKeys: [
-      "pricing.feature.aiCustom",
-      "pricing.feature.twoFloorPdf",
-      "pricing.feature.pileFoundation",
-      "pricing.feature.structuralCheck",
+      "pricing.feature.customSpec2Story",
+      "pricing.feature.fullPdfA3",
+      "pricing.feature.foundationStructuralCalc",
+      "pricing.feature.cadDeliverable",
     ] as const,
     highlighted: false,
   },
@@ -49,9 +53,7 @@ export function Pricing() {
         <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">
           {translate("pricing.title")}
         </h2>
-        <p className="mb-16 text-center text-text-secondary">
-          CAD files: {formatPrice(PRICING.custom.cad, country.currency, locale)} — all packages
-        </p>
+        <p className="mb-16 text-center text-text-secondary">{translate("pricing.subtitle")}</p>
 
         <div className="grid gap-6 md:grid-cols-3">
           {PACKAGES.map((pkg) => (
@@ -63,7 +65,7 @@ export function Pricing() {
                   : "border-border bg-surface-raised"
               }`}
             >
-              <h3 className="mb-2 text-lg font-semibold">{translate(pkg.nameKey)}</h3>
+              <h3 className="mb-2 text-lg font-semibold leading-snug">{translate(pkg.nameKey)}</h3>
               <div className="mb-6">
                 <span className="text-4xl font-bold">
                   {formatPrice(pkg.price, country.currency, locale)}
@@ -74,17 +76,12 @@ export function Pricing() {
                 {pkg.featureKeys.map((key) => (
                   <li key={key} className="flex items-start gap-2 text-sm text-text-secondary">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                    {key === "pricing.feature.storeCatalog"
-                      ? translate(key).replace(
-                          "{price}",
-                          formatPrice(PRICING.store.pdf, country.currency, locale),
-                        )
-                      : translate(key)}
+                    {translate(key)}
                   </li>
                 ))}
               </ul>
               <Link
-                href="/workspace"
+                href={pkg.id === "store" ? "/store" : "/workspace"}
                 className={`block w-full rounded-lg py-3 text-center text-sm font-medium transition-all ${
                   pkg.highlighted
                     ? "bg-accent text-white hover:bg-accent-hover"

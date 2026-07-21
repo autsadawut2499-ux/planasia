@@ -36,7 +36,7 @@ export function analyzeClarificationNeeds(
 ): ClarificationResult {
   const issues: ClarificationIssue[] = [];
 
-  if (!uploads.sitePlan) {
+  if (!uploads.sitePlan.length) {
     issues.push({
       id: "upload-site",
       field: "uploads.sitePlan",
@@ -74,7 +74,7 @@ export function analyzeClarificationNeeds(
     });
   }
 
-  if (!uploads.elevationSection) {
+  if (!uploads.elevationSection.length) {
     issues.push({
       id: "upload-elevation",
       field: "uploads.elevationSection",
@@ -94,7 +94,7 @@ export function analyzeClarificationNeeds(
     });
   }
 
-  if (!uploads.frontView3d) {
+  if (!uploads.frontView3d.length) {
     issues.push({
       id: "upload-3d-front",
       field: "uploads.frontView3d",
@@ -133,7 +133,7 @@ export function analyzeClarificationNeeds(
   }
 
   const requiredFloors = project.floors;
-  const uploadedFloors = uploads.floorPlans.filter(Boolean).length;
+  const uploadedFloors = uploads.floorPlans.length;
   if (uploadedFloors < requiredFloors) {
     issues.push({
       id: "upload-floor-plans",

@@ -1,12 +1,12 @@
 "use client";
 
-import { ClipboardList, Download, Upload } from "lucide-react";
+import { ClipboardList, FileStack, Sparkles } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 const STEPS = [
   { icon: ClipboardList, titleKey: "how.step1.title" as const, descKey: "how.step1.desc" as const },
-  { icon: Upload, titleKey: "how.step2.title" as const, descKey: "how.step2.desc" as const },
-  { icon: Download, titleKey: "how.step3.title" as const, descKey: "how.step3.desc" as const },
+  { icon: Sparkles, titleKey: "how.step2.title" as const, descKey: "how.step2.desc" as const },
+  { icon: FileStack, titleKey: "how.step3.title" as const, descKey: "how.step3.desc" as const },
 ];
 
 export function HowItWorks() {

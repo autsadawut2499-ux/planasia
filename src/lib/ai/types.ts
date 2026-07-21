@@ -37,12 +37,28 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface SheetPreviewItem {
+  sheetNo: string;
+  title: string;
+  titleTh: string;
+  category: "A" | "S" | "SN" | "E";
+  scale: string;
+  svg: string;
+}
+
 export interface DesignPreview {
+  /** AI 3D exterior render */
   perspectiveUrl: string;
+  /** AI front facade / elevation */
+  facadeUrl: string;
   floorPlans: string[];
+  /** Watermarked drawing sheet previews — populated after user confirms design */
+  sheetPreviews?: SheetPreviewItem[];
   status: "idle" | "generating" | "ready" | "error";
   watermarked?: boolean;
 }
+
+export type AiPreviewView = "render3d" | "facade" | "floorplan";
 
 export type WorkflowStage =
   | "input"
@@ -59,11 +75,16 @@ export interface UploadedFileRef {
   sizeBytes: number;
 }
 
+/** Max images per upload slot (site, elevation, 3D, floor plans). */
+export const MAX_UPLOAD_FILES_PER_SLOT = 4;
+
+export type UploadSlotFiles = UploadedFileRef[];
+
 export interface QuestionnaireUploads {
-  sitePlan: UploadedFileRef | null;
-  elevationSection: UploadedFileRef | null;
-  frontView3d: UploadedFileRef | null;
-  floorPlans: (UploadedFileRef | null)[];
+  sitePlan: UploadSlotFiles;
+  elevationSection: UploadSlotFiles;
+  frontView3d: UploadSlotFiles;
+  floorPlans: UploadSlotFiles;
 }
 
 export interface DesignDirection {
@@ -105,11 +126,11 @@ export const DEFAULT_QUESTIONNAIRE: QuestionnaireInput = {
   },
 };
 
-export const EMPTY_UPLOADS = (floors: 1 | 2): QuestionnaireUploads => ({
-  sitePlan: null,
-  elevationSection: null,
-  frontView3d: null,
-  floorPlans: floors === 2 ? [null, null] : [null],
+export const EMPTY_UPLOADS = (): QuestionnaireUploads => ({
+  sitePlan: [],
+  elevationSection: [],
+  frontView3d: [],
+  floorPlans: [],
 });
 
 export interface PlanOptions {

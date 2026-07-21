@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Heart, Menu, Search, ShoppingCart, Store, Tags, User } from "lucide-react";
 import { useState } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { BrandLogo } from "@/components/layout/BrandLogo";
+import { NavIconLink } from "@/components/layout/NavIconLink";
 import { MobileNavDrawer } from "@/components/ui/MobileNavDrawer";
 import { useApp, COUNTRIES, LOCALE_LABELS, type Locale } from "@/context/AppContext";
 import { useStoreBrowse } from "@/context/StoreBrowseContext";
@@ -24,24 +26,26 @@ export function StoreHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-white shadow-sm">
-      <div className="mx-auto flex h-[72px] max-w-[1400px] items-center gap-4 px-4 md:gap-6 md:px-6">
-        <Link href="/" className="shrink-0">
-          <span className="text-xl font-bold tracking-tight text-[#1e3a5f]">Planasia</span>
-        </Link>
+      <div className="flex h-[72px] items-center gap-3 pl-2 pr-3 md:gap-4 md:pl-3 md:pr-5 lg:max-w-[1400px] lg:mx-auto lg:pr-6">
+        <BrandLogo variant="light" />
 
-        <nav className="hidden items-center gap-5 lg:flex">
-          <Link href="/store" className="text-xs font-semibold uppercase tracking-wide text-[#1e40af]">
-            {translate("nav.store")}
-          </Link>
-          <Link
+        <nav className="hidden items-center gap-2 lg:flex">
+          <NavIconLink
+            href="/store"
+            label={translate("nav.store")}
+            icon={Store}
+            active
+            variant="light"
+          />
+          <NavIconLink
             href="/#pricing"
-            className="text-xs font-semibold uppercase tracking-wide text-text-secondary hover:text-text-primary"
-          >
-            {translate("nav.pricing")}
-          </Link>
+            label={translate("nav.pricing")}
+            icon={Tags}
+            variant="light"
+          />
           <Link
             href="/workspace"
-            className="text-xs font-semibold uppercase tracking-wide text-text-secondary hover:text-text-primary"
+            className="rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary"
           >
             {translate("nav.startDesign")}
           </Link>

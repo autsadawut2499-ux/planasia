@@ -8,9 +8,11 @@ import type { ChatMessage, ProjectInput } from "@/lib/ai/types";
 interface AIChatBarProps {
   project: ProjectInput;
   onMessagesChange?: (messages: ChatMessage[]) => void;
+  /** Docked at bottom of canvas (Firefly-style) */
+  embedded?: boolean;
 }
 
-export function AIChatBar({ project, onMessagesChange }: AIChatBarProps) {
+export function AIChatBar({ project, onMessagesChange, embedded = false }: AIChatBarProps) {
   const { locale, country, translate } = useApp();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -89,9 +91,19 @@ export function AIChatBar({ project, onMessagesChange }: AIChatBarProps) {
   };
 
   return (
-    <div className="shrink-0 border-t border-white/8 bg-surface/80 px-4 py-4 backdrop-blur-xl">
+    <div
+      className={
+        embedded
+          ? "shrink-0 px-4 pb-4 pt-1"
+          : "shrink-0 border-t border-white/8 bg-surface/80 px-4 py-4 backdrop-blur-xl"
+      }
+    >
       {messages.length > 0 && (
-        <div className="mb-3 max-h-36 space-y-2 overflow-y-auto rounded-2xl border border-white/8 bg-white/3 p-3">
+        <div
+          className={`mb-3 max-h-28 space-y-2 overflow-y-auto rounded-2xl border border-white/8 bg-black/30 p-3 ${
+            embedded ? "mx-auto max-w-3xl" : ""
+          }`}
+        >
           {messages.slice(-4).map((msg) => (
             <div
               key={msg.id}
@@ -121,7 +133,7 @@ export function AIChatBar({ project, onMessagesChange }: AIChatBarProps) {
         </div>
       )}
 
-      <div className="prompt-box mx-auto max-w-3xl">
+      <div className={`prompt-box ${embedded ? "prompt-dock mx-auto max-w-3xl" : "mx-auto max-w-3xl"}`}>
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/30 to-violet/30">
           <Sparkles className="h-4 w-4 text-accent" />
         </div>

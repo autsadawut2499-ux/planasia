@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Share2, Lock } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { Box, ChevronLeft, ChevronRight, Home, LayoutGrid, Share2, Sparkles } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { useToast } from "@/context/ToastContext";
 import { useProjectValidation } from "@/hooks/useProjectValidation";
 import { DocumentationExportButton } from "@/components/workspace/DocumentationExportButton";
 import { PermitCompliancePanel } from "@/components/workspace/PermitCompliancePanel";
-import type { DesignPreview, ProjectInput } from "@/lib/ai/types";
+import type { AiPreviewView, DesignPreview, ProjectInput } from "@/lib/ai/types";
 import { DEFAULT_PROJECT } from "@/lib/ai/types";
 import type { DesignEditorState } from "@/lib/design/editor-types";
 import { applyEditorToProject } from "@/lib/design/editor-state";
@@ -17,12 +17,9 @@ import { CostBalanceBar } from "@/components/workspace/CostBalancePanel";
 
 interface PreviewCanvasProps {
   preview: DesignPreview;
-  activeView: "3d" | "floor1" | "floor2";
-  onViewChange: (view: "3d" | "floor1" | "floor2") => void;
+  activeView: AiPreviewView;
+  onViewChange: (view: AiPreviewView) => void;
   floors: 1 | 2;
-  /** When false, only 3D teaser is shown — floor plans stay behind paywall. */
-  unlocked?: boolean;
-  showFloorTabs?: boolean;
   onSaveDraft?: () => void;
   savingDraft?: boolean;
   editorState?: DesignEditorState | null;
@@ -30,20 +27,20 @@ interface PreviewCanvasProps {
   project?: ProjectInput | null;
 }
 
-const PERSPECTIVE_URL =
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85";
-const FLOOR1_URL =
-  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80";
-const FLOOR2_URL =
-  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80";
+const VIEW_META: Record<
+  AiPreviewView,
+  { icon: typeof Home; labelKey: "workspace.viewRender3d" | "workspace.viewFacade" | "workspace.viewFloorPlan" }
+> = {
+  render3d: { icon: Home, labelKey: "workspace.viewRender3d" },
+  facade: { icon: Box, labelKey: "workspace.viewFacade" },
+  floorplan: { icon: LayoutGrid, labelKey: "workspace.viewFloorPlan" },
+};
 
 export function PreviewCanvas({
   preview,
   activeView,
   onViewChange,
   floors,
-  unlocked = false,
-  showFloorTabs = true,
   onSaveDraft,
   savingDraft,
   editorState,
@@ -52,6 +49,7 @@ export function PreviewCanvas({
 }: PreviewCanvasProps) {
   const { translate } = useApp();
   const { success: toastSuccess, error: toastError } = useToast();
+  const [floorIndex, setFloorIndex] = useState(0);
 
   const mergedProject = useMemo(() => {
     if (!project) return null;
@@ -68,33 +66,37 @@ export function PreviewCanvas({
     return computeCostBalance(editorState, budgetTargets, project ?? undefined);
   }, [editorState, budgetTargets, project]);
 
-  const canShowFloors = unlocked && preview.floorPlans.length > 0;
-  const view = canShowFloors ? activeView : "3d";
+  const imageUrl = useMemo(() => {
+    switch (activeView) {
+      case "render3d":
+        return preview.perspectiveUrl;
+      case "facade":
+        return preview.facadeUrl;
+      case "floorplan":
+        return preview.floorPlans[floorIndex] ?? preview.floorPlans[0] ?? "";
+      default:
+        return "";
+    }
+  }, [activeView, preview, floorIndex]);
 
-  const imageUrl =
-    view === "3d"
-      ? preview.perspectiveUrl || PERSPECTIVE_URL
-      : view === "floor1"
-        ? preview.floorPlans[0] || FLOOR1_URL
-        : preview.floorPlans[1] || FLOOR2_URL;
+  const hasAnyImage =
+    Boolean(preview.perspectiveUrl) ||
+    Boolean(preview.facadeUrl) ||
+    preview.floorPlans.length > 0;
 
-  const views: { id: "3d" | "floor1" | "floor2"; label: string }[] = [
-    { id: "3d", label: "3D" },
-    ...(showFloorTabs && canShowFloors
-      ? [
-          { id: "floor1" as const, label: translate("workspace.floor1") },
-          ...(floors === 2
-            ? [{ id: "floor2" as const, label: translate("workspace.floor2") }]
-            : []),
-        ]
-      : []),
-  ];
+  const views = (["render3d", "facade"] as const).map((id) => ({
+    id,
+    label: translate(VIEW_META[id].labelKey),
+    available:
+      id === "render3d"
+        ? Boolean(preview.perspectiveUrl)
+        : Boolean(preview.facadeUrl),
+  }));
 
-  const viewIndex = views.findIndex((v) => v.id === view);
+  const viewIndex = views.findIndex((v) => v.id === activeView);
 
   const cycleView = useCallback(
     (direction: -1 | 1) => {
-      if (views.length <= 1) return;
       const next = (viewIndex + direction + views.length) % views.length;
       onViewChange(views[next].id);
     },
@@ -121,17 +123,13 @@ export function PreviewCanvas({
     }
   }, [translate, toastSuccess, toastError]);
 
-  return (
-    <div className="relative flex flex-1 flex-col">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
+  const ActiveIcon = VIEW_META[activeView].icon;
 
-      <div className="absolute right-4 top-4 z-10 flex flex-wrap justify-end gap-2">
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="absolute right-3 top-2 z-10 flex flex-wrap justify-end gap-2 md:right-4">
         {editorState && project && (
-          <DocumentationExportButton
-            project={project}
-            editorState={editorState}
-            variant="ghost"
-          />
+          <DocumentationExportButton project={project} editorState={editorState} variant="ghost" />
         )}
         {onSaveDraft && (
           <button
@@ -143,13 +141,15 @@ export function PreviewCanvas({
             {savingDraft ? translate("editor.saving") : translate("editor.saveDraft")}
           </button>
         )}
-        <button type="button" onClick={handleShare} className="btn-ghost glass-card gap-1.5 text-xs">
-          <Share2 className="h-3.5 w-3.5" />
-          {translate("workspace.share")}
-        </button>
+        {hasAnyImage && (
+          <button type="button" onClick={handleShare} className="btn-ghost glass-card gap-1.5 text-xs">
+            <Share2 className="h-3.5 w-3.5" />
+            {translate("workspace.share")}
+          </button>
+        )}
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden p-6 md:p-10">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-3 py-2 md:px-6">
         {preview.status === "generating" ? (
           <div className="text-center">
             <div className="relative mx-auto mb-6 h-16 w-16">
@@ -159,71 +159,104 @@ export function PreviewCanvas({
               </div>
             </div>
             <p className="gradient-text text-sm font-medium">{translate("workspace.generating")}</p>
+            <p className="mt-2 text-xs text-text-muted">{translate("workspace.aiPreviewHint")}</p>
           </div>
-        ) : (
-          <div className="gradient-border relative max-h-full max-w-full rounded-2xl">
-            <div className="glass-panel overflow-hidden rounded-2xl border-0 p-2">
+        ) : imageUrl ? (
+          <div className="relative flex h-full w-full max-w-5xl flex-col items-center justify-center">
+            <div className="relative w-full overflow-hidden rounded-xl">
               <img
                 src={imageUrl}
-                alt={translate("workspace.preview")}
-                className="max-h-[calc(100vh-220px)] max-w-full rounded-xl object-contain"
+                alt={translate(VIEW_META[activeView].labelKey)}
+                className="mx-auto max-h-[calc(100vh-280px)] w-full object-contain"
               />
             </div>
-            {!unlocked && preview.status === "ready" && (
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-xs text-text-secondary backdrop-blur-md">
-                <Lock className="h-3.5 w-3.5 text-accent" />
-                {translate("workflow.preview3dOnly")}
+            {activeView === "floorplan" && floors === 2 && preview.floorPlans.length > 1 && (
+              <div className="mt-3 flex gap-2">
+                {preview.floorPlans.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setFloorIndex(i)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      floorIndex === i
+                        ? "bg-accent text-white"
+                        : "border border-white/10 text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    {i === 0 ? translate("workspace.floor1") : translate("workspace.floor2")}
+                  </button>
+                ))}
               </div>
             )}
+          </div>
+        ) : (
+          <div className="flex max-w-md flex-col items-center rounded-2xl border border-dashed border-white/12 bg-white/[0.02] px-8 py-12 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+              <ActiveIcon className="h-7 w-7" strokeWidth={1.5} />
+            </div>
+            <div className="mb-2 flex items-center gap-1.5 text-accent/80">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wide">{translate("workspace.aiZone")}</span>
+            </div>
+            <h3 className="text-base font-semibold text-text-primary">
+              {translate(VIEW_META[activeView].labelKey)}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-text-muted">{translate("workspace.aiPreviewEmpty")}</p>
           </div>
         )}
       </div>
 
-      {views.length > 1 && (
-        <div className="flex items-center justify-center gap-3 border-t border-white/8 px-4 py-3 backdrop-blur-sm">
-          <button
-            type="button"
-            onClick={() => cycleView(-1)}
-            disabled={views.length <= 1}
-            className="btn-ghost rounded-full p-2 disabled:opacity-30"
-            aria-label={translate("workspace.prevView")}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
+      <div className="flex shrink-0 items-center justify-center gap-2 px-3 pb-2 pt-1">
+        <button
+          type="button"
+          onClick={() => cycleView(-1)}
+          className="btn-ghost rounded-full p-2"
+          aria-label={translate("workspace.prevView")}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
 
-          <div className="flex gap-1 rounded-full border border-white/10 bg-white/5 p-1">
-            {views.map((v) => (
+        <div className="flex gap-1 rounded-full border border-white/10 bg-white/5 p-1">
+          {views.map((v) => {
+            const Icon = VIEW_META[v.id].icon;
+            return (
               <button
                 key={v.id}
                 type="button"
                 onClick={() => onViewChange(v.id)}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
-                  view === v.id
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 ${
+                  activeView === v.id
                     ? "bg-gradient-to-r from-accent to-violet text-white shadow-md shadow-accent/25"
-                    : "text-text-muted hover:text-text-primary"
+                    : v.available
+                      ? "text-text-muted hover:text-text-primary"
+                      : "text-text-muted/50 hover:text-text-muted"
                 }`}
               >
-                {v.label}
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">{v.label}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
-          <button
-            type="button"
-            onClick={() => cycleView(1)}
-            disabled={views.length <= 1}
-            className="btn-ghost rounded-full p-2 disabled:opacity-30"
-            aria-label={translate("workspace.nextView")}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        <button
+          type="button"
+          onClick={() => cycleView(1)}
+          className="btn-ghost rounded-full p-2"
+          aria-label={translate("workspace.nextView")}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      {costBar && (
+        <div className="shrink-0 px-3 pb-1">
+          <CostBalanceBar balance={costBar} />
         </div>
       )}
 
-      {costBar && <CostBalanceBar balance={costBar} />}
-
       {mergedProject && (
-        <div className="shrink-0 border-t border-white/8 px-4 py-2">
+        <div className="absolute bottom-16 left-3 z-10 max-w-xs md:left-4">
           <PermitCompliancePanel
             report={validation?.permitCompliance ?? null}
             loading={permitLoading}

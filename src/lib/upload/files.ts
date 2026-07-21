@@ -1,4 +1,4 @@
-import type { UploadedFileRef } from "@/lib/ai/types";
+import { MAX_UPLOAD_FILES_PER_SLOT, type UploadSlotFiles, type UploadedFileRef } from "@/lib/ai/types";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
@@ -20,10 +20,26 @@ export async function fileToUploadRef(file: File): Promise<UploadedFileRef> {
   };
 }
 
-export function resizeUploadsForFloors(
-  floorPlans: (UploadedFileRef | null)[],
-  floors: 1 | 2,
-): (UploadedFileRef | null)[] {
-  if (floors === 1) return [floorPlans[0] ?? null];
-  return [floorPlans[0] ?? null, floorPlans[1] ?? null];
+export function hasUploadFiles(files: UploadSlotFiles): boolean {
+  return files.length > 0;
+}
+
+export function uploadSlotSummary(files: UploadSlotFiles, max = MAX_UPLOAD_FILES_PER_SLOT): string {
+  if (files.length === 0) return "—";
+  return `${files.length}/${max}`;
+}
+
+export async function appendFilesToSlot(
+  current: UploadSlotFiles,
+  incoming: File[],
+  max = MAX_UPLOAD_FILES_PER_SLOT,
+): Promise<UploadSlotFiles> {
+  const room = max - current.length;
+  if (room <= 0) return current;
+  const refs = await Promise.all(incoming.slice(0, room).map(fileToUploadRef));
+  return [...current, ...refs];
+}
+
+export function removeFileAtIndex(files: UploadSlotFiles, index: number): UploadSlotFiles {
+  return files.filter((_, i) => i !== index);
 }

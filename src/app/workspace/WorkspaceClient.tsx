@@ -4,17 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Header } from "@/components/layout/Header";
-import { DEFAULT_PROJECT } from "@/components/workspace/ControlPanel";
+import { DEFAULT_PROJECT, EMPTY_UPLOADS, DEFAULT_QUESTIONNAIRE, DEFAULT_PLAN_OPTIONS } from "@/lib/ai/types";
 import { QuestionnairePanel } from "@/components/workspace/QuestionnairePanel";
 import { ClarificationPanel } from "@/components/workspace/ClarificationPanel";
 import { PreviewCanvas } from "@/components/workspace/PreviewCanvas";
+import { SheetPreviewScroll } from "@/components/workspace/SheetPreviewScroll";
 import { DesignEditor } from "@/components/workspace/DesignEditor";
 import { RoughPreviewModal } from "@/components/workspace/RoughPreviewModal";
-import { FloorPlanPanel } from "@/components/workspace/FloorPlanPanel";
-import { ExportBar } from "@/components/workspace/ExportBar";
-import { AIChatBar } from "@/components/workspace/AIChatBar";
-import { WorkflowStepper } from "@/components/workspace/WorkflowStepper";
-import { ConfirmRenderBar } from "@/components/workspace/ConfirmRenderBar";
+import { WorkspaceMainStage } from "@/components/workspace/WorkspaceMainStage";
 import {
   MobileQuestionnaireFab,
   MobileQuestionnaireSheet,
@@ -38,6 +35,7 @@ import {
 } from "@/lib/design/budget-targets";
 import type {
   ClarificationAnswer,
+  AiPreviewView,
   DesignPreview,
   PaymentState,
   PlanOptions,
@@ -45,11 +43,6 @@ import type {
   QuestionnaireInput,
   QuestionnaireUploads,
   WorkflowStage,
-} from "@/lib/ai/types";
-import {
-  DEFAULT_PLAN_OPTIONS,
-  DEFAULT_QUESTIONNAIRE,
-  EMPTY_UPLOADS,
 } from "@/lib/ai/types";
 import { PRICING } from "@/lib/geo/countries";
 
@@ -71,7 +64,7 @@ export default function WorkspacePage() {
 
   const [project, setProject] = useState<ProjectInput>(DEFAULT_PROJECT);
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireInput>(DEFAULT_QUESTIONNAIRE);
-  const [uploads, setUploads] = useState<QuestionnaireUploads>(() => EMPTY_UPLOADS(2));
+  const [uploads, setUploads] = useState<QuestionnaireUploads>(() => EMPTY_UPLOADS());
   const [clarificationAnswers, setClarificationAnswers] = useState<ClarificationAnswer[]>([]);
   const [clarifyQueue, setClarifyQueue] = useState<ClarificationIssue[]>([]);
   const [clarifyIndex, setClarifyIndex] = useState(0);
@@ -79,7 +72,7 @@ export default function WorkspacePage() {
   const [planOptions, setPlanOptions] = useState<PlanOptions>(DEFAULT_PLAN_OPTIONS);
   const [planId, setPlanId] = useState<string | null>(null);
   const [stage, setStage] = useState<WorkflowStage>("input");
-  const [activeView, setActiveView] = useState<"3d" | "floor1" | "floor2">("3d");
+  const [activeView, setActiveView] = useState<AiPreviewView>("render3d");
   const [generating, setGenerating] = useState(false);
   const [checking, setChecking] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -89,6 +82,7 @@ export default function WorkspacePage() {
   const [downloadTokens, setDownloadTokens] = useState<{ pdf?: string; cad?: string }>({});
   const [preview, setPreview] = useState<DesignPreview>({
     perspectiveUrl: "",
+    facadeUrl: "",
     floorPlans: [],
     status: "idle",
     watermarked: false,
@@ -101,6 +95,10 @@ export default function WorkspacePage() {
   const [roughPreviewOpen, setRoughPreviewOpen] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
+
+  const handleProjectChange = useCallback((updates: Partial<ProjectInput>) => {
+    setProject((p) => ({ ...p, ...updates }));
+  }, []);
 
   const payload = useCallback(
     () => ({
@@ -221,13 +219,14 @@ export default function WorkspacePage() {
 
       const data = await res.json();
       setPreview({
-        perspectiveUrl: data.preview.perspectiveUrl,
-        floorPlans: [],
+        perspectiveUrl: data.preview.perspectiveUrl ?? "",
+        facadeUrl: data.preview.facadeUrl ?? "",
+        floorPlans: data.preview.floorPlans ?? [],
         status: "ready",
         watermarked: false,
       });
       setStage("render_ready");
-      setActiveView("3d");
+      setActiveView("render3d");
       setEditorState(createEditorStateFromProject(project, sessionId));
       toastUpdate(toastId, translate("toast.renderReady"), "success");
     } catch {
@@ -311,90 +310,13 @@ export default function WorkspacePage() {
     [clarifyQueue, clarifyIndex, clarificationAnswers, payload, runGenerateRender],
   );
 
-  const handleConfirmRender = useCallback(() => {
-    setRoughPreviewOpen(false);
-    setPlanOptions(
-      planOptionsFromQuestionnaire(questionnaire, {
-        ...DEFAULT_PLAN_OPTIONS,
-        wallMaterial: editorState?.rooms[0]?.wallMaterial ?? project.wallMaterial,
-        floorMaterial: editorState?.rooms[0]?.floorMaterial ?? project.floorMaterial,
-        roofMaterial: editorState?.roofMaterial ?? project.roofMaterial,
-      }),
-    );
-    setOptionsOpen(true);
-  }, [questionnaire, editorState, project]);
-
-  const publishToStore = useCallback(
-    async (pid: string, image: string, floorPlanUrls: string[]) => {
-      if (!localUserId) return;
-      await fetch("/api/store", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...identityHeaders() },
-        body: JSON.stringify({
-          workspaceSessionId: sessionId,
-          project,
-          planOptions,
-          image,
-          floorPlanUrls,
-          planId: pid,
-          countryCode: country.code,
-          locale,
-        }),
-      });
-      setListedOnStore(true);
-      toastSuccess(translate("store.autoPublished"));
-    },
-    [localUserId, identityHeaders, sessionId, project, planOptions, country.code, locale, toastSuccess, translate],
-  );
-
-  const unlockAfterPayment = useCallback(
-    async (format: "pdf" | "cad", downloadToken: string, pid: string) => {
-      setPayment((prev) => ({
-        ...prev,
-        pdfPaid: format === "pdf" ? true : prev.pdfPaid,
-        cadPaid: format === "cad" ? true : prev.cadPaid,
-      }));
-      setDownloadTokens((prev) => ({ ...prev, [format]: downloadToken }));
-      setPaymentModal(null);
-      setStage("unlocked");
-      setActiveView("floor1");
-      setPreview((prev) => {
-        void publishToStore(pid, prev.perspectiveUrl, prev.floorPlans);
-        return { ...prev, watermarked: false };
-      });
-    },
-    [publishToStore],
-  );
-
-  useEffect(() => {
-    const paymentStatus = searchParams.get("payment");
-    const returnPlanId = searchParams.get("planId");
-    const format = searchParams.get("format") as "pdf" | "cad" | null;
-    const stripeSessionId = searchParams.get("session_id");
-
-    if (paymentStatus !== "success" || !returnPlanId || !format) return;
-
-    const confirmPayment = async () => {
-      if (stripeSessionId) {
-        const res = await fetch(`/api/payment/confirm?session_id=${stripeSessionId}`);
-        const data = await res.json();
-        if (data.downloadToken) {
-          setPlanId(returnPlanId);
-          void unlockAfterPayment(format, data.downloadToken, returnPlanId);
-        }
-      }
-    };
-
-    void confirmPayment();
-  }, [searchParams, unlockAfterPayment]);
-
   const handleGeneratePlans = useCallback(
     async (options: PlanOptions) => {
       setPlanOptions(options);
       setOptionsOpen(false);
       setGenerating(true);
       setStage("plans_generating");
-      setPreview((prev) => ({ ...prev, status: "generating" }));
+      setPreview((prev) => ({ ...prev, status: "generating", sheetPreviews: undefined }));
       const toastId = toastLoading(translate("toast.processingPlans"));
 
       try {
@@ -439,13 +361,15 @@ export default function WorkspacePage() {
         const data = await res.json();
         setPlanId(data.planId);
         setPreview({
-          perspectiveUrl: data.preview.perspectiveUrl,
+          perspectiveUrl: data.preview.perspectiveUrl ?? "",
+          facadeUrl: data.preview.facadeUrl ?? "",
           floorPlans: data.preview.floorPlans ?? [],
+          sheetPreviews: data.preview.sheetPreviews,
           status: "ready",
           watermarked: true,
         });
         setStage("plans_preview");
-        setActiveView("3d");
+        setActiveView("render3d");
         toastUpdate(toastId, translate("workflow.plansReadyPaywall"), "success");
       } catch {
         setPreview((prev) => ({ ...prev, status: "error" }));
@@ -458,6 +382,82 @@ export default function WorkspacePage() {
     [project, payload, sessionId, planId, identityHeaders, toastLoading, toastUpdate, toastError, translate, editorState],
   );
 
+  const handleConfirmRender = useCallback(() => {
+    setRoughPreviewOpen(false);
+    const options = planOptionsFromQuestionnaire(questionnaire, {
+      ...DEFAULT_PLAN_OPTIONS,
+      wallMaterial: editorState?.rooms[0]?.wallMaterial ?? project.wallMaterial,
+      floorMaterial: editorState?.rooms[0]?.floorMaterial ?? project.floorMaterial,
+      roofMaterial: editorState?.roofMaterial ?? project.roofMaterial,
+    });
+    void handleGeneratePlans(options);
+  }, [questionnaire, editorState, project, handleGeneratePlans]);
+
+  const publishToStore = useCallback(
+    async (pid: string, image: string, floorPlanUrls: string[]) => {
+      if (!localUserId) return;
+      await fetch("/api/store", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...identityHeaders() },
+        body: JSON.stringify({
+          workspaceSessionId: sessionId,
+          project,
+          planOptions,
+          image,
+          floorPlanUrls,
+          planId: pid,
+          countryCode: country.code,
+          locale,
+        }),
+      });
+      setListedOnStore(true);
+      toastSuccess(translate("store.autoPublished"));
+    },
+    [localUserId, identityHeaders, sessionId, project, planOptions, country.code, locale, toastSuccess, translate],
+  );
+
+  const unlockAfterPayment = useCallback(
+    async (format: "pdf" | "cad", downloadToken: string, pid: string) => {
+      setPayment((prev) => ({
+        ...prev,
+        pdfPaid: format === "pdf" ? true : prev.pdfPaid,
+        cadPaid: format === "cad" ? true : prev.cadPaid,
+      }));
+      setDownloadTokens((prev) => ({ ...prev, [format]: downloadToken }));
+      setPaymentModal(null);
+      setStage("unlocked");
+      setActiveView("floorplan");
+      setPreview((prev) => {
+        void publishToStore(pid, prev.perspectiveUrl, prev.floorPlans);
+        return { ...prev, watermarked: false };
+      });
+    },
+    [publishToStore],
+  );
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const returnPlanId = searchParams.get("planId");
+    const format = searchParams.get("format") as "pdf" | "cad" | null;
+    const stripeSessionId = searchParams.get("session_id");
+
+    if (paymentStatus !== "success" || !returnPlanId || !format) return;
+
+    const confirmPayment = async () => {
+      if (stripeSessionId) {
+        const res = await fetch(`/api/payment/confirm?session_id=${stripeSessionId}`);
+        const data = await res.json();
+        if (data.downloadToken) {
+          setPlanId(returnPlanId);
+          void unlockAfterPayment(format, data.downloadToken, returnPlanId);
+        }
+      }
+    };
+
+    void confirmPayment();
+  }, [searchParams, unlockAfterPayment]);
+
+
   const handlePaymentSuccess = useCallback(
     (format: "pdf" | "cad", downloadToken: string) => {
       if (!planId) return;
@@ -468,27 +468,29 @@ export default function WorkspacePage() {
 
   const pdfPrice = PRICING.custom.pdf[String(project.floors) as "1" | "2"];
   const cadPrice = PRICING.custom.cad;
-  const isUnlocked = stage === "unlocked";
   const showQuestionnaire = stage === "input" || stage === "clarifying";
 
   const showEditor =
     editorMode && editorState && (stage === "render_ready" || stage === "plans_preview");
   const canUseEditor = stage === "render_ready" && editorState !== null;
 
+  const showSheetPreview =
+    stage === "plans_preview" || stage === "plans_generating" || stage === "unlocked";
+
   return (
-    <div className="ambient-bg flex h-screen flex-col overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0a0a0c]">
       <Header variant="workspace" />
 
       <div className="flex min-h-0 flex-1">
-        <div className="hidden w-72 shrink-0 xl:block xl:w-80">
+        <div className="hidden shrink-0 lg:block">
           {showQuestionnaire ? (
             <QuestionnairePanel
               project={project}
               questionnaire={questionnaire}
               uploads={uploads}
-              onProjectChange={(u) => setProject((p) => ({ ...p, ...u }))}
+              onProjectChange={handleProjectChange}
               onQuestionnaireChange={(u) => setQuestionnaire((q) => ({ ...q, ...u }))}
-              onUploadsChange={setUploads}
+              onUploadsChange={(u) => setUploads((prev) => ({ ...prev, ...u }))}
               onSubmit={handleQuestionnaireSubmit}
               submitting={checking || generating}
             />
@@ -497,9 +499,9 @@ export default function WorkspacePage() {
               project={project}
               questionnaire={questionnaire}
               uploads={uploads}
-              onProjectChange={(u) => setProject((p) => ({ ...p, ...u }))}
+              onProjectChange={handleProjectChange}
               onQuestionnaireChange={(u) => setQuestionnaire((q) => ({ ...q, ...u }))}
-              onUploadsChange={setUploads}
+              onUploadsChange={(u) => setUploads((prev) => ({ ...prev, ...u }))}
               onSubmit={() => setStage("input")}
               canSubmit={false}
               submitting={false}
@@ -507,67 +509,53 @@ export default function WorkspacePage() {
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <WorkflowStepper stage={stage} optionsOpen={optionsOpen} />
-          <ConfirmRenderBar
-            stage={stage}
-            onConfirm={handleConfirmRender}
-            onPayUnlock={() => setPaymentModal("pdf")}
-            listedOnStore={listedOnStore}
-            editorMode={editorMode}
-            onToggleEditor={canUseEditor ? () => setEditorMode((v) => !v) : undefined}
-            onRoughPreview={canUseEditor ? () => setRoughPreviewOpen(true) : undefined}
-          />
-
-          <div className="flex min-h-0 flex-1">
-            {showEditor ? (
-              <DesignEditor
-                editorState={editorState}
-                project={project}
-                budgetTargets={budgetTargets}
-                onChange={setEditorState}
-                onBudgetTargetsChange={handleBudgetTargetsChange}
-                onSaveDraft={() => void handleSaveDraft()}
-                saving={savingDraft}
-              />
-            ) : (
-              <PreviewCanvas
-                preview={preview}
-                activeView={activeView}
-                onViewChange={(v) => {
-                  if (!isUnlocked && v !== "3d") return;
-                  setActiveView(v);
-                }}
-                floors={project.floors}
-                unlocked={isUnlocked}
-                showFloorTabs={isUnlocked && preview.floorPlans.length > 0}
-                onSaveDraft={canUseEditor ? () => void handleSaveDraft() : undefined}
-                savingDraft={savingDraft}
-                editorState={editorState}
-                budgetTargets={budgetTargets}
-                project={project}
-              />
-            )}
-            <FloorPlanPanel
-              floors={project.floors}
-              activeFloor={activeView === "floor2" ? 2 : 1}
-              onSelectFloor={(f) => setActiveView(f === 1 ? "floor1" : "floor2")}
-              floorPlanUrls={preview.floorPlans}
-              watermarked={false}
-              visible={isUnlocked && preview.floorPlans.length > 0}
+        <WorkspaceMainStage
+          project={project}
+          stage={stage}
+          optionsOpen={optionsOpen}
+          payment={payment}
+          downloadTokens={downloadTokens}
+          onRequestPayment={setPaymentModal}
+          onConfirmRender={handleConfirmRender}
+          confirmLoading={generating && stage === "plans_generating"}
+          listedOnStore={listedOnStore}
+          editorMode={editorMode}
+          onToggleEditor={canUseEditor ? () => setEditorMode((v) => !v) : undefined}
+          onRoughPreview={canUseEditor ? () => setRoughPreviewOpen(true) : undefined}
+          editorState={editorState}
+          showEditor={Boolean(showEditor)}
+        >
+          {showEditor ? (
+            <DesignEditor
+              editorState={editorState!}
+              project={project}
+              budgetTargets={budgetTargets}
+              onChange={setEditorState}
+              onBudgetTargetsChange={handleBudgetTargetsChange}
+              onSaveDraft={() => void handleSaveDraft()}
+              saving={savingDraft}
             />
-          </div>
-
-          <ExportBar
-            project={project}
-            stage={stage}
-            payment={payment}
-            downloadTokens={downloadTokens}
-            onRequestPayment={setPaymentModal}
-            editorState={editorState}
-          />
-          <AIChatBar project={project} />
-        </div>
+          ) : showSheetPreview ? (
+            <SheetPreviewScroll
+              sheets={preview.sheetPreviews ?? []}
+              watermarked={preview.watermarked ?? false}
+              generating={stage === "plans_generating" || preview.status === "generating"}
+              projectName={project.projectName}
+            />
+          ) : (
+            <PreviewCanvas
+              preview={preview}
+              activeView={activeView}
+              onViewChange={setActiveView}
+              floors={project.floors}
+              onSaveDraft={canUseEditor ? () => void handleSaveDraft() : undefined}
+              savingDraft={savingDraft}
+              editorState={editorState}
+              budgetTargets={budgetTargets}
+              project={project}
+            />
+          )}
+        </WorkspaceMainStage>
       </div>
 
       <PlanOptionsModal
@@ -617,9 +605,9 @@ export default function WorkspacePage() {
         project={project}
         questionnaire={questionnaire}
         uploads={uploads}
-        onProjectChange={(u) => setProject((p) => ({ ...p, ...u }))}
+        onProjectChange={handleProjectChange}
         onQuestionnaireChange={(u) => setQuestionnaire((q) => ({ ...q, ...u }))}
-        onUploadsChange={setUploads}
+        onUploadsChange={(u) => setUploads((prev) => ({ ...prev, ...u }))}
         onSubmit={showQuestionnaire ? handleQuestionnaireSubmit : () => setStage("input")}
         submitting={checking || generating}
         canSubmit={showQuestionnaire}

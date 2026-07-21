@@ -1,24 +1,25 @@
 import type { ProjectInput } from "@/lib/ai/types";
 import { getImageModel, isGeminiConfigured } from "./gemini";
 
-const FALLBACK_PERSPECTIVE =
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85";
-const FALLBACK_FLOOR1 =
-  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80";
-const FALLBACK_FLOOR2 =
-  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80";
-
 function buildPerspectivePrompt(project: ProjectInput): string {
-  return `Photorealistic architectural exterior render of a ${project.style} ${project.floors}-storey residential house in ${project.location || "Southeast Asia"}.
+  return `Photorealistic architectural exterior 3D render of a ${project.style} ${project.floors}-storey residential house in ${project.location || "Southeast Asia"}.
 ${project.bedrooms} bedrooms, ${project.bathrooms} bathrooms, ${project.roofType} roof, ${project.colorPalette} color palette.
-${project.wallMaterial} walls, modern tropical context, golden hour lighting, professional architectural visualization.`;
+${project.wallMaterial} walls, modern tropical context, golden hour lighting, professional architectural visualization, slight perspective angle.`;
+}
+
+function buildFacadePrompt(project: ProjectInput): string {
+  return `Photorealistic architectural front facade elevation of a ${project.style} ${project.floors}-storey residential house in ${project.location || "Southeast Asia"}.
+${project.bedrooms} bedrooms, ${project.bathrooms} bathrooms, ${project.roofType} roof, ${project.colorPalette} color palette.
+${project.wallMaterial} walls, perfectly straight-on front view, symmetrical composition, no perspective distortion, professional architectural photography style, clear sky background.`;
 }
 
 function buildFloorPlanPrompt(project: ProjectInput, floor: number): string {
-  return `Clean architectural floor plan drawing, black lines on white, ${project.style} house floor ${floor}, ${project.bedrooms} bedrooms layout, technical drawing style, top-down view, labeled rooms, 1:100 scale appearance.`;
+  return `Beautiful clean architectural floor plan drawing, black lines on white background, ${project.style} house floor ${floor}, ${project.bedrooms} bedrooms layout, professional permit drawing style, top-down view, labeled rooms, furniture hints, 1:100 scale appearance, high contrast, publication quality.`;
 }
 
-async function extractImageFromResponse(response: { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string }; text?: string }[] } }[] }): Promise<string | null> {
+async function extractImageFromResponse(response: {
+  candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string }; text?: string }[] } }[];
+}): Promise<string | null> {
   const parts = response.candidates?.[0]?.content?.parts ?? [];
   for (const part of parts) {
     if (part.inlineData?.data) {
@@ -30,29 +31,40 @@ async function extractImageFromResponse(response: { candidates?: { content?: { p
 }
 
 export async function generatePerspectiveImage(project: ProjectInput): Promise<string> {
-  if (!isGeminiConfigured()) return FALLBACK_PERSPECTIVE;
+  if (!isGeminiConfigured()) return "";
 
   const model = getImageModel();
-  if (!model) return FALLBACK_PERSPECTIVE;
+  if (!model) return "";
 
   try {
     const result = await model.generateContent(buildPerspectivePrompt(project));
     const img = await extractImageFromResponse(result.response as never);
-    return img ?? FALLBACK_PERSPECTIVE;
+    return img ?? "";
   } catch {
-    return FALLBACK_PERSPECTIVE;
+    return "";
+  }
+}
+
+export async function generateFacadeImage(project: ProjectInput): Promise<string> {
+  if (!isGeminiConfigured()) return "";
+
+  const model = getImageModel();
+  if (!model) return "";
+
+  try {
+    const result = await model.generateContent(buildFacadePrompt(project));
+    const img = await extractImageFromResponse(result.response as never);
+    return img ?? "";
+  } catch {
+    return "";
   }
 }
 
 export async function generateFloorPlanImages(project: ProjectInput): Promise<string[]> {
-  if (!isGeminiConfigured()) {
-    return project.floors === 2 ? [FALLBACK_FLOOR1, FALLBACK_FLOOR2] : [FALLBACK_FLOOR1];
-  }
+  if (!isGeminiConfigured()) return [];
 
   const model = getImageModel();
-  if (!model) {
-    return project.floors === 2 ? [FALLBACK_FLOOR1, FALLBACK_FLOOR2] : [FALLBACK_FLOOR1];
-  }
+  if (!model) return [];
 
   const urls: string[] = [];
   const floors = project.floors === 2 ? [1, 2] : [1];
@@ -61,9 +73,9 @@ export async function generateFloorPlanImages(project: ProjectInput): Promise<st
     try {
       const result = await model.generateContent(buildFloorPlanPrompt(project, floor));
       const img = await extractImageFromResponse(result.response as never);
-      urls.push(img ?? (floor === 1 ? FALLBACK_FLOOR1 : FALLBACK_FLOOR2));
+      if (img) urls.push(img);
     } catch {
-      urls.push(floor === 1 ? FALLBACK_FLOOR1 : FALLBACK_FLOOR2);
+      /* skip failed floor */
     }
   }
 

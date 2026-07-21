@@ -3,7 +3,8 @@ import { getCountryByCode, PRICING } from "@/lib/geo/countries";
 import { validateProject, selectReferencePatternId, selectCadPatternIds } from "@/lib/rules/engine";
 import { generatePlanDocument } from "@/lib/ai/plan-generator";
 import { auditGoldenCompleteness } from "@/lib/plans/golden-standard";
-import { generatePerspectiveImage, generateFloorPlanImages } from "@/lib/ai/image-generator";
+import { generatePerspectiveImage, generateFacadeImage } from "@/lib/ai/image-generator";
+import { buildSheetPreviews } from "@/lib/plans/sheet-preview";
 import { createPlanId, savePlanDocument } from "@/lib/plans/store";
 import { isGeminiConfigured } from "@/lib/ai/gemini";
 import type { PlanOptions, ProjectInput, QuestionnaireInput, QuestionnaireUploads } from "@/lib/ai/types";
@@ -15,10 +16,22 @@ type GenerateStage = "render" | "plans" | "rough_preview";
 
 function previewFromUploads(uploads?: QuestionnaireUploads) {
   if (!uploads) return null;
-  const perspectiveUrl = uploads.frontView3d?.dataUrl;
-  const floorPlans = uploads.floorPlans.filter(Boolean).map((f) => f!.dataUrl);
-  if (!perspectiveUrl) return null;
-  return { perspectiveUrl, floorPlans };
+  const perspectiveUrl = uploads.frontView3d[0]?.dataUrl ?? "";
+  const facadeUrl = uploads.elevationSection[0]?.dataUrl ?? "";
+  const floorPlans = uploads.floorPlans.map((f) => f.dataUrl);
+  if (!perspectiveUrl && !facadeUrl && floorPlans.length === 0) return null;
+  return { perspectiveUrl, facadeUrl, floorPlans };
+}
+
+async function resolveRenderImages(mergedProject: ProjectInput, uploads?: QuestionnaireUploads) {
+  const uploaded = previewFromUploads(uploads);
+  const [perspectiveUrl, facadeUrl] = await Promise.all([
+    uploaded?.perspectiveUrl
+      ? Promise.resolve(uploaded.perspectiveUrl)
+      : generatePerspectiveImage(mergedProject),
+    uploaded?.facadeUrl ? Promise.resolve(uploaded.facadeUrl) : generateFacadeImage(mergedProject),
+  ]);
+  return { perspectiveUrl, facadeUrl };
 }
 
 export async function POST(request: NextRequest) {
@@ -32,7 +45,6 @@ export async function POST(request: NextRequest) {
   const existingPlanId = body.planId as string | undefined;
   const questionnaire = body.questionnaire as QuestionnaireInput | undefined;
   const uploads = body.uploads as QuestionnaireUploads | undefined;
-  const uploadPreview = previewFromUploads(uploads);
   const designEditor = body.designEditor as DesignEditorState | undefined;
   const mergedProject = designEditor ? applyEditorToProject(project, designEditor) : project;
 
@@ -68,19 +80,19 @@ export async function POST(request: NextRequest) {
   }
 
   if (stage === "render") {
-    const perspectiveUrl =
-      uploadPreview?.perspectiveUrl ?? (await generatePerspectiveImage(mergedProject));
+    const { perspectiveUrl, facadeUrl } = await resolveRenderImages(mergedProject, uploads);
     return NextResponse.json({
       status: "ready",
       stage: "render",
       preview: {
         perspectiveUrl,
-        floorPlans: uploadPreview?.floorPlans ?? [],
+        facadeUrl,
+        floorPlans: [],
         status: "ready",
         watermarked: false,
       },
       validations,
-      aiMode: isGeminiConfigured() ? "gemini" : uploadPreview ? "user-upload" : "fallback",
+      aiMode: isGeminiConfigured() ? "gemini" : previewFromUploads(uploads) ? "user-upload" : "empty",
       questionnaire,
     });
   }
@@ -109,12 +121,8 @@ export async function POST(request: NextRequest) {
   );
   await savePlanDocument(planDocument);
 
-  const [perspectiveUrl, floorPlans] = uploadPreview
-    ? [uploadPreview.perspectiveUrl, uploadPreview.floorPlans]
-    : await Promise.all([
-        generatePerspectiveImage(mergedProject),
-        generateFloorPlanImages(mergedProject),
-      ]);
+  const { perspectiveUrl, facadeUrl } = await resolveRenderImages(mergedProject, uploads);
+  const sheetPreviews = buildSheetPreviews(planDocument);
 
   return NextResponse.json({
     status: "ready",
@@ -122,7 +130,9 @@ export async function POST(request: NextRequest) {
     planId,
     preview: {
       perspectiveUrl,
-      floorPlans,
+      facadeUrl,
+      floorPlans: [],
+      sheetPreviews,
       status: "ready",
       watermarked: true,
     },
