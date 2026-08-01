@@ -3,6 +3,7 @@ import { requireAdminSession } from "@/lib/admin/auth";
 import type { CmsSectionKey } from "@/lib/admin/defaults";
 import type { Locale } from "@/lib/geo/countries";
 import { loadAllCmsSections, loadCmsSection, saveCmsSection } from "@/lib/supabase/cms-sections";
+import { revalidateSiteSurfaces } from "@/lib/site/revalidate-site";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,6 +36,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const saved = await saveCmsSection(section, locale, content, admin.email);
+    revalidateSiteSurfaces();
     return NextResponse.json({ section, locale, content: saved });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save CMS content";

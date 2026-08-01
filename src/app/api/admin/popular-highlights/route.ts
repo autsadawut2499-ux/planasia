@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin/auth";
 import type { PopularHighlightCard } from "@/lib/admin/popular-highlights";
 import { loadPopularHighlights, savePopularHighlights } from "@/lib/supabase/popular-highlights";
+import { revalidateSiteSurfaces } from "@/lib/site/revalidate-site";
 
 export async function GET() {
   try {
@@ -29,6 +30,7 @@ export async function PUT(request: NextRequest) {
       by: admin.email,
       images: saved.map((c) => ({ id: c.id, imageUrl: c.imageUrl?.slice(0, 80) })),
     });
+    revalidateSiteSurfaces();
     return NextResponse.json({ cards: saved, ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save popular highlights";

@@ -40,6 +40,7 @@ export function FeaturedStyles() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
+                  key={tile.imageUrl}
                   src={tile.imageUrl}
                   alt={label}
                   loading="lazy"

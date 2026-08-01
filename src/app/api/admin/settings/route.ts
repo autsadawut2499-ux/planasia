@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin/auth";
 import type { SiteSettingsBundle } from "@/lib/admin/defaults";
 import { loadSiteSettings, saveSiteSettingsBundle, saveSiteSettingsSection } from "@/lib/supabase/site-settings";
+import { revalidateSiteSurfaces } from "@/lib/site/revalidate-site";
 
 export async function GET() {
   try {
@@ -21,10 +22,12 @@ export async function PUT(request: NextRequest) {
     if (body.section != null && body.value != null) {
       const section = body.section as keyof SiteSettingsBundle;
       const value = await saveSiteSettingsSection(section, body.value, admin.email);
+      revalidateSiteSurfaces();
       return NextResponse.json({ section, value });
     }
 
     const settings = await saveSiteSettingsBundle(body.settings ?? body, admin.email);
+    revalidateSiteSurfaces();
     return NextResponse.json({ settings });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save settings";

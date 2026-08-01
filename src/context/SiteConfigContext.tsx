@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import type { CmsSectionContent, CmsSectionKey, SiteSettingsBundle } from "@/lib/admin/defaults";
 import type { CuratedStyleItem } from "@/lib/admin/curated-styles";
 import type { MegaMenuCollectionCard } from "@/lib/admin/mega-menu-collections";
@@ -72,7 +73,9 @@ export function SiteConfigProvider({
   initialConfig: SiteConfigPayload;
 }) {
   const { locale } = useApp();
+  const pathname = usePathname();
   const seededLocale = useRef(initialConfig.locale);
+  const lastHomeRefresh = useRef(0);
 
   const [settings, setSettings] = useState(initialConfig.settings);
   const [cms, setCms] = useState(initialConfig.cms);
@@ -107,7 +110,9 @@ export function SiteConfigProvider({
   const fetchConfig = useCallback(
     async (targetLocale: Locale) => {
       try {
-        const res = await fetch(`/api/site/config?locale=${targetLocale}`);
+        const res = await fetch(`/api/site/config?locale=${targetLocale}`, {
+          cache: "no-store",
+        });
         if (!res.ok) return;
         const data = (await res.json()) as SiteConfigPayload;
         applyPayload(data, setters);
@@ -125,6 +130,32 @@ export function SiteConfigProvider({
     setLoading(true);
     void fetchConfig(locale).finally(() => setLoading(false));
   }, [locale, fetchConfig]);
+
+  // After admin replaces hero/gallery images, pick up new URLs on return to storefront.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void fetchConfig(locale);
+    };
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void fetchConfig(locale);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [locale, fetchConfig]);
+
+  // Navigating home from /admin/* keeps the provider mounted — refresh config there.
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const now = Date.now();
+    if (now - lastHomeRefresh.current < 1500) return;
+    lastHomeRefresh.current = now;
+    void fetchConfig(locale);
+  }, [pathname, locale, fetchConfig]);
 
   const refresh = useCallback(async () => {
     setLoading(true);

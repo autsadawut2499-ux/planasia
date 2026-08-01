@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin/auth";
 import type { MegaMenuStyleCard } from "@/lib/admin/mega-menu-styles";
 import { loadMegaMenuStyles, saveMegaMenuStyles } from "@/lib/supabase/mega-menu-styles";
+import { revalidateSiteSurfaces } from "@/lib/site/revalidate-site";
 
 export async function GET() {
   try {
@@ -24,6 +25,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const saved = await saveMegaMenuStyles(cards, admin.email);
+    revalidateSiteSurfaces();
     return NextResponse.json({ cards: saved });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save mega menu styles";

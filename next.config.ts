@@ -18,7 +18,8 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [360, 480, 640, 768, 1024, 1280, 1536, 1920],
     imageSizes: [64, 96, 128, 256, 384],
-    minimumCacheTTL: 60 * 60 * 24 * 30,
+    // Short TTL so replaced listing/vendor images via next/image update quickly.
+    minimumCacheTTL: 60,
     remotePatterns: [
       {
         protocol: "https",

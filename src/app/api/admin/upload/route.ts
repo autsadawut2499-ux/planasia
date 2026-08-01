@@ -91,7 +91,12 @@ export async function POST(request: NextRequest) {
 
     const { error } = await getSupabaseAdmin()
       .storage.from(SITE_ASSETS_BUCKET)
-      .upload(storagePath, buffer, { contentType, upsert: true });
+      .upload(storagePath, buffer, {
+        contentType,
+        upsert: true,
+        // Short CDN/browser TTL — admin often replaces covers; paths are unique but keep TTL low.
+        cacheControl: "60",
+      });
 
     if (error) {
       console.error("[admin/upload] Storage upload failed", {

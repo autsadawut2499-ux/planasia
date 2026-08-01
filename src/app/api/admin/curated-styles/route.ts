@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin/auth";
 import type { CuratedStyleItem } from "@/lib/admin/curated-styles";
 import { loadCuratedStyles, saveCuratedStyles } from "@/lib/supabase/curated-styles";
+import { revalidateSiteSurfaces } from "@/lib/site/revalidate-site";
 
 export async function GET() {
   try {
@@ -24,6 +25,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const saved = await saveCuratedStyles(styles, admin.email);
+    revalidateSiteSurfaces();
     return NextResponse.json({ styles: saved });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save curated styles";
