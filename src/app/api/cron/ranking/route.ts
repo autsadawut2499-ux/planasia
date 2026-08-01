@@ -5,7 +5,7 @@ import { recomputeRankingNow } from "@/lib/ranking/popular";
 export const dynamic = "force-dynamic";
 
 /**
- * Hourly Smart Ranking recompute. Wired to Vercel Cron (see vercel.json).
+ * Daily Smart Ranking recompute. Wired to Vercel Cron (see vercel.json).
  * Requires `Authorization: Bearer <CRON_SECRET>` in production.
  */
 export async function GET(request: NextRequest) {

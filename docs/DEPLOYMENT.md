@@ -9,7 +9,7 @@
 | Production URL | `https://planasia.vercel.app` |
 | Vercel project | **`planasia`** (keep a single project) |
 
-`vercel.json` only configures the hourly ranking cron (`/api/cron/ranking`). Framework settings use Next.js defaults and `npm run build`.
+`vercel.json` configures the ranking cron (`/api/cron/ranking`) once daily (`0 17 * * *` UTC ≈ midnight ICT) — Hobby plans disallow more frequent crons. Framework settings use Next.js defaults and `npm run build`.
 
 ## Build command / env gate
 
