@@ -3,6 +3,7 @@ import { filterListingsForViewer } from "@/lib/store/visibility";
 import { attachCreator, attachCreators } from "@/lib/store/creators";
 import type { StoreListing } from "@/lib/store/listing-types";
 import { resolvePlanIdentity } from "@/lib/store/plan-identity";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   supabaseGetAllListings,
   supabaseGetListingById,
@@ -17,8 +18,10 @@ export type { StoreListing } from "@/lib/store/listing-types";
 /**
  * Store listings are loaded from Supabase only.
  * Demo/AI seed rows are no longer auto-inserted — manage content via Admin → แบบบ้าน.
+ * Returns [] when Supabase env is missing so bootstrap / SSG builds can succeed.
  */
 async function loadListings(): Promise<StoreListing[]> {
+  if (!isSupabaseConfigured()) return [];
   return attachCreators(await supabaseGetAllListings());
 }
 

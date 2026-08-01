@@ -9,6 +9,7 @@ import { getSiteUrl } from "@/lib/seo/site-url";
 import { filterListingsBySpec, getAllPlanPresets } from "@/lib/seo/programmatic";
 import { resolvePlanPage } from "@/lib/seo/plan-content";
 import { getListings } from "@/lib/store/db";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamicParams = true;
 export const revalidate = 3600;
@@ -16,6 +17,8 @@ export const revalidate = 3600;
 type PageProps = { params: Promise<{ slug: string }> };
 
 export function generateStaticParams() {
+  // Avoid prerendering dozens of SEO pages when Supabase env is not set yet (bootstrap deploy).
+  if (!isSupabaseConfigured()) return [];
   return getAllPlanPresets().map((p) => ({ slug: p.slug }));
 }
 
@@ -46,7 +49,7 @@ export default async function PlanLandingPage({ params }: PageProps) {
   const page = resolvePlanPage(slug);
   if (!page) notFound();
 
-  const all = await getListings();
+  const all = isSupabaseConfigured() ? await getListings() : [];
   const listings = filterListingsBySpec(all, page.filter);
 
   const breadcrumb = buildBreadcrumbJsonLd([
