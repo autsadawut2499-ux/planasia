@@ -45,7 +45,7 @@ export interface CheckoutPreview {
   unitSystem: UnitSystem;
   buildingCode: string;
   currency: Currency;
-  exchangeRate: { usdThb: number; note: string };
+  exchangeRate: { usdThb: number; thbPerUnit?: number; note: string };
   listings: LocalizedListingView[];
   pricing: {
     subtotalThb: number;

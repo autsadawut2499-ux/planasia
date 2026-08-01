@@ -112,9 +112,10 @@ export function PreCheckoutWizard({
   const countryOptions = useMemo(() => listGeminiMarketCountryOptions(), []);
   const selectedCountry =
     countryOptions.find((c) => c.code === selections.targetCountry) ?? countryOptions[0];
-  const chargeCurrency = THAI_DOMESTIC_MARKET
-    ? "THB"
-    : checkoutCurrencyFor(selections.targetCountry, visitorCountryCode);
+  const chargeCurrency = checkoutCurrencyFor(
+    selections.targetCountry,
+    visitorCountryCode,
+  );
 
   // Thai-only: lock target market + document language.
   useEffect(() => {
@@ -239,13 +240,13 @@ export function PreCheckoutWizard({
             {" · "}
             <span className="font-semibold text-[#1e40af]">
               {thai ? "สกุลเงิน" : "Currency"}: {chargeCurrency}
-              {chargeCurrency === "USD"
+              {chargeCurrency === "THB"
                 ? thai
-                  ? " (ต่างประเทศ)"
-                  : " (international)"
-                : thai
                   ? " (ประเทศไทย)"
-                  : " (Thailand)"}
+                  : " (Thailand)"
+                : thai
+                  ? " (ตามประเทศผู้เยี่ยมชม)"
+                  : " (visitor local)"}
             </span>
             {localizationFee > 0 && (
               <>

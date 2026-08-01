@@ -31,6 +31,8 @@ import { CollectionsMegaMenuPanel } from "@/components/landing/CollectionsMegaMe
 interface NavItem {
   href: string;
   label: string;
+  /** Open in a new tab (external destinations). */
+  external?: boolean;
 }
 
 /** Shared site header — identical chrome on home, store, about, draftsmen, etc. */
@@ -62,13 +64,21 @@ export function LandingHeader() {
     label: L(c.en, c.th),
   }));
 
-  // บริการลูกค้า — 9 หัวข้อจาก CMS (ข้อความล้วน ไม่มีรูป)
-  const aboutItems: NavItem[] = customerServiceTopicCatalog(
-    siteConfig?.customerServiceArticles,
-  ).map((topic) => ({
-    href: topic.href,
-    label: L(topic.titleEn, topic.titleTh),
-  }));
+  // บริการลูกค้า — หัวข้อจาก CMS + ลิงก์ภายนอกที่เกี่ยวข้อง
+  const aboutItems: NavItem[] = [
+    ...customerServiceTopicCatalog(siteConfig?.customerServiceArticles).map((topic) => ({
+      href: topic.href,
+      label: L(topic.titleEn, topic.titleTh),
+    })),
+    {
+      href: "https://dashboard.doctranslator.com/home?locale=th",
+      label: L(
+        "Construction plan translation",
+        "แปลภาษาในแบบแปลนก่อสร้าง",
+      ),
+      external: true,
+    },
+  ];
 
   const planIncludesLabel = L("What the Plan Includes", "แบบประกอบด้วยอะไรบ้าง");
   const homeBuildingLabel = L("Home Building", "รับสร้างบ้าน");
@@ -567,21 +577,38 @@ function NavDropdown({
               {emptyLabel ?? "—"}
             </span>
           ) : (
-            items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className={
-                  list === "clean"
-                    ? "block px-4 py-2.5 text-[12px] font-semibold leading-snug tracking-wide text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
-                    : "block px-3 py-1.5 text-[11px] font-semibold tracking-wide text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
-                }
-              >
-                {item.label}
-              </Link>
-            ))
+            items.map((item) => {
+              const itemClass =
+                list === "clean"
+                  ? "block px-4 py-2.5 text-[12px] font-semibold leading-snug tracking-wide text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+                  : "block px-3 py-1.5 text-[11px] font-semibold tracking-wide text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]";
+              if (item.external) {
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    role="menuitem"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setOpen(false)}
+                    className={itemClass}
+                  >
+                    {item.label}
+                  </a>
+                );
+              }
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className={itemClass}
+                >
+                  {item.label}
+                </Link>
+              );
+            })
           )}
         </div>
       )}

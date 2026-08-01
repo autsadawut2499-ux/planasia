@@ -28,7 +28,15 @@ import {
   type Currency,
 } from "@/lib/currency";
 import { t, type TranslationKey } from "@/lib/i18n";
-import { THAI_DOMESTIC_MARKET } from "@/lib/market/config";
+import { STOREFRONT_UI_LOCALES, THAI_DOMESTIC_MARKET } from "@/lib/market/config";
+
+/** Keep geo/browser picks inside the languages the chrome actually offers. */
+function clampStorefrontUiLocale(locale: UiLocale | null | undefined): UiLocale | null {
+  if (!locale || !isUiLocale(locale)) return null;
+  if ((STOREFRONT_UI_LOCALES as readonly string[]).includes(locale)) return locale;
+  // Domestic storefront is TH/EN only — map any other geo language to English.
+  return THAI_DOMESTIC_MARKET ? "en" : locale;
+}
 
 interface AppContextValue {
   /** Content locale (en/th/hi/vi) — drives prices, AI content, PDFs. */
@@ -40,10 +48,12 @@ interface AppContextValue {
   setLocale: (locale: UiLocale) => void;
   country: CountryConfig;
   setCountryCode: (code: string) => void;
+  /** Raw ISO country from IP/geo — drives display/checkout currency. */
+  geoCountryCode: string;
   unitSystem: UnitSystem;
   /**
-   * Display currency from geo IP (not user-selectable on the storefront):
-   * Thailand → THB, everywhere else → USD.
+   * Display currency from geo IP (not user-selectable on the storefront).
+   * Mapped from visitor country (JPY, EUR, USD, THB, …).
    */
   currency: Currency;
   /** No-op on the storefront — currency follows geo detection. */
@@ -92,7 +102,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Default TH to match the homepage Thai experience and avoid EN→TH chrome flicker.
   const [uiLocale, setUiLocaleState] = useState<UiLocale>("th");
   const [countryCode, setCountryCodeState] = useState("TH");
-  /** Raw ISO country from IP/geo — drives THB vs USD (not remapped store country). */
+  /** Raw ISO country from IP/geo — not remapped to the store catalog country. */
   const [geoCountryCode, setGeoCountryCode] = useState("TH");
   const [geoDetected, setGeoDetected] = useState(false);
 
@@ -111,10 +121,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // 1) Honour an explicit manual language choice (persisted).
     if (storedUiLocale) {
-      setUiLocaleState(storedUiLocale);
+      setUiLocaleState(clampStorefrontUiLocale(storedUiLocale) ?? "th");
     } else {
       // 2) Instant hint from the browser before the geo round-trip finishes.
-      const browser = detectBrowserUiLocale();
+      const browser = clampStorefrontUiLocale(detectBrowserUiLocale());
       if (browser) setUiLocaleState(browser);
     }
 
@@ -140,9 +150,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
           }
           if (!storedUiLocale) {
-            const detected = isUiLocale(data.uiLocale)
+            const rawDetected = isUiLocale(data.uiLocale)
               ? data.uiLocale
               : uiLocaleForCountry(data.countryCode);
+            const detected = clampStorefrontUiLocale(rawDetected) ?? "en";
             setUiLocaleState(detected);
           }
           setGeoDetected(true);
@@ -152,9 +163,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setUiLocale = useCallback((next: UiLocale) => {
-    if (!isUiLocale(next)) return;
-    setUiLocaleState(next);
-    writeStoredSettings({ uiLocale: next });
+    const clamped = clampStorefrontUiLocale(next);
+    if (!clamped) return;
+    setUiLocaleState(clamped);
+    writeStoredSettings({ uiLocale: clamped });
   }, []);
 
   const setCountryCode = useCallback((code: string) => {
@@ -164,7 +176,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   /** Manual currency switching is disabled on the storefront. */
   const setCurrency = useCallback((_next: Currency) => {
-    /* no-op — THB/USD follows geo IP */
+    /* no-op — display currency follows geo IP country */
   }, []);
 
   const country = useMemo(
@@ -172,10 +184,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [countryCode],
   );
   const locale = useMemo<Locale>(() => uiToContentLocale(uiLocale), [uiLocale]);
-  // Domestic lock → always THB. Multi-country → TH IP → THB, elsewhere → USD.
-  const currency: Currency = THAI_DOMESTIC_MARKET
-    ? "THB"
-    : currencyForCountry(geoCountryCode);
+  // Visitor origin (geo IP) → local display currency; unknown → THB.
+  const currency: Currency = currencyForCountry(geoCountryCode);
 
   const value = useMemo<AppContextValue>(
     () => ({
@@ -185,6 +195,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLocale: setUiLocale,
       country,
       setCountryCode,
+      geoCountryCode,
       unitSystem: country.unitSystem,
       currency,
       setCurrency,
@@ -193,7 +204,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       translate: (key) => t(uiLocale, key),
       geoDetected,
     }),
-    [locale, uiLocale, setUiLocale, country, setCountryCode, currency, setCurrency, geoDetected],
+    [
+      locale,
+      uiLocale,
+      setUiLocale,
+      country,
+      setCountryCode,
+      geoCountryCode,
+      currency,
+      setCurrency,
+      geoDetected,
+    ],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

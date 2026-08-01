@@ -8,6 +8,8 @@ export interface MobileNavLink {
   href: string;
   label: string;
   anchor?: boolean;
+  /** External URL — opens in a new tab. */
+  external?: boolean;
 }
 
 interface MobileNavDrawerProps {
@@ -67,10 +69,13 @@ export function MobileNavDrawer({
           <ul className="space-y-1">
             {links.map((link) => (
               <li key={link.href}>
-                {link.anchor ? (
+                {link.anchor || link.external ? (
                   <a
                     href={link.href}
                     onClick={onClose}
+                    {...(link.external
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
                     className={`block min-h-11 rounded-lg px-3 py-3 text-sm font-semibold ${linkClass}`}
                   >
                     {link.label}

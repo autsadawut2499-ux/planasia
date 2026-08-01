@@ -17,7 +17,7 @@ import {
 } from "@/components/store/PreCheckoutWizard";
 import { EMPTY_SHIPPING_ADDRESS } from "@/lib/store/shipping-address";
 import { defaultDocumentLanguage } from "@/lib/store/document-languages";
-import { checkoutCurrencyFor, formatMoney as formatMoneyInCurrency } from "@/lib/currency";
+import { formatMoney as formatMoneyInCurrency } from "@/lib/currency";
 import {
   availablePaymentMethods,
   defaultPaymentMethod,
@@ -207,7 +207,7 @@ export function StoreCheckoutModal({
   viewerHeaders,
   buyerId,
 }: StoreCheckoutModalProps) {
-  const { country, translate, uiLocale } = useApp();
+  const { country, currency, geoCountryCode, translate, uiLocale } = useApp();
   const localized = useStoreListingCopy(listing);
   const thai = uiLocale === "th";
   const [loading, setLoading] = useState(false);
@@ -221,35 +221,25 @@ export function StoreCheckoutModal({
     ),
   );
 
-  const checkoutCurrency = useMemo(
-    () => checkoutCurrencyFor(selections.targetCountry, country.code),
-    [selections.targetCountry, country.code],
-  );
+  const checkoutCurrency = currency;
   const formatCheckoutMoney = useMemo(
     () => (amountThb: number) => formatMoneyInCurrency(amountThb, checkoutCurrency),
     [checkoutCurrency],
   );
   const paymentMethods = useMemo(
-    () =>
-      availablePaymentMethods(
-        checkoutCurrency,
-        checkoutCurrency === "THB" ? "TH" : selections.targetCountry,
-      ),
-    [checkoutCurrency, selections.targetCountry],
+    () => availablePaymentMethods(checkoutCurrency, geoCountryCode),
+    [checkoutCurrency, geoCountryCode],
   );
   const [method, setMethod] = useState<PaymentMethodId>(() =>
-    defaultPaymentMethod(checkoutCurrency, checkoutCurrency === "THB" ? "TH" : country.code),
+    defaultPaymentMethod(checkoutCurrency, geoCountryCode),
   );
 
   useEffect(() => {
-    const next = defaultPaymentMethod(
-      checkoutCurrency,
-      checkoutCurrency === "THB" ? "TH" : selections.targetCountry,
-    );
+    const next = defaultPaymentMethod(checkoutCurrency, geoCountryCode);
     if (!paymentMethods.some((m) => m.id === method && m.available)) {
       setMethod(next);
     }
-  }, [checkoutCurrency, selections.targetCountry, method, paymentMethods]);
+  }, [checkoutCurrency, geoCountryCode, method, paymentMethods]);
 
   if (!open) return null;
 
@@ -280,6 +270,7 @@ export function StoreCheckoutModal({
           format: "pdf",
           method,
           countryCode: country.code,
+          visitorCountryCode: geoCountryCode,
           target_country: selections.targetCountry,
           currency: checkoutCurrency,
           userId: buyerId,
@@ -337,7 +328,7 @@ export function StoreCheckoutModal({
             thai={thai}
             formatMoney={formatCheckoutMoney}
             selections={selections}
-            visitorCountryCode={country.code}
+            visitorCountryCode={geoCountryCode}
             onChange={setSelections}
             basePlanLabel={localized.name}
             basePlanPrice={listing.price}

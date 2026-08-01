@@ -2,7 +2,8 @@ import { UI_LOCALES, type UiLocale } from "@/lib/geo/countries";
 
 /**
  * Thailand-only marketplace.
- * When `true`, forces Thai domestic mode (THB, TH country, TH/EN UI toggle only).
+ * When `true`, forces Thai domestic mode (TH country catalog, TH/EN UI toggle).
+ * Display/checkout currency still follows geo-IP local currency.
  * No foreign localization, OCR translation, or multi-country checkout.
  */
 export const THAI_DOMESTIC_MARKET = true;

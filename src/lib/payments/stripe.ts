@@ -3,6 +3,8 @@ import { getCountryByCode, PRICING } from "@/lib/geo/countries";
 import type { ProjectInput } from "@/lib/ai/types";
 import {
   convertFromThb,
+  currencyForCountry,
+  isCurrency,
   toGatewayMinorUnits,
   type Currency,
 } from "@/lib/currency";
@@ -69,13 +71,9 @@ export async function createCheckoutSession(params: {
   const stripe = getStripe();
   if (!stripe) return null;
 
-  const country = getCountryByCode(params.countryCode);
-  const chargeCurrency: Currency =
-    params.currency === "USD" || params.currency === "THB"
-      ? params.currency
-      : (country.currency || "THB").toUpperCase() === "USD"
-        ? "USD"
-        : "THB";
+  const chargeCurrency: Currency = isCurrency(params.currency)
+    ? params.currency
+    : currencyForCountry(params.countryCode);
   const chargeThb = Math.max(
     1,
     Math.round(params.amountThb ?? computePrice(params.format, params.project, params.countryCode).amount),
@@ -163,8 +161,8 @@ export interface CartCheckoutLineItem {
  * Create a Stripe Checkout session for a store cart.
  *
  * `lineItems[].amount` is always in **base THB**. The gateway converts to the
- * display currency (THB for Thailand, USD elsewhere at 1 USD = 35 THB) before
- * charging. PromptPay is only offered for THB + Thailand.
+ * visitor's local charge currency (from geo-IP) before charging.
+ * PromptPay is only offered for THB + Thailand.
  */
 export async function createCartCheckoutSession(params: {
   cartOrderId: string;
@@ -190,7 +188,9 @@ export async function createCartCheckoutSession(params: {
   const stripe = getStripe();
   if (!stripe) return null;
 
-  const currency: Currency = params.currency === "USD" ? "USD" : "THB";
+  const currency: Currency = isCurrency(params.currency)
+    ? params.currency
+    : currencyForCountry(params.countryCode);
   const method: PaymentMethodId =
     params.method === "promptpay" ? "promptpay" : params.method === "card" ? "card" : "card";
 

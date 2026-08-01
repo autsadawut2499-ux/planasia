@@ -19,7 +19,7 @@ import {
   defaultDocumentLanguage,
   localizationSurchargeThb,
 } from "@/lib/store/document-languages";
-import { checkoutCurrencyFor, formatMoney as formatMoneyInCurrency } from "@/lib/currency";
+import { formatMoney as formatMoneyInCurrency } from "@/lib/currency";
 import type { StoreListing } from "@/lib/store/db";
 import { StoreUpsellSection } from "@/components/store/StoreUpsellSection";
 import {
@@ -51,7 +51,7 @@ export function StoreCartDrawer({
   buyerId,
   onCheckoutComplete,
 }: StoreCartDrawerProps) {
-  const { country, uiLocale, unitSystem, translate } = useApp();
+  const { country, currency, geoCountryCode, uiLocale, unitSystem, translate } = useApp();
   const { success: toastSuccess } = useToast();
   const {
     items,
@@ -74,36 +74,26 @@ export function StoreCartDrawer({
     ),
   );
 
-  // TH target + Thai visitor → THB; foreign target or international visitor → USD.
-  const checkoutCurrency = useMemo(
-    () => checkoutCurrencyFor(preCheckout.targetCountry, country.code),
-    [preCheckout.targetCountry, country.code],
-  );
+  // Charge / display currency follows visitor geo-IP (not store catalog country).
+  const checkoutCurrency = currency;
   const formatCheckoutMoney = useMemo(
     () => (amountThb: number) => formatMoneyInCurrency(amountThb, checkoutCurrency),
     [checkoutCurrency],
   );
   const paymentMethods = useMemo(
-    () =>
-      availablePaymentMethods(
-        checkoutCurrency,
-        checkoutCurrency === "THB" ? "TH" : preCheckout.targetCountry,
-      ),
-    [checkoutCurrency, preCheckout.targetCountry],
+    () => availablePaymentMethods(checkoutCurrency, geoCountryCode),
+    [checkoutCurrency, geoCountryCode],
   );
   const [method, setMethod] = useState<PaymentMethodId>(() =>
-    defaultPaymentMethod(checkoutCurrency, checkoutCurrency === "THB" ? "TH" : country.code),
+    defaultPaymentMethod(checkoutCurrency, geoCountryCode),
   );
 
   useEffect(() => {
-    const next = defaultPaymentMethod(
-      checkoutCurrency,
-      checkoutCurrency === "THB" ? "TH" : preCheckout.targetCountry,
-    );
+    const next = defaultPaymentMethod(checkoutCurrency, geoCountryCode);
     if (!paymentMethods.some((m) => m.id === method && m.available)) {
       setMethod(next);
     }
-  }, [checkoutCurrency, preCheckout.targetCountry, method, paymentMethods]);
+  }, [checkoutCurrency, geoCountryCode, method, paymentMethods]);
 
   // Pre-checkout: unit preview for selected country (Gemini runs only after payment).
   const [preview, setPreview] = useState<CheckoutPreview | null>(null);
@@ -135,7 +125,7 @@ export function StoreCartDrawer({
       body: JSON.stringify({
         listingIds: ids,
         uiLocale,
-        countryCode: country.code,
+        countryCode: geoCountryCode,
         /** Buyer-selected market for Gemini translate + unit conversion. */
         target_country: preCheckout.targetCountry,
         currency: checkoutCurrency,
@@ -215,6 +205,7 @@ export function StoreCartDrawer({
           addons,
           method: activeMethod,
           countryCode: country.code,
+          visitorCountryCode: geoCountryCode,
           target_country: preCheckout.targetCountry,
           currency: checkoutCurrency,
           uiLocale,
@@ -309,7 +300,7 @@ export function StoreCartDrawer({
                 thai={thai}
                 formatMoney={formatCheckoutMoney}
                 selections={preCheckout}
-                visitorCountryCode={country.code}
+                visitorCountryCode={geoCountryCode}
                 onChange={(next) => {
                   setPreCheckout(next);
                   const hasBoq = addons.includes("boq-bundle");

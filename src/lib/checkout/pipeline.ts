@@ -19,9 +19,11 @@ import "server-only";
 import {
   checkoutCurrencyFor,
   convertFromThb,
-  currencyForCountry,
+  exchangeRateNote,
   formatMoney,
+  isCurrency,
   type Currency,
+  THB_PER_UNIT,
   USD_THB_RATE,
 } from "@/lib/currency";
 import {
@@ -187,21 +189,17 @@ export async function localizeListingForCheckout(
 }
 
 export function resolveCheckoutCurrency(opts: {
+  /** Visitor geo / storefront country — drives local charge currency. */
   countryCode?: string;
-  /** Buyer-selected target market — foreign → USD. */
+  /** Buyer-selected target market (units/translation) — does not set currency. */
   targetCountry?: string;
   currencyOverride?: Currency;
 }): Currency {
-  if (THAI_DOMESTIC_MARKET) return "THB";
-  // Prefer authoritative target + visitor countries over a client override.
-  const fromMarkets = checkoutCurrencyFor(opts.targetCountry, opts.countryCode);
-  if (opts.targetCountry || opts.countryCode) {
-    return fromMarkets;
-  }
-  if (opts.currencyOverride === "THB" || opts.currencyOverride === "USD") {
+  if (isCurrency(opts.currencyOverride)) {
     return opts.currencyOverride;
   }
-  return currencyForCountry(opts.countryCode);
+  // Charge in the visitor's local currency from geo-IP country.
+  return checkoutCurrencyFor(opts.targetCountry, opts.countryCode);
 }
 
 /**
@@ -226,9 +224,9 @@ export async function buildCheckoutPreview(input: {
   const unitProfile = getCountryUnitProfile(targetCountry);
 
   const currency = resolveCheckoutCurrency({
-    countryCode: country.code,
+    countryCode: input.countryCode,
     targetCountry,
-    currencyOverride: THAI_DOMESTIC_MARKET ? "THB" : input.currency,
+    currencyOverride: input.currency,
   });
   // Prefer the Gemini market unit rule for the selected target country.
   const unitSystem = resolveUnitSystem(
@@ -283,10 +281,8 @@ export async function buildCheckoutPreview(input: {
     currency,
     exchangeRate: {
       usdThb: USD_THB_RATE,
-      note:
-        currency === "THB"
-          ? "ราคาแสดงเป็นบาทไทย (THB)"
-          : `Fixed reference rate: 1 USD = ${USD_THB_RATE} THB`,
+      thbPerUnit: THB_PER_UNIT[currency],
+      note: exchangeRateNote(currency),
     },
     listings,
     pricing: {

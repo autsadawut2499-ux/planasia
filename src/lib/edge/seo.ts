@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { currencyForCountry } from "@/lib/currency";
 
 /**
  * Edge SEO layer — runs in the Edge runtime (Vercel's global network, closest to
@@ -38,9 +39,9 @@ function localeHint(request: NextRequest, country: string): "th" | "en" {
   return "th"; // Thai-first product
 }
 
-/** Display currency: Thailand → THB, everywhere else → USD. */
+/** Display currency from visitor country (THB default). */
 function currencyHint(country: string): string {
-  return country.toUpperCase() === "TH" ? "THB" : "USD";
+  return currencyForCountry(country);
 }
 
 /**

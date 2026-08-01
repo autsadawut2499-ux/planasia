@@ -27,7 +27,7 @@ import {
 } from "@/lib/store/cart-pricing";
 import { createCartOrderId, saveCartOrder } from "@/lib/store/cart-orders";
 import { resolveCheckoutCurrency } from "@/lib/checkout/pipeline";
-import type { Currency } from "@/lib/currency";
+import { isCurrency, type Currency } from "@/lib/currency";
 import { THAI_DOMESTIC_MARKET } from "@/lib/market/config";
 import { defaultPaymentMethod, type PaymentMethodId } from "@/lib/payments/methods";
 import {
@@ -60,20 +60,20 @@ export async function POST(request: NextRequest) {
   const shippingAddress = wantsHardcopy
     ? normalizeShippingAddress(body.shippingAddress)
     : undefined;
-  const currency: Currency = THAI_DOMESTIC_MARKET
-    ? "THB"
-    : resolveCheckoutCurrency({
-        countryCode,
-        targetCountry,
-        currencyOverride:
-          body.currency === "THB" || body.currency === "USD" ? body.currency : undefined,
-      });
+  const visitorCountryCode = String(
+    body.visitorCountryCode ?? body.countryCode ?? countryCode,
+  ).toUpperCase();
+  const currency: Currency = resolveCheckoutCurrency({
+    countryCode: visitorCountryCode,
+    targetCountry,
+    currencyOverride: isCurrency(body.currency) ? body.currency : undefined,
+  });
   const requestedMethod: PaymentMethodId =
     body.method === "promptpay" || body.method === "card"
       ? body.method
       : body.method === "stripe"
         ? "card"
-        : defaultPaymentMethod(currency, currency === "THB" ? "TH" : targetCountry);
+        : defaultPaymentMethod(currency, visitorCountryCode);
   const method = requestedMethod;
 
   if (!listingId) {
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
       listingId: listing.id,
       amountThb,
       project,
-      countryCode,
+      countryCode: visitorCountryCode,
       targetCountry,
       currency,
       userId: buyerUserId,

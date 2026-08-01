@@ -9,7 +9,7 @@ import { currencyForCountry } from "@/lib/currency";
  * Returns:
  *  - countryCode:  the real detected ISO code (e.g. "MM") — used for language + currency.
  *  - storeCountry: mapped to a supported store country (units / catalog).
- *  - currency:     THB when detected country is Thailand, otherwise USD.
+ *  - currency:     visitor local currency from countryCode (THB default).
  *  - uiLocale:     suggested interface language for that country.
  */
 export async function GET(request: NextRequest) {

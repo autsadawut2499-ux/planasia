@@ -24,7 +24,7 @@ import { getViewerFromRequest } from "@/lib/user/identity";
 import { loadPlanDocument } from "@/lib/plans/store";
 import { resolveCheckoutCurrency } from "@/lib/checkout/pipeline";
 import { defaultPaymentMethod, type PaymentMethodId } from "@/lib/payments/methods";
-import { convertFromThb, formatMoney, type Currency } from "@/lib/currency";
+import { convertFromThb, formatMoney, isCurrency, type Currency } from "@/lib/currency";
 import { isUiLocale, type UiLocale } from "@/lib/geo/countries";
 import { resolvePlanDocumentId } from "@/lib/store/plan-identity";
 import { getListingBlueprintUrls } from "@/lib/store/listing-blueprints";
@@ -56,18 +56,18 @@ export async function POST(request: NextRequest) {
     : String(body.target_country ?? body.targetCountry ?? countryCode)
         .toUpperCase()
         .slice(0, 8);
-  const currency: Currency = THAI_DOMESTIC_MARKET
-    ? "THB"
-    : resolveCheckoutCurrency({
-        countryCode,
-        targetCountry,
-        currencyOverride:
-          body.currency === "THB" || body.currency === "USD" ? body.currency : undefined,
-      });
+  const visitorCountryCode = String(
+    body.visitorCountryCode ?? body.countryCode ?? countryCode,
+  ).toUpperCase();
+  const currency: Currency = resolveCheckoutCurrency({
+    countryCode: visitorCountryCode,
+    targetCountry,
+    currencyOverride: isCurrency(body.currency) ? body.currency : undefined,
+  });
   const method: PaymentMethodId =
     body.method === "promptpay" || body.method === "card"
       ? body.method
-      : defaultPaymentMethod(currency, currency === "THB" ? "TH" : targetCountry);
+      : defaultPaymentMethod(currency, visitorCountryCode);
   const documentLanguage = THAI_DOMESTIC_MARKET
     ? "th"
     : resolveCheckoutDocumentLanguage(body.documentLanguage, targetCountry);
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
       lineItems,
       currency,
       method,
-      countryCode,
+      countryCode: visitorCountryCode,
       targetCountry,
       userId: buyerUserId,
       uiLocale,

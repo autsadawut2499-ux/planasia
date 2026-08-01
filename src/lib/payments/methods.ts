@@ -14,12 +14,16 @@ export interface PaymentMethodOption {
   reasonUnavailableTh?: string;
 }
 
-/** PromptPay for THB (Thailand); card for domestic + international USD. */
+/** PromptPay for THB (Thailand); card for any local charge currency. */
 export function availablePaymentMethods(
   currency: Currency,
   countryCode: string,
 ): PaymentMethodOption[] {
   const isTh = countryCode.toUpperCase() === "TH";
+  const cardLabel =
+    currency === "THB" ? "Card" : `International card (${currency})`;
+  const cardLabelTh =
+    currency === "THB" ? "บัตรเครดิต/เดบิต" : `บัตรต่างประเทศ (${currency})`;
   return [
     {
       id: "promptpay",
@@ -39,8 +43,8 @@ export function availablePaymentMethods(
     {
       id: "card",
       stripeType: "card",
-      label: currency === "USD" ? "International card (USD)" : "Card",
-      labelTh: currency === "USD" ? "บัตรต่างประเทศ (USD)" : "บัตรเครดิต/เดบิต",
+      label: cardLabel,
+      labelTh: cardLabelTh,
       available: true,
     },
   ];
