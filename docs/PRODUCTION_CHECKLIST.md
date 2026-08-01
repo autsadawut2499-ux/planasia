@@ -2,6 +2,8 @@
 
 Prioritized build plan for a house-plan marketplace go-live.
 
+Deployment runbook (Vercel env gate, dual-project pitfalls, SHA verification): [`DEPLOYMENT.md`](DEPLOYMENT.md).
+
 ## P0 — Security (do before real money / vendor files)
 
 | Status | Item | Notes |
@@ -28,6 +30,11 @@ Prioritized build plan for a house-plan marketplace go-live.
 
 | Status | Item | Notes |
 |--------|------|--------|
+| ✅ Done | Production env gate in `npm run build` | `scripts/check-production-env.mjs` fails closed on Vercel production |
+| ✅ Done | Geo-IP local currency (display + charge) | `src/lib/currency.ts` + `/api/geo`; PromptPay remains THB+TH |
+| ✅ Done | TH/EN storefront locale clamp | `STOREFRONT_UI_LOCALES` when `THAI_DOMESTIC_MARKET` |
+| ⬜ | Single Vercel project only | Disconnect duplicate `planasia-n359` if still linked |
+| ⬜ | Confirm production deploy SHA = `main` tip | Avoid serving pre–history-reset builds |
 | ⬜ | Refund / dispute webhooks | Revoke grants + reverse commissions on Stripe refund/dispute |
 | ⬜ | Hardcopy ops queue | Admin list of orders with `hardcopy-3sets` + shipping status |
 | ⬜ | Buyer order history | Account page for past purchases / download links |

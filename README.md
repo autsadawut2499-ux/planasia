@@ -1,99 +1,133 @@
 # Planasia
 
-AI-powered regional house-plan marketplace for Thailand, Asia, and India. Browse and buy concept drawing sets from draftsmen and architects — have local licensed professionals review before construction.
+Thai-first house-plan marketplace: browse and buy concept drawing sets from draftsmen and architects. Local licensed professionals should review plans before construction.
 
-## Features (Phase 2)
+**Live:** [https://planasia.vercel.app](https://planasia.vercel.app) · **Repo:** [autsadawut2499-ux/planasia](https://github.com/autsadawut2499-ux/planasia)
 
-- **Vendor PDF delivery** — Purchased downloads serve uploaded blueprint PDFs via `/api/download`
-- **Gemini AI** — Listing assist / imagery when `GEMINI_API_KEY` is set
-- **Payments** — Stripe Checkout (card + PromptPay for TH); mock unlocks only with `ALLOW_MOCK_PAYMENTS=true` in non-production
-- **Google OAuth** — NextAuth sign-in when Google credentials configured
-- **Hardcopy upsell** — Optional printed sets with shipping address at checkout
+## Stack
 
-## Quick Start
+| Layer | Tech |
+|-------|------|
+| App | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 4 |
+| Auth | NextAuth (Google OAuth) + admin PIN |
+| Data | Supabase (Postgres, Storage, RLS) |
+| Payments | Stripe Checkout (PromptPay for THB + Thailand; card for local currencies) |
+| AI | Google Gemini (`GEMINI_API_KEY`) — listing assist, KYC helpers, plan-finder chat, SEO copy |
+| Hosting | Vercel (`vercel.json` cron for smart ranking) |
+
+## Current product mode
+
+`THAI_DOMESTIC_MARKET = true` in [`src/lib/market/config.ts`](src/lib/market/config.ts):
+
+- Store catalog / target market locked to **Thailand**
+- UI language toggle: **TH / EN** only (geo/browser picks are clamped)
+- Foreign document OCR / post-pay translation pipelines are gated off (code retained)
+- **Display & checkout currency follow geo-IP** (JPY, EUR, USD, THB, …) — not hardcoded to THB
+
+Prices in the database stay in **THB**; conversion uses fixed reference rates in [`src/lib/currency.ts`](src/lib/currency.ts). Unknown countries default to THB.
+
+## Features
+
+- **Storefront** — Catalog, filters, favorites, cart, pre-checkout review, Stripe purchase + download grants
+- **Vendor dashboard** — Listings, KYC, earnings / payouts, private blueprint uploads
+- **Admin** — CMS, listings moderation, KYC, commissions, payouts, ranking, mega-menu, hero/gallery/brand
+- **Geo-IP** — `/api/geo` sets suggested language + local currency from edge headers or ipapi
+- **AI plan chat** — Floating “AI ค้นหาแบบบ้าน” assistant → listing recommendations
+- **Listing SEO** — Gemini/rules-generated title, description, and RealEstateListing JSON-LD (`seo_*` columns)
+- **Partner marquee** — Brand strip on the homepage between hero and popular plans
+- **Customer service** — CMS topics + external DocTranslator link in the header mega-menu
+- **Hardcopy upsell** — Optional printed sets with shipping address (ops queue still evolving)
+- **PWA / SEO** — Manifest, sitemap, robots, Open Graph per listing
+
+## Quick start
 
 ```bash
-cd Projects/planasia
 npm install
+cp .env.example .env.local   # fill keys as needed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000).
+
+Useful scripts:
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Local Next.js server |
+| `npm run build` | Production env check + `next build` |
+| `npm run check:env` | Same env gate used on Vercel production builds |
+| `npm run test:supabase` / `test:gemini` | Connectivity smoke tests |
+| `npm run setup` | Windows helper (`scripts/setup.ps1`) |
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and fill in keys as needed:
+See [`.env.example`](.env.example) for the full list.
 
-| Variable | Purpose |
-|----------|---------|
-| `GEMINI_API_KEY` | AI plan data, images, chat |
-| `GOOGLE_CLIENT_ID/SECRET` + `NEXTAUTH_SECRET` | Google sign-in |
-| `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` | Live payments |
+**Required on Vercel Production** (enforced by `scripts/check-production-env.mjs` when `VERCEL_ENV=production`):
 
-Without API keys, the app runs in **fallback mode** (deterministic plans + mock payment).
+`NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `NEXT_PUBLIC_SITE_URL`, Supabase URL/anon/service role, Stripe secret/webhook/publishable, `ADMIN_PIN` (not the example `501499`), `CRON_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 
-## Project Structure
+Optional but recommended: `GEMINI_API_KEY`, `RESEND_API_KEY` / `EMAIL_FROM` for receipts.
+
+Never set `ALLOW_MOCK_PAYMENTS` in production (ignored even if set).
+
+## Project structure
 
 ```
 src/
-├── app/
-│   ├── page.tsx              # Landing page
-│   ├── workspace/page.tsx    # Main design workspace
-│   ├── store/page.tsx        # Ready-to-buy catalog
+├── app/                      # App Router pages + API routes
+│   ├── page.tsx              # Homepage (hero, marquee, popular plans)
+│   ├── store/                # Marketplace catalog + listing detail
+│   ├── dashboard/draftsman/  # Vendor dashboard
+│   ├── admin/                # Admin console
+│   ├── about/, draftsmen/, home-building/, …
 │   └── api/
-│       ├── geo/route.ts      # IP geolocation
-│       ├── generate/route.ts # AI render + plan generation
-│       ├── download/route.ts # PDF/CAD download (token-gated)
-│       ├── payment/route.ts  # Stripe / mock payment
-│       ├── auth/[...nextauth]/ # Google OAuth
-│       └── chat/route.ts     # Dual-AI chat endpoint
+│       ├── geo/              # Geo-IP → country, uiLocale, currency
+│       ├── store/            # Listings, cart checkout, purchase
+│       ├── gemini/           # Chat, status, translate helpers
+│       ├── vendor/, admin/, webhooks/stripe/, cron/ranking/
+│       └── …
+├── components/               # landing, store, vendor, admin, chat, UI
+├── context/AppContext.tsx    # Locale, geo country, display currency
 ├── lib/
-│   ├── pdf/generator.ts      # A3 permit PDF assembly
-│   ├── plans/                # Plan schema + storage
-│   ├── ai/gemini.ts          # Gemini SDK client
-│   └── payments/stripe.ts    # Stripe Checkout
-└── components/               # UI (workspace, landing, layout)
+│   ├── currency.ts           # Multi-currency map + THB conversion
+│   ├── market/config.ts      # Thai domestic market flags
+│   ├── geo/, checkout/, payments/, store/, vendor/, seo/, gemini/
+│   └── …
+└── middleware.ts
+
+supabase/migrations/          # Schema through 043_listing_seo.sql
+docs/                         # Production + deployment notes
+templates/                    # Internal drawing references (not store products)
+scripts/                      # Env check, setup, Gemini/Supabase tests
 ```
 
-## Template Policy (กรมโยธาธิการ Reference Files)
+## Documentation
 
-**Important:** PDF files in `templates/master/` are **internal reference only**.
+| Doc | Contents |
+|-----|----------|
+| [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md) | Soft-launch security, payouts, ops checklist |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Vercel / GitHub deploy, env gate, dual-project pitfalls |
+| [`templates/master/README.md`](templates/master/README.md) | กรมโยธาธิการ reference PDF policy |
+| [`templates/cad/README.md`](templates/cad/README.md) | Golden Standard CAD sync notes |
 
-| Purpose | Details |
-|---------|---------|
-| What they are | Sample templates and drawing patterns from กรมโยธาธิการ for AI to learn line weights, title blocks, symbols, and sheet layout |
-| What they are NOT | Products for sale on the Store |
-| Store sells | **Original house designs co-created by users and AI**, using government samples only as technical guidance |
+## Template policy
 
-See [`templates/master/README.md`](templates/master/README.md) and [`src/lib/templates/policy.ts`](src/lib/templates/policy.ts).
+PDF/DWG files under `templates/` are **internal reference only** (line weights, title blocks, completeness). They are **not** store products. The marketplace sells original vendor designs. See [`src/lib/templates/policy.ts`](src/lib/templates/policy.ts).
 
-## Pricing Rules (built-in)
+## Pricing notes
 
-| Type | PDF | CAD |
-|------|-----|-----|
-| Store (community AI design) | 1,000 THB | — |
-| Custom 1-floor | 1,990 THB | 4,990 THB |
-| Custom 2-floor | 2,990 THB | 4,990 THB |
+Listing sale prices are set by vendors (THB base). Platform share / vendor share are enforced in store pricing helpers. Custom workspace PDF/CAD reference prices remain in geo pricing config for legacy workspace flows.
 
-## Reference Patterns (Internal — NOT Store Products)
+## Deploy
 
-| Library | Format | Purpose |
-|---------|--------|---------|
-| `templates/master/` | PDF | กรมโยธาธิการ drawing patterns |
-| `templates/cad/smart-a-golden/` | DWG | **Golden Standard** — Smart A TYPE E complete house set (32 files) |
-| `templates/cad/golden-standard.json` | JSON | Completeness checklist + auto-fill rules |
+1. Push to `main` on GitHub (Vercel Git integration).
+2. Ensure **one** Vercel project (`planasia`) is connected — avoid a second overlapping project.
+3. Production builds run `npm run build` → env check must pass or the deploy fails and the previous build stays live.
+4. Confirm the Ready deployment cloned the expected commit SHA.
 
-**Smart A Golden Standard** is an internal drawing-set completeness guideline (A/S/SN/E/ME/AC). Marketplace downloads are vendor PDFs; generative sheets are a legacy fallback only.
+Details: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
-Sync locally: `node scripts/sync-cad-templates.mjs` — see `templates/cad/README.md`.
+## License / contact
 
-## PDF Drawing Set (Phase 2)
-
-Generated sheets include:
-
-| Category | Sheets |
-|----------|--------|
-| **A** Architectural | Index, Site Plan, Floor Plans, Roof, Elevations, Sections, Bathroom/Stair/Door details |
-| **S** Structural | Foundation/Pile, Beams, Roof structure, Details, Calculation report |
-| **SN** Sanitary | Per-floor plumbing, septic, rainwater |
-| **E** Electrical | Per-floor lighting/power, Single Line Diagram |
+Private project. Business contact: hello@planasia.com
