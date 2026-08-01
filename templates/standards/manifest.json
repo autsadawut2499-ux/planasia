@@ -1,0 +1,72 @@
+{
+  "id": "planasia-drawing-standards",
+  "version": "1.0.0",
+  "platform": "Planasia / Titan Box",
+  "purpose": "Authoritative standards bundle for DPT layouts and Titan Box title blocks. Platform prepares specs; external AI agents generate vector geometry.",
+  "roleSplit": {
+    "platform": [
+      "DPT Golden Standard sheet structure and index",
+      "Titan Box title block references and field mapping",
+      "Project data schema (HousePlanDocument)",
+      "Per-sheet vector generation specifications",
+      "Export pipeline orchestration and validation"
+    ],
+    "externalAgent": [
+      "Pure vector geometry for each drawing sheet (pdf-lib or equivalent)",
+      "Wall, door, window, dimension, elevation, section, MEP linework",
+      "Compliance with specs in sheet-vector-specs.json"
+    ]
+  },
+  "authorities": {
+    "layout": {
+      "id": "dpt-smart-a-type-e",
+      "config": "templates/cad/golden-standard.json",
+      "description": "Department of Public Works and Town & Country Planning — Smart A TYPE E"
+    },
+    "titleBlock": {
+      "platform": "Titan Box",
+      "cadMaster": "templates/title-block/STANDARD-TITLE-BLOCK.dwg",
+      "pdfPlotReference": "templates/title-block/STANDARD-TITLE-BLOCK.plt",
+      "vectorTemplate": "templates/title-block/titan-box-standard.json",
+      "manifest": "templates/title-block/manifest.json"
+    }
+  },
+  "configs": [
+    {
+      "id": "external-agent-contract",
+      "path": "templates/standards/external-agent-contract.json",
+      "description": "API contract for external vector generation agents"
+    },
+    {
+      "id": "vector-output-spec",
+      "path": "templates/standards/vector-output-spec.json",
+      "description": "Output format, coordinate system, and pdf-lib primitive requirements"
+    },
+    {
+      "id": "sheet-vector-specs",
+      "path": "templates/standards/sheet-vector-specs.json",
+      "description": "Per-sheet generation specs — required elements, inputs, acceptance criteria"
+    },
+    {
+      "id": "template-blocks",
+      "path": "templates/standards/template-blocks/manifest.json",
+      "description": "Standard template blocks — line standards, skeletons, details, notes, symbols"
+    },
+    {
+      "id": "construction-scope",
+      "path": "src/lib/pdf/drawing-scope.ts",
+      "description": "7-section construction drawing scope (code module)"
+    },
+    {
+      "id": "golden-standard",
+      "path": "templates/cad/golden-standard.json",
+      "description": "DPT Smart A TYPE E sheet index and discipline structure"
+    }
+  ],
+  "apiEndpoints": {
+    "standardsBundle": "/api/standards/drawing-spec",
+    "sheetSpec": "/api/standards/drawing-spec?sheet={sheetCode}",
+    "templateBlocks": "/api/standards/drawing-spec?blocks={categoryId}",
+    "agentPayload": "/api/standards/vector-generation"
+  }
+}

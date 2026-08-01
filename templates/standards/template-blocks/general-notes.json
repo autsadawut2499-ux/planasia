@@ -1,0 +1,193 @@
+{
+  "version": "1.0.0",
+  "category": "general-notes",
+  "label": "General Notes & Specifications",
+  "labelTh": "หมายเหตุทั่วไปและข้อกำหนด",
+  "authority": "DPT Smart A TYPE E + Thai Building Code",
+  "textFormat": {
+    "fontSizePt": 7,
+    "lineSpacingPt": 9,
+    "numberingStyle": "decimal-parenthesis",
+    "bilingual": true,
+    "languages": ["en", "th"]
+  },
+  "blocks": [
+    {
+      "blockId": "NOTE-GENERAL-STD",
+      "name": "General Notes",
+      "nameTh": "หมายเหตุทั่วไป",
+      "targetSheets": ["A0.00", "A1.00", "A2.00"],
+      "panelPosition": "bottom-left-above-titleblock-or-A0-panel",
+      "items": [
+        {
+          "no": 1,
+          "en": "All dimensions are in millimeters unless otherwise noted. Elevations are in meters relative to +0.00 ground floor level.",
+          "th": "มิติทั้งหมดเป็นหน่วยมิลลิเมตร เว้นแต่ระบุไว้เป็นอย่างอื่น ระดับชั้นเป็นเมตร อ้างอิง +0.00 ชั้นพื้น"
+        },
+        {
+          "no": 2,
+          "en": "Contractor shall verify all dimensions on site before construction. Discrepancies shall be reported to the architect/engineer immediately.",
+          "th": "ผู้รับเหมาต้องตรวจสอบมิติหน้างานก่อนก่อสร้าง หากพบความคลาดเคลื่อนให้แจ้งสถาปนิก/วิศวกรทันที"
+        },
+        {
+          "no": 3,
+          "en": "All materials and workmanship shall comply with the Department of Public Works and Town & Country Planning (DPT) standards and Thai Building Control Act B.E. 2522.",
+          "th": "วัสดุและงานก่อสร้างทั้งหมดต้องเป็นไปตามมาตรฐานกรมโยธาธิการและ town planning และ พ.ร.บ. ควบคุมอาคาร พ.ศ. 2522"
+        },
+        {
+          "no": 4,
+          "en": "Construction schedule: foundation within 30 days of permit approval; superstructure per agreed program; final inspection before occupancy.",
+          "th": "ระยะเวลาก่อสร้าง: ฐานรากภายใน 30 วันหลังอนุญาต โครงสร้างตามแผนงานที่ตกลง ตรวจรับก่อนเข้าอยู่อาศัย"
+        },
+        {
+          "no": 5,
+          "en": "Do not scale drawings. Use written dimensions only.",
+          "th": "ห้ามใช้ scale จากแบบ ให้อ่านมิติที่ระบุบนแบบเท่านั้น"
+        },
+        {
+          "no": 6,
+          "en": "All structural work shall be inspected and approved by a licensed Professional Engineer (PE) before concrete placement.",
+          "th": "งานโครงสร้างทั้งหมดต้องได้รับการตรวจสอบและอนุมัติจากวิศวกรที่ได้รับใบอนุญาต (PE) ก่อนเทคอนกรีต"
+        }
+      ],
+      "inputDataPaths": ["doc.project", "doc.buildingCode"]
+    },
+    {
+      "blockId": "NOTE-STRUCT-STD",
+      "name": "Structural Notes",
+      "nameTh": "หมายเหตุโครงสร้าง",
+      "targetSheets": ["S1.00", "S2.00", "S3.00", "S5.00"],
+      "panelPosition": "right-panel-or-S5-summary",
+      "engineeringStandards": {
+        "concreteCompressiveStrength": {
+          "symbol": "fc'",
+          "unit": "MPa",
+          "values": {
+            "footing": 240,
+            "column": 280,
+            "beam": 280,
+            "slab": 240,
+            "stair": 280
+          },
+          "note": "Cylinder test at 28 days per มย. / TIS standards"
+        },
+        "reinforcementYieldStrength": {
+          "symbol": "fy",
+          "unit": "MPa",
+          "values": {
+            "SD40": 400,
+            "SD50": 500
+          },
+          "defaultGrade": "SD40"
+        },
+        "lapSplice": {
+          "unit": "mm",
+          "compression": { "formula": "40 × db", "minMm": 400 },
+          "tension": { "formula": "50 × db", "minMm": 500 },
+          "note": "db = bar diameter; increase 25% for epoxy-coated bars"
+        },
+        "concreteClearCover": {
+          "unit": "mm",
+          "footing": 75,
+          "column": 40,
+          "beam": 40,
+          "slab": 20,
+          "stair": 25,
+          "note": "Clear cover to main reinforcement; exposed to soil use 75 mm minimum"
+        },
+        "developmentLength": {
+          "formula": "40 × db (tension, SD40)",
+          "minMm": 300
+        }
+      },
+      "items": [
+        {
+          "no": 1,
+          "en": "Concrete compressive strength fc' as noted per element type (footing 240 MPa, column/beam 280 MPa, slab 240 MPa).",
+          "th": "กำลังอัดคอนกรีต fc' ตามประเภทองค์ประกอบ (ฐานราก 240 MPa, เสา/คาน 280 MPa, พื้น 240 MPa)"
+        },
+        {
+          "no": 2,
+          "en": "Reinforcement steel yield strength fy = 400 MPa (SD40) unless noted otherwise.",
+          "th": "เหล็กเสริม fy = 400 MPa (SD40) เว้นแต่ระบุเป็นอย่างอื่น"
+        },
+        {
+          "no": 3,
+          "en": "Lap splice length: tension 50×db (min 500 mm); compression 40×db (min 400 mm).",
+          "th": "ความยาว splice: แรงดึง 50×db (ขั้นต่ำ 500 มม.) แรงอัด 40×db (ขั้นต่ำ 400 มม.)"
+        },
+        {
+          "no": 4,
+          "en": "Concrete clear cover: footing 75 mm, column/beam 40 mm, slab 20 mm to main rebar.",
+          "th": "cover คอนกรีต: ฐานราก 75 มม. เสา/คาน 40 มม. พื้น 20 มม. ถึงเหล็กเสริมหลัก"
+        },
+        {
+          "no": 5,
+          "en": "All reinforcement shall be securely tied and supported on approved chairs/spacers before pouring.",
+          "th": "เหล็กเสริมต้องมัดและรองรับด้วย chair/spacer ที่ได้รับอนุมัติก่อนเทคอนกรีต"
+        }
+      ],
+      "inputDataPaths": ["doc.structural", "doc.buildingCode"]
+    },
+    {
+      "blockId": "NOTE-FINISH-MEP-STD",
+      "name": "Finishing & MEP Specifications",
+      "nameTh": "ข้อกำหนดงานตกแต่งและระบบ MEP",
+      "targetSheets": ["A0.00", "A8.00", "SN-01", "E-01"],
+      "panelPosition": "spec-panel-or-schedule-sheet",
+      "finishingSpecs": {
+        "flooring": {
+          "livingBedroom": { "material": "polished-cement-or-tile", "note": "As per owner selection" },
+          "bathroom": { "material": "ceramic-tile-300x300", "skidResistant": true },
+          "kitchen": { "material": "ceramic-tile-or-stone", "waterResistant": true },
+          "exterior": { "material": "anti-slip-tile-or-stone" }
+        },
+        "walls": {
+          "interior": { "material": "smooth-plaster-paint", "coats": 2 },
+          "bathroom": { "material": "ceramic-tile-full-height", "grout": "waterproof" },
+          "exterior": { "material": "cement-plaster-acrylic-paint" }
+        },
+        "ceiling": {
+          "interior": { "material": "gypsum-board-flat", "paint": "matte-white" },
+          "bathroom": { "material": "moisture-resistant-gypsum", "note": "Or exposed if ventilated" }
+        },
+        "paint": {
+          "interior": { "type": "acrylic-latex", "finish": "matte/eggshell" },
+          "exterior": { "type": "elastomeric-acrylic", "finish": "textured-or-smooth" }
+        }
+      },
+      "mepSpecs": {
+        "plumbing": {
+          "waterSupply": "PP-R or PVC-U, PN 10, Thai Industrial Standards",
+          "drainage": "PVC-U soil/waste, slope min 1:60",
+          "septicTank": "Prefabricated reinforced concrete, capacity per occupancy",
+          "greaseTrap": "Required for kitchen if connected to municipal sewer"
+        },
+        "electrical": {
+          "wiring": "THW copper conductor in PVC conduit",
+          "consumerUnit": "Main breaker + RCD per EIA/TIS",
+          "lighting": "LED fixtures, min 200 lux living areas",
+          "earthing": "Ground rod ≤ 5 Ω or per utility requirement"
+        },
+        "mechanical": {
+          "ventilation": "Natural cross-ventilation min 10% floor area opening",
+          "exhaustFan": "Bathroom min 8 ACH",
+          "ac": "Split-type inverter, drain to floor trap"
+        }
+      },
+      "items": [
+        {
+          "no": 1,
+          "en": "Finishing materials as specified in schedule; owner to confirm selections before procurement.",
+          "th": "วัสดุตกแต่งตามตารางข้อกำหนด เจ้าของยืนยันตัวเลือกก่อนจัดซื้อ"
+        },
+        {
+          "no": 2,
+          "en": "MEP systems shall comply with DPT Smart A TYPE E sheets SN and E series.",
+          "th": "ระบบ MEP ต้องเป็นไปตามแบบชุด SN และ E ของ Smart A TYPE E"
+        }
+      ],
+      "inputDataPaths": ["doc.sanitary", "doc.electrical", "doc.architecturalDetails"]
+    }
+  ]
+}

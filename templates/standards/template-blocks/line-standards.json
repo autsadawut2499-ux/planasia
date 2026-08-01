@@ -1,0 +1,169 @@
+{
+  "version": "1.0.0",
+  "category": "line-standards",
+  "label": "Line Standards & Types",
+  "labelTh": "มาตรฐานเส้นและประเภทเส้น",
+  "authority": "DPT Smart A TYPE E",
+  "units": { "lineWeight": "pt", "spacing": "mm-on-paper-at-scale" },
+  "blocks": [
+    {
+      "blockId": "LINE-DIM-STD",
+      "name": "Dimension & Extension Lines",
+      "nameTh": "เส้นมิติและเส้นช่วยมิติ",
+      "cadLayer": "DIM",
+      "lineWeightPt": 0.35,
+      "color": "#333333",
+      "extensionLine": {
+        "offsetFromObjectMm": 1.5,
+        "extensionBeyondDimLineMm": 2.0,
+        "gapFromObjectMm": 0.5,
+        "lineWeightPt": 0.25
+      },
+      "dimensionLine": {
+        "lineWeightPt": 0.35,
+        "textHeightPt": 7,
+        "textGapMm": 1.0,
+        "textPosition": "above-center",
+        "format": "{value} (metric) or {value}'-{inches}\" (imperial)",
+        "decimalPlaces": 0,
+        "suppressTrailingZeros": false
+      },
+      "arrowhead": {
+        "style": "closed-filled-triangle",
+        "lengthMm": 2.5,
+        "widthMm": 1.0,
+        "tickAlternative": {
+          "style": "architectural-tick",
+          "lengthMm": 2.0,
+          "useWhen": "interior-dimensions-under-600mm"
+        }
+      },
+      "chainDimension": {
+        "enabled": true,
+        "baselineOffsetMm": 8,
+        "runningOffsetIncrementMm": 8
+      },
+      "angularDimension": {
+        "arcRadiusMm": 10,
+        "textInsideArc": true
+      },
+      "appliesTo": ["A1.00", "A2.xx", "A3.00", "A4.00", "A5.00", "A6.00", "A7.00", "A8.00", "S1.00", "S2.00", "S3.00"]
+    },
+    {
+      "blockId": "LINE-CENTER-STD",
+      "name": "Center Lines / Axis Lines",
+      "nameTh": "เส้นจากศูนย์กลาง / เส้นแกน",
+      "cadLayer": "CENTER",
+      "lineWeightPt": 0.25,
+      "color": "#000000",
+      "lineStyle": {
+        "pattern": "long-dash-short-dash",
+        "dashSequenceMm": [12, 2, 2, 2],
+        "phaseOffsetMm": 0
+      },
+      "alternatives": {
+        "gridAxis": {
+          "pattern": "center-dot",
+          "dashSequenceMm": [24, 2, 2, 2],
+          "lineWeightPt": 0.25
+        },
+        "columnCenterline": {
+          "extendsBeyondColumnMm": 300,
+          "lineWeightPt": 0.25
+        }
+      },
+      "appliesTo": ["A2.xx", "S1.00", "S2.00", "S3.00", "S4.00", "A5.00"],
+      "usageNotes": [
+        "Column grid centerlines on all floor and structural plans",
+        "Symmetry axis on sections and elevations",
+        "Beam/column centerlines on structural details"
+      ]
+    },
+    {
+      "blockId": "LINE-HIDDEN-STD",
+      "name": "Hidden Lines",
+      "nameTh": "เส้นที่มองไม่เห็น / ใต้ดิน",
+      "cadLayer": "HIDDEN",
+      "lineWeightPt": 0.25,
+      "color": "#666666",
+      "lineStyle": {
+        "pattern": "dashed",
+        "dashSequenceMm": [4, 2],
+        "phaseOffsetMm": 0
+      },
+      "variants": {
+        "underground": {
+          "cadLayer": "HIDDEN-UG",
+          "dashSequenceMm": [6, 3],
+          "lineWeightPt": 0.25,
+          "useFor": ["footing-outline-below-grade", "underground-pipes", "below-slab-elements"]
+        },
+        "above-ceiling": {
+          "cadLayer": "HIDDEN-AC",
+          "dashSequenceMm": [4, 2],
+          "useFor": ["beam-above-ceiling", "duct-above-ceiling"]
+        },
+        "future-work": {
+          "cadLayer": "HIDDEN-FUT",
+          "dashSequenceMm": [8, 4, 2, 4],
+          "useFor": ["future-expansion", "optional-elements"]
+        }
+      },
+      "appliesTo": ["A2.xx", "A5.00", "S1.00", "S3.00", "SN-xx", "E-xx"]
+    },
+    {
+      "blockId": "LINE-CUT-REF-STD",
+      "name": "Cutting Plane & Reference Lines",
+      "nameTh": "เส้นตัดและเส้นอ้างอิงรายละเอียด",
+      "cadLayer": "CUT-REF",
+      "lineWeightPt": 0.5,
+      "color": "#000000",
+      "cuttingPlane": {
+        "lineStyle": {
+          "pattern": "long-dash-dot",
+          "dashSequenceMm": [16, 4, 2, 4]
+        },
+        "symbol": {
+          "type": "cutting-plane-indicator",
+          "tailLengthMm": 15,
+          "arrowheadStyle": "filled-triangle",
+          "labelFormat": "{cutId}",
+          "labelHeightPt": 8,
+          "labelBox": true
+        },
+        "cutIdSequence": ["A-A", "B-B", "C-C", "1-1", "2-2"],
+        "viewDirectionArrow": {
+          "lengthMm": 8,
+          "filled": true
+        }
+      },
+      "detailReference": {
+        "symbol": {
+          "type": "detail-bubble",
+          "diameterMm": 12,
+          "lineWeightPt": 0.5,
+          "leaderStyle": "straight-or-dogleg",
+          "leaderLineWeightPt": 0.35
+        },
+        "labelFormat": "{detailNo}/{sheetNo}",
+        "detailNoSequence": [1, 2, 3, 4, 5],
+        "targetSheets": ["A6.00", "A7.00", "A8.00", "S2.00", "S3.00"]
+      },
+      "sectionReference": {
+        "symbol": {
+          "type": "section-marker-circle",
+          "diameterMm": 14,
+          "topHalfFilled": true,
+          "bottomHalfOpen": true
+        },
+        "labelFormat": "{sectionId} / {sheetNo}",
+        "targetSheet": "A5.00"
+      },
+      "elevationReference": {
+        "symbol": "SYM-ELEV-MARKER-STD",
+        "targetSheet": "A4.00"
+      },
+      "appliesTo": ["A2.xx", "A4.00", "A5.00", "A6.00", "A7.00", "S1.00"]
+    }
+  ]
+}

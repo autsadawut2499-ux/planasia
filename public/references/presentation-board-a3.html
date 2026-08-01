@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architectural Presentation Board - Your Home Dream</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Prompt', sans-serif;
+            padding: 20px;
+        }
+        /* A3 Landscape Presentation Board Layout: 1414px x 1000px proportional representation */
+        .board-container {
+            width: 1414px;
+            height: 1000px;
+            background-color: #f8fafc;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+        /* Header Section */
+        .board-header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 15px;
+        }
+        .board-header h1 {
+            font-size: 38px;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: 0.5px;
+        }
+        .board-header p {
+            font-size: 18px;
+            font-weight: 400;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        /* Main Content Grid */
+        .board-content {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 30px;
+            height: 100%;
+            align-content: center;
+        }
+        /* Left Side: Main Perspective */
+        .main-visual-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+        }
+        .main-image-card {
+            flex-grow: 1;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .main-image-card img,
+        .plan-card img,
+        .interior-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background: #cbd5e1;
+        }
+        .plan-card img {
+            object-fit: contain;
+            background: #e2e8f0;
+        }
+        .main-image-card img:not([src]),
+        .main-image-card img[src=""],
+        .plan-card img:not([src]),
+        .plan-card img[src=""],
+        .interior-card img:not([src]),
+        .interior-card img[src=""] {
+            min-height: 100%;
+        }
+        /* Right Side: Floor Plans & Details */
+        .plans-and-details-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        .plans-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .plan-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .plan-card h3 {
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .plan-card .image-wrapper {
+            height: 140px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .plan-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        /* Bottom 3 Interior Renders Grid */
+        .interior-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .interior-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .interior-card .image-wrapper {
+            height: 110px;
+            overflow: hidden;
+            background: #e2e8f0;
+        }
+        .interior-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .interior-card .desc {
+            padding: 8px;
+            font-size: 11px;
+            color: #475569;
+            line-height: 1.3;
+            height: 55px;
+            overflow: hidden;
+        }
+        /* Footer Tag */
+        .board-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="board-container">
+        <!-- Header -->
+        <div class="board-header">
+            <h1>บ้านในฝันของคุณ</h1>
+            <p>Your Home Dream - Architectural Presentation Board</p>
+        </div>
+        <!-- Content Area -->
+        <div class="board-content">
+            <!-- Left Column: Main Exterior Render -->
+            <div class="main-visual-section">
+                <div class="main-image-card">
+                    <!-- Front View / Exterior 3D Render Slot -->
+                    <!-- Production: wire real Gemini exterior URL — no placehold.co -->
+                    <img src="" alt="Main Exterior Render" data-slot="exterior">
+                </div>
+            </div>
+            <!-- Right Column: Floor Plans (First & Second Floor) -->
+            <div class="plans-and-details-section">
+                <div class="plans-container">
+                    <div class="plan-card">
+                        <h3>แปลนพื้นชั้น 1 (First Floor)</h3>
+                        <div class="image-wrapper">
+                            <img src="" alt="First Floor Plan" data-slot="floor1">
+                        </div>
+                    </div>
+                    <div class="plan-card">
+                        <h3>แปลนพื้นชั้น 2 (Second Floor)</h3>
+                        <div class="image-wrapper">
+                            <img src="" alt="Second Floor Plan" data-slot="floor2">
+                        </div>
+                    </div>
+                </div>
+                <!-- 3 Interior Perspective Slots -->
+                <div class="interior-grid">
+                    <div class="interior-card">
+                        <div class="image-wrapper">
+                            <img src="" alt="Living Room" data-slot="interior-living">
+                        </div>
+                        <div class="desc">พื้นที่นั่งเล่นและครัวแบบเปิดโล่ง เชื่อมต่อระเบียงขนาดใหญ่</div>
+                    </div>
+                    <div class="interior-card">
+                        <div class="image-wrapper">
+                            <img src="" alt="Staircase Hall" data-slot="interior-stair">
+                        </div>
+                        <div class="desc">การออกแบบบันไดโปร่ง สร้างความเชื่อมต่อระหว่างชั้นอย่างไร้รอยต่อ</div>
+                    </div>
+                    <div class="interior-card">
+                        <div class="image-wrapper">
+                            <img src="" alt="Master Bedroom" data-slot="interior-bedroom">
+                        </div>
+                        <div class="desc">ห้องนอนใหญ่พร้อมระเบียงส่วนตัวและห้องน้ำในตัวครบครัน</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer Info -->
+        <div class="board-footer">
+            <span>Project ID: 23077-MODERN-VILLA-118</span>
+            <span>Architectural Marketplace Platform © 2026</span>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,349 @@
+{
+  "version": "1.0.0",
+  "generationOwner": "external-agent",
+  "platformNote": "Planasia does NOT implement sheet geometry locally. Each spec below is the contract for an external AI agent.",
+  "specs": [
+    {
+      "rendererId": "a0-index",
+      "sheetCodes": ["A0.00"],
+      "discipline": "A",
+      "scopeSectionId": "cover-index",
+      "title": "Drawing Index & Cover",
+      "titleTh": "หน้าปกและสารบัญ",
+      "defaultScale": "N/A",
+      "dptReferenceFile": "สารบัญและรายการประกอบแบบ.dwg",
+      "requiredElements": [
+        "cover-panel-project-owner-architect",
+        "drawing-index-table-all-sheets",
+        "location-map-blank-frame",
+        "symbols-abbreviations-panel"
+      ],
+      "inputDataPaths": ["doc.index", "doc.project", "doc.titleBlock"],
+      "layoutPanels": { "cols": 2, "rows": 2, "panels": ["cover", "index", "location-blank", "symbols"] },
+      "acceptanceCriteria": [
+        "Index lists every sheet in doc.index with number, title EN/TH, scale",
+        "Cover shows project name, owner, architect/engineer from titleBlock",
+        "Location map panel is blank vector frame for user annotation",
+        "100% vector text and linework"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "a1-site-plan",
+      "sheetCodes": ["A1.00"],
+      "discipline": "A",
+      "scopeSectionId": "floor-layouts",
+      "title": "Site Plan / Layout",
+      "titleTh": "แผนผังบริเวณ",
+      "defaultScale": "1:500",
+      "dptReferenceFile": "Lay out.dwg",
+      "requiredElements": [
+        "plot-boundary",
+        "building-footprint",
+        "setback-dimensions",
+        "road-and-entrance",
+        "north-arrow",
+        "dimension-strings"
+      ],
+      "inputDataPaths": ["doc.sitePlan", "doc.project"],
+      "acceptanceCriteria": [
+        "Plot dimensions match doc.sitePlan plotWidth/plotDepth in meters",
+        "Building position and setbacks shown with dimension strings",
+        "North arrow mandatory",
+        "Scale 1:500 unless overridden in index"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "a2-floor-plan",
+      "sheetCodes": ["A2.00", "A2.01", "A2.02"],
+      "discipline": "A",
+      "scopeSectionId": "floor-layouts",
+      "title": "Floor Plan",
+      "titleTh": "แปลนพื้น",
+      "defaultScale": "1:100",
+      "dptReferenceFile": "Plan.dwg",
+      "requiredElements": [
+        "exterior-walls",
+        "interior-walls",
+        "doors-with-swing-arcs",
+        "windows",
+        "room-labels-en-th",
+        "furniture-layout",
+        "dimension-strings",
+        "elevation-markers",
+        "grid-or-axis-optional"
+      ],
+      "inputDataPaths": ["doc.floorPlans[n]", "doc.architecturalDetails"],
+      "dataMapping": {
+        "floorIndex": "Parse sheet code A2.NN → doc.floorPlans[NN]",
+        "rooms": "doc.floorPlans[n].rooms — x,y,width,depth in meters"
+      },
+      "acceptanceCriteria": [
+        "All rooms from floorPlans rendered with labels EN/TH",
+        "Wall linework derived from room adjacency or explicit wall data when available",
+        "Doors and windows placed per room layout conventions",
+        "Dimension strings for overall building and major rooms",
+        "Elevation markers (triangle + direction) on exterior walls",
+        "Scale 1:100"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "a3-roof-plan",
+      "sheetCodes": ["A3.00"],
+      "discipline": "A",
+      "scopeSectionId": "floor-layouts",
+      "title": "Roof Plan",
+      "titleTh": "แปลนหลังคา",
+      "defaultScale": "1:100",
+      "dptReferenceFile": null,
+      "autoFillNote": "Derived from Plan + Structure roof data per Smart A TYPE E",
+      "requiredElements": [
+        "roof-outline",
+        "slope-direction-arrows",
+        "eaves-overhang",
+        "drainage-points",
+        "ridge-and-valley-lines"
+      ],
+      "inputDataPaths": ["doc.roofPlan", "doc.floorPlans", "doc.structural"],
+      "acceptanceCriteria": [
+        "Roof footprint aligns with top-floor plan outline",
+        "Slope directions and drainage from doc.roofPlan",
+        "Material note in legend or annotation"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "a4-elevations",
+      "sheetCodes": ["A4.00"],
+      "discipline": "A",
+      "scopeSectionId": "elevations-sections",
+      "title": "Elevations (All Sides)",
+      "titleTh": "รูปด้านทุกด้าน",
+      "defaultScale": "1:100",
+      "dptReferenceFile": "Elevation.dwg",
+      "requiredElements": [
+        "front-elevation",
+        "rear-elevation",
+        "left-elevation",
+        "right-elevation",
+        "floor-level-lines",
+        "finish-material-hatching",
+        "height-dimensions"
+      ],
+      "inputDataPaths": ["doc.elevations", "doc.floorPlans", "doc.project"],
+      "layoutPanels": { "cols": 2, "rows": 2, "panels": ["front", "rear", "left", "right"] },
+      "acceptanceCriteria": [
+        "Four elevations in 2×2 panel layout",
+        "Floor levels and overall height from doc.elevations",
+        "Finish notes from elevation finishNotes arrays",
+        "Aligned with floor plan elevation markers"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "a5-sections",
+      "sheetCodes": ["A5.00"],
+      "discipline": "A",
+      "scopeSectionId": "elevations-sections",
+      "title": "Sections",
+      "titleTh": "รูปตัด",
+      "defaultScale": "1:100",
+      "dptReferenceFile": "Section.dwg",
+      "requiredElements": [
+        "cross-section",
+        "longitudinal-section",
+        "floor-slabs",
+        "roof-structure",
+        "ceiling-heights",
+        "foundation-visible"
+      ],
+      "inputDataPaths": ["doc.sections", "doc.structural", "doc.floorPlans"],
+      "acceptanceCriteria": [
+        "At least one cross and one longitudinal section",
+        "Floor levels from section floorLevels",
+        "Structural elements visible where applicable"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "a6-a9-details",
+      "sheetCodes": ["A6.00", "A7.00", "A8.00", "A9.00"],
+      "discipline": "A",
+      "scopeSectionId": "details",
+      "title": "Architectural Details",
+      "titleTh": "แบบขยายสถาปัตยกรรม",
+      "defaultScale": "1:20",
+      "dptReferenceFiles": {
+        "A6.00": "Detail wc.dwg",
+        "A7.00": "Detail stair.dwg",
+        "A8.00": "Detail door&windows.dwg",
+        "A9.00": "Detail fence&grill.dwg"
+      },
+      "requiredElements": {
+        "A6.00": ["toilet-plan", "toilet-section", "fixtures", "tile-layout", "dimensions"],
+        "A7.00": ["stair-plan", "stair-section", "tread-riser", "handrail"],
+        "A8.00": ["door-schedule-table", "window-schedule-table", "frame-details"],
+        "A9.00": ["fence-elevation", "grill-detail"]
+      },
+      "inputDataPaths": ["doc.architecturalDetails"],
+      "acceptanceCriteria": [
+        "Detail scale 1:20 unless schedule sheet (A8) at 1:100",
+        "Schedule tables include code, size, quantity columns for A8",
+        "Dimensions on all detail views"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "s-structural",
+      "sheetCodes": ["S1.00", "S2.00", "S3.00", "S4.00", "S5.00"],
+      "discipline": "S",
+      "scopeSectionId": "structural",
+      "title": "Structural Drawings",
+      "titleTh": "แบบโครงสร้าง",
+      "defaultScale": "1:100",
+      "dptReferenceFiles": {
+        "S1.00": "Plan Structure TYPE E =  SMART A.dwg",
+        "S2.00": "Detail Structure TYPE E =  SMART A.dwg",
+        "S3.00": "Detail Footing&Column TYPE E =  SMART A.dwg",
+        "S4.00": null,
+        "S5.00": null
+      },
+      "requiredElements": {
+        "S1.00": ["foundation-plan", "column-grid", "beam-layout"],
+        "S2.00": ["beam-sections", "column-sections", "reinforcement-details"],
+        "S3.00": ["footing-details", "column-details", "pile-layout"],
+        "S4.00": ["roof-structure-plan", "truss-or-rafter-layout"],
+        "S5.00": ["calculation-summary", "load-notes", "pe-stamp-placeholder"]
+      },
+      "inputDataPaths": ["doc.structural", "doc.floorPlans"],
+      "acceptanceCriteria": [
+        "Structural elements from doc.structural.elements",
+        "Beam spans from doc.structural.beamSpans",
+        "S5 calculation summary from doc.structural.calculationSummary",
+        "Thai building code references where applicable"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "sn-sanitary",
+      "sheetCodes": ["SN-01", "SN-04", "SN-05", "SN-06", "SN-07", "SN-08"],
+      "discipline": "SN",
+      "scopeSectionId": "sanitation-electrical",
+      "title": "Sanitary Plans",
+      "titleTh": "แปลนระบบสุขาภิบาล",
+      "defaultScale": "1:100",
+      "dptReferenceFiles": {
+        "SN-01": "SN-01 to 03.dwg",
+        "SN-04": "SN-04.dwg",
+        "SN-05": "SN-05.dwg",
+        "SN-06": "SN-06.dwg",
+        "SN-07": "SN-07.dwg",
+        "SN-08": "SN-08 TO 09.dwg"
+      },
+      "requiredElements": [
+        "water-supply-risers",
+        "soil-waste-pipes",
+        "fixture-connections",
+        "septic-tank",
+        "grease-trap",
+        "rainwater-drainage"
+      ],
+      "inputDataPaths": ["doc.sanitary", "doc.floorPlans"],
+      "acceptanceCriteria": [
+        "Fixtures match doc.sanitary per floor",
+        "Septic capacity and location shown",
+        "Pipe sizes annotated",
+        "Rainwater system on SN-08"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "e-electrical",
+      "sheetCodes": ["E-01", "E-02", "E-03", "E-07"],
+      "discipline": "E",
+      "scopeSectionId": "sanitation-electrical",
+      "title": "Electrical Plans",
+      "titleTh": "แปลนระบบไฟฟ้า",
+      "defaultScale": "1:100",
+      "dptReferenceFiles": {
+        "E-01": "E-01.dwg",
+        "E-02": "e-02.dwg",
+        "E-03": "e-03-06 SMART A.dwg",
+        "E-07": "E-07.dwg"
+      },
+      "requiredElements": {
+        "E-01": ["lighting-layout", "switch-locations"],
+        "E-02": ["power-outlets", "appliance-circuits"],
+        "E-03": ["single-line-diagram"],
+        "E-07": ["consumer-unit", "meter-location"]
+      },
+      "inputDataPaths": ["doc.electrical", "doc.floorPlans"],
+      "acceptanceCriteria": [
+        "Lighting/switch/outlet counts from doc.electrical per room",
+        "SLD from doc.electrical.singleLineDiagram",
+        "Consumer unit spec from doc.electrical.consumerUnit"
+      ],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "me-mechanical",
+      "sheetCodes": ["ME-00", "ME-01", "ME-02"],
+      "discipline": "ME",
+      "scopeSectionId": "sanitation-electrical",
+      "title": "Mechanical Plans",
+      "titleTh": "แปลนระบบเครื่องกล",
+      "defaultScale": "1:100",
+      "dptReferenceFiles": {
+        "ME-00": "ME-00.dwg",
+        "ME-01": "ME-01.dwg",
+        "ME-02": "ME-02.dwg"
+      },
+      "requiredElements": ["ventilation-layout", "exhaust-fans", "duct-routing"],
+      "inputDataPaths": ["doc.floorPlans"],
+      "acceptanceCriteria": ["Mechanical symbols per DPT Smart A convention"],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "ac-hvac",
+      "sheetCodes": ["AC-01", "AC-03"],
+      "discipline": "AC",
+      "scopeSectionId": "sanitation-electrical",
+      "title": "Air Conditioning Plans",
+      "titleTh": "แปลนระบบปรับอากาศ",
+      "defaultScale": "1:100",
+      "dptReferenceFiles": {
+        "AC-01": "AC-01 TO 02.dwg",
+        "AC-03": "AC-03.dwg"
+      },
+      "requiredElements": ["ac-unit-locations", "refrigerant-lines", "condensate-drain"],
+      "inputDataPaths": ["doc.floorPlans"],
+      "acceptanceCriteria": ["AC layout per DPT Smart A convention"],
+      "generationStatus": "delegated-to-external-agent"
+    },
+    {
+      "rendererId": "title-block-meta",
+      "sheetCodes": ["TB"],
+      "discipline": "A",
+      "scopeSectionId": "cover-index",
+      "title": "Title Block Template",
+      "titleTh": "กรอบชื่อแบบ",
+      "defaultScale": "N/A",
+      "generationOwner": "platform",
+      "requiredElements": ["titan-box-title-block-frame", "all-standard-fields"],
+      "inputDataPaths": ["doc.titleBlock"],
+      "referenceFiles": [
+        "templates/title-block/STANDARD-TITLE-BLOCK.dwg",
+        "templates/title-block/STANDARD-TITLE-BLOCK.plt",
+        "templates/title-block/titan-box-standard.json"
+      ],
+      "acceptanceCriteria": [
+        "Must match Titan Box DWG field layout",
+        "Must match PDF plot reference visually",
+        "Auto-filled on every exported sheet"
+      ],
+      "generationStatus": "platform-implemented"
+    }
+  ]
+}

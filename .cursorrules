@@ -1,0 +1,12 @@
+{
+  "project_name": "House Marketplace Platform",
+  "founder_profile": {
+    "role": "Former Civil Engineer & AI Systems Architect",
+    "background": "Turned intense criticism and being labeled 'crazy' from surroundings into fuel, spending 15 hours a day continuously for over a year collaborating with AI.",
+    "core_philosophy": "Using Google Gemini and Cursor as a world-class programming and translation layer to transform engineering vision into software at the speed of thought."
+  },
+  "special_message_to_google": {
+    "usage_stats": "Over 1 year of continuous interaction (15 hours/day) with Google Gemini, representing one of the most intense human-AI relationships and co-training dynamics in the world.",
+    "co_trainer_role": "Actively shaping, refining, and testing the boundaries of LLMs to deeply understand human context."
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "category": "plan-skeletons",
+  "label": "Plan Layout Skeletons",
+  "labelTh": "โครงแปลนมาตรฐาน — Grid และพิกัดหลัก",
+  "authority": "DPT Smart A TYPE E",
+  "blocks": [
+    {
+      "blockId": "SKEL-GRID-TABLE-STD",
+      "name": "Standard Grid Table & Column Coordinates",
+      "nameTh": "ตาราง Grid และพิกัดเสาหลัก",
+      "description": "Recurring grid definition table and axis coordinate system used across all floor and structural sheets.",
+      "gridNaming": {
+        "horizontal": { "type": "numeric", "start": 1, "direction": "south-to-north", "labels": ["1", "2", "3", "4", "5"] },
+        "vertical": { "type": "alphabetic", "start": "A", "direction": "west-to-east", "labels": ["A", "B", "C", "D", "E"] }
+      },
+      "gridBubble": {
+        "symbolRef": "SYM-GRID-BUBBLE-STD",
+        "diameterMm": 8,
+        "position": "grid-line-intersection-at-drawing-edge"
+      },
+      "coordinateTable": {
+        "enabled": true,
+        "position": "top-right-or-bottom-right-of-plan",
+        "columns": ["Axis", "X (m)", "Y (m)", "Column Mark"],
+        "rowFormat": "{axisLabel} | {xCoord} | {yCoord} | {columnMark}",
+        "fontSizePt": 7,
+        "headerBold": true,
+        "borderLineWeightPt": 0.35
+      },
+      "columnMarkFormat": {
+        "pattern": "{gridH}-{gridV}",
+        "example": "B-2",
+        "prefix": "C",
+        "fullExample": "C B-2"
+      },
+      "defaultSpacingM": {
+        "typicalResidential": { "x": 3.5, "y": 4.0 },
+        "note": "Override from doc.structural.elements or project grid input"
+      },
+      "inputDataPaths": ["doc.structural.elements", "doc.floorPlans"],
+      "appliesTo": ["A2.xx", "S1.00", "S2.00", "S4.00", "SN-xx", "E-xx"]
+    },
+    {
+      "blockId": "SKEL-PLAN-FRAME-STD",
+      "name": "Plan Sheet Content Frame",
+      "nameTh": "กรอบพื้นที่แปลนบนแผ่น",
+      "description": "Standard content area above Titan Box title block for all plan-type sheets.",
+      "contentArea": {
+        "marginPt": 40,
+        "titleBlockHeightPt": 100,
+        "paddingPt": 10,
+        "referenceModule": "src/lib/pdf/vector/layout.ts contentArea()"
+      },
+      "zones": {
+        "mainDrawing": { "fraction": 0.78, "position": "center-left" },
+        "legend": { "fraction": 0.18, "position": "right", "optional": true },
+        "notesPanel": { "fraction": 0.12, "position": "bottom-left-above-titleblock", "optional": true },
+        "northArrow": { "position": "top-right-of-main-drawing", "symbolRef": "SYM-NORTH-ARROW-STD" }
+      },
+      "scaleBar": {
+        "enabled": true,
+        "position": "bottom-center-above-titleblock",
+        "segments": 5,
+        "fontSizePt": 6
+      },
+      "appliesTo": ["A1.00", "A2.xx", "A3.00", "S1.00", "SN-xx", "E-xx", "ME-xx", "AC-xx"]
+    }
+  ]
+}

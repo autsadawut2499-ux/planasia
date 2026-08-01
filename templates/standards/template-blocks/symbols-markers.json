@@ -1,0 +1,164 @@
+{
+  "version": "1.0.0",
+  "category": "symbols-markers",
+  "label": "Symbols & Markers",
+  "labelTh": "สัญลักษณ์และเครื่องหมาย",
+  "authority": "DPT Smart A TYPE E + Titan Box",
+  "renderMode": "pure-vector",
+  "coordinateNote": "Symbol geometry defined in normalized units (0–1); agent scales to model/page coordinates",
+  "blocks": [
+    {
+      "blockId": "SYM-LEVEL-MARKER-STD",
+      "name": "Level Markers",
+      "nameTh": "เครื่องหมายระดับชั้น",
+      "description": "Triangle symbol indicating floor, ground, and roof levels (+0.00, +1.00, etc.)",
+      "geometry": {
+        "type": "filled-triangle-with-tail",
+        "triangleHeightNorm": 0.012,
+        "triangleBaseNorm": 0.008,
+        "tailLengthNorm": 0.015,
+        "orientation": "pointing-right",
+        "fill": true,
+        "lineWeightPt": 0.35
+      },
+      "label": {
+        "position": "right-of-triangle",
+        "format": "{sign}{value}",
+        "fontSizePt": 7,
+        "examples": ["+0.00", "+3.20", "+6.40", "R.L."]
+      },
+      "levelTypes": {
+        "groundFloor": { "defaultValue": "+0.00", "label": "F.F.L." },
+        "upperFloor": { "incrementM": 3.0, "format": "+{level}" },
+        "roof": { "label": "R.L.", "note": "Roof level — value from doc.elevations or structural" }
+      },
+      "placement": {
+        "onElevations": "at-each-floor-line-left-side",
+        "onSections": "at-floor-slab-edges",
+        "onFloorPlans": "optional-at-stair-or-section-cut"
+      },
+      "appliesTo": ["A4.00", "A5.00", "A2.xx"]
+    },
+    {
+      "blockId": "SYM-ELEV-MARKER-STD",
+      "name": "Elevation / Section Markers",
+      "nameTh": "เครื่องหมายรูปด้าน / รูปตัด",
+      "description": "Callout circles indicating sheet numbers and viewing directions",
+      "geometry": {
+        "type": "circle-with-direction-arrow",
+        "diameterMm": 12,
+        "lineWeightPt": 0.5,
+        "arrowLengthMm": 8,
+        "arrowFilled": true,
+        "topHalfFilled": false
+      },
+      "label": {
+        "topLine": "{direction}",
+        "bottomLine": "{sheetNo}",
+        "fontSizePt": 6,
+        "directions": {
+          "front": { "en": "FRONT", "th": "ด้านหน้า", "arrow": "outward-from-wall" },
+          "rear": { "en": "REAR", "th": "ด้านหลัง", "arrow": "outward-from-wall" },
+          "left": { "en": "LEFT", "th": "ด้านซ้าย", "arrow": "outward-from-wall" },
+          "right": { "en": "RIGHT", "th": "ด้านขวา", "arrow": "outward-from-wall" },
+          "section": { "en": "SEC {id}", "th": "ตัด {id}", "targetSheet": "A5.00" }
+        }
+      },
+      "targetSheet": "A4.00",
+      "placement": {
+        "onFloorPlan": "on-exterior-walls-facing-view-direction",
+        "spacingMinM": 3.0
+      },
+      "appliesTo": ["A2.xx", "A4.00", "A5.00"]
+    },
+    {
+      "blockId": "SYM-GRID-BUBBLE-STD",
+      "name": "Grid Bubbles & Column Marks",
+      "nameTh": "วงกลม Grid และเครื่องหมายเสา",
+      "description": "Grid markers for column axes (A, B, C… / 1, 2, 3…)",
+      "gridBubble": {
+        "geometry": {
+          "type": "circle",
+          "diameterMm": 8,
+          "lineWeightPt": 0.5
+        },
+        "label": {
+          "fontSizePt": 7,
+          "bold": true,
+          "horizontalLabels": "1-2-3-4-5",
+          "verticalLabels": "A-B-C-D-E"
+        },
+        "position": "at-grid-line-termination-at-drawing-edge"
+      },
+      "columnMark": {
+        "geometry": {
+          "type": "rect-with-cross",
+          "sizeMm": 6,
+          "lineWeightPt": 0.5,
+          "crossLineWeightPt": 0.35
+        },
+        "label": {
+          "format": "C {gridV}-{gridH}",
+          "fontSizePt": 6,
+          "position": "above-or-beside-mark",
+          "example": "C B-2"
+        },
+        "position": "at-column-centerline-intersection"
+      },
+      "appliesTo": ["A2.xx", "S1.00", "S2.00", "S4.00"],
+      "crossRef": "SKEL-GRID-TABLE-STD"
+    },
+    {
+      "blockId": "SYM-TITLE-BLOCK-STD",
+      "name": "Title Block",
+      "nameTh": "กรอบชื่อแบบ",
+      "description": "Standard fields for project name, designer, scale, and date — Titan Box authority",
+      "generationOwner": "platform",
+      "references": {
+        "cadMaster": "templates/title-block/STANDARD-TITLE-BLOCK.dwg",
+        "pdfPlotReference": "templates/title-block/STANDARD-TITLE-BLOCK.plt",
+        "vectorTemplate": "templates/title-block/titan-box-standard.json",
+        "manifest": "templates/title-block/manifest.json"
+      },
+      "fields": [
+        { "key": "firmName", "label": "CUADRO DE / DRAWING SHEET", "autoFill": true },
+        { "key": "projectName", "label": "PROJECT / โครงการ", "autoFill": true },
+        { "key": "ownerName", "label": "OWNER / เจ้าของอาคาร", "autoFill": true },
+        { "key": "location", "label": "LOCATION / ที่ตั้ง", "autoFill": true },
+        { "key": "architectEngineer", "label": "ARCHITECT / ENGINEER", "autoFill": true },
+        { "key": "sheetNo", "label": "NO.", "autoFill": true },
+        { "key": "sheetTitle", "label": "TITLE / ชื่อแบบ", "autoFill": true },
+        { "key": "sheetTitleTh", "label": "TITLE (TH)", "autoFill": true },
+        { "key": "scale", "label": "SCALE / มาตราส่วน", "autoFill": true },
+        { "key": "buildingCode", "label": "CODE", "autoFill": true },
+        { "key": "drawnBy", "label": "DESIGNED BY", "autoFill": true },
+        { "key": "checkedBy", "label": "CHECKED", "autoFill": true },
+        { "key": "approvedBy", "label": "APPROVED BY", "autoFill": true },
+        { "key": "issueDate", "label": "DATE", "autoFill": true },
+        { "key": "revision", "label": "REV.", "autoFill": true }
+      ],
+      "appliesTo": "every-sheet",
+      "platformRenders": true,
+      "agentNote": "Do not redesign title block layout; use platform-provided field values"
+    }
+  ],
+  "additionalSymbols": {
+    "SYM-NORTH-ARROW-STD": {
+      "name": "North Arrow",
+      "geometry": "filled-arrow-with-N-label",
+      "diameterMm": 15,
+      "appliesTo": ["A1.00", "A2.xx", "A3.00"]
+    },
+    "SYM-DOOR-SWING-STD": {
+      "name": "Door Swing Arc",
+      "geometry": "quarter-circle-arc-plus-jamb-lines",
+      "arcAngleDeg": 90,
+      "appliesTo": ["A2.xx"]
+    },
+    "SYM-WINDOW-STD": {
+      "name": "Window Symbol",
+      "geometry": "parallel-lines-in-wall-gap",
+      "appliesTo": ["A2.xx"]
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "version": "1.0.0",
+  "category": "recurring-details",
+  "label": "Standard Detail Expansions",
+  "labelTh": "รายละเอียดมาตรฐานซ้ำ",
+  "authority": "DPT Smart A TYPE E — TYPE E structural & architectural",
+  "defaultDetailScale": "1:20",
+  "blocks": [
+    {
+      "blockId": "DET-FOOTING-STD",
+      "name": "Standard Footing Detail",
+      "nameTh": "แบบขยายฐานรากมาตรฐาน",
+      "discipline": "S",
+      "targetSheets": ["S3.00"],
+      "dptReferenceFile": "Detail Footing&Column TYPE E =  SMART A.dwg",
+      "views": ["plan", "section"],
+      "parameters": {
+        "footingWidthMm": { "default": 800, "range": [600, 1500] },
+        "footingDepthMm": { "default": 300, "range": [250, 500] },
+        "pedestalWidthMm": { "default": 200, "range": [150, 300] },
+        "concreteCoverMm": { "default": 75, "ref": "NOTE-STRUCT-STD clearCover.footing" },
+        "mainRebar": { "default": "6-D12", "pattern": "{count}-D{diameter}" },
+        "stirrup": { "default": "D6@200" }
+      },
+      "requiredAnnotations": ["top-of-footing-level", "bottom-of-footing-level", "concrete-grade", "rebar-spec"],
+      "lineStandards": ["LINE-DIM-STD", "LINE-HIDDEN-STD", "LINE-CENTER-STD"]
+    },
+    {
+      "blockId": "DET-PEDESTAL-STD",
+      "name": "Standard Pedestal Detail",
+      "nameTh": "แบบขยายฐานย่อมาตรฐาน",
+      "discipline": "S",
+      "targetSheets": ["S3.00"],
+      "views": ["plan", "elevation"],
+      "parameters": {
+        "widthMm": { "default": 200, "range": [150, 300] },
+        "heightMm": { "default": 300, "range": [200, 600] },
+        "mainRebar": { "default": "4-D12" },
+        "stirrup": { "default": "D6@150" },
+        "anchorBolts": { "default": "4-M16", "optional": true }
+      },
+      "requiredAnnotations": ["pedestal-mark", "column-above-mark", "elevation-datum"]
+    },
+    {
+      "blockId": "DET-GROUND-BEAM-STD",
+      "name": "Standard Ground Beam Detail",
+      "nameTh": "แบบขยายคานคอดินมาตรฐาน",
+      "discipline": "S",
+      "targetSheets": ["S2.00", "S3.00"],
+      "views": ["section", "plan"],
+      "parameters": {
+        "widthMm": { "default": 200, "range": [150, 300] },
+        "depthMm": { "default": 400, "range": [300, 600] },
+        "topRebar": { "default": "2-D16" },
+        "bottomRebar": { "default": "2-D16" },
+        "stirrup": { "default": "D6@150" },
+        "concreteCoverMm": { "default": 50 }
+      },
+      "requiredAnnotations": ["beam-mark", "span-dimension", "support-centers"]
+    },
+    {
+      "blockId": "DET-COLUMN-STD",
+      "name": "Standard Column Detail",
+      "nameTh": "แบบขยายเสามาตรฐาน",
+      "discipline": "S",
+      "targetSheets": ["S2.00", "S3.00"],
+      "views": ["section", "plan"],
+      "parameters": {
+        "widthMm": { "default": 200, "range": [150, 300] },
+        "depthMm": { "default": 200, "range": [150, 300] },
+        "mainRebar": { "default": "4-D12", "cornerBars": 4 },
+        "stirrup": { "default": "D6@150" },
+        "concreteCoverMm": { "default": 40 },
+        "lapLengthRef": "NOTE-STRUCT-STD lapSplice"
+      },
+      "requiredAnnotations": ["column-mark", "floor-levels", "rebar-lap-note"]
+    },
+    {
+      "blockId": "DET-SLAB-STD",
+      "name": "Standard Slab Detail",
+      "nameTh": "แบบขยายพื้นคอนกรีตมาตรฐาน",
+      "discipline": "S",
+      "targetSheets": ["S2.00"],
+      "views": ["section"],
+      "parameters": {
+        "thicknessMm": { "default": 120, "range": [100, 150] },
+        "topMesh": { "default": "D6@200-B" },
+        "bottomMesh": { "default": "D6@200-T" },
+        "concreteCoverMm": { "default": 20 },
+        "supportType": { "options": ["simply-supported", "continuous", "cantilever"] }
+      },
+      "requiredAnnotations": ["slab-thickness", "support-condition", "mesh-spec"]
+    },
+    {
+      "blockId": "DET-TOILET-STD",
+      "name": "Standard Toilet Detail Expansion",
+      "nameTh": "แบบขยายห้องน้ำมาตรฐาน",
+      "discipline": "A",
+      "targetSheets": ["A6.00"],
+      "dptReferenceFile": "Detail wc.dwg",
+      "defaultScale": "1:20",
+      "views": ["plan", "section"],
+      "parameters": {
+        "minRoomWidthMm": { "default": 1500 },
+        "minRoomDepthMm": { "default": 2100 },
+        "floorFinish": { "default": "ceramic-tile-300x300" },
+        "wallFinish": { "default": "ceramic-tile-full-height" },
+        "fixtures": ["water-closet", "lavatory", "shower-or-bathtub", "floor-drain"]
+      },
+      "requiredAnnotations": ["fixture-dimensions", "tile-joint-spec", "slope-to-drain", "pipe-penetration"],
+      "lineStandards": ["LINE-DIM-STD", "LINE-HIDDEN-STD"]
+    },
+    {
+      "blockId": "DET-STAIR-STD",
+      "name": "Standard Staircase Detail Expansion",
+      "nameTh": "แบบขยายบันไดมาตรฐาน",
+      "discipline": "A",
+      "targetSheets": ["A7.00"],
+      "dptReferenceFile": "Detail stair.dwg",
+      "defaultScale": "1:20",
+      "views": ["plan", "section"],
+      "parameters": {
+        "treadMm": { "default": 250, "range": [250, 300] },
+        "riserMm": { "default": 175, "max": 180, "codeRef": "Thai Building Code B.E. 2522" },
+        "widthMm": { "default": 1000, "min": 900 },
+        "handrailHeightMm": { "default": 900, "min": 850 },
+        "landingDepthMm": { "default": 1000 }
+      },
+      "requiredAnnotations": ["tread-riser-dimensions", "handrail-detail", "headroom-clearance", "nosing-detail"],
+      "formulaCheck": "2R + T = 600–650 mm"
+    },
+    {
+      "blockId": "DET-DOOR-WINDOW-JOINT-STD",
+      "name": "Standard Door & Window Frame Joint Detail",
+      "nameTh": "แบบขยายรอยต่อวงกบประตู-หน้าต่าง",
+      "discipline": "A",
+      "targetSheets": ["A8.00"],
+      "dptReferenceFile": "Detail door&windows.dwg",
+      "defaultScale": "1:10",
+      "views": ["section", "elevation"],
+      "parameters": {
+        "doorFrameMaterial": { "default": "teak-or-aluminum", "options": ["teak", "aluminum", "uPVC"] },
+        "windowFrameMaterial": { "default": "aluminum-sliding" },
+        "wallThicknessMm": { "default": 150 },
+        "sealant": { "default": "silicone-waterproof" },
+        "scheduleColumns": ["Mark", "Width (mm)", "Height (mm)", "Qty", "Material", "Remarks"]
+      },
+      "requiredAnnotations": ["frame-section", "sill-detail", "lintel-detail", "schedule-table"]
+    }
+  ]
+}

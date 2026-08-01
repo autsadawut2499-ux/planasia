@@ -1,0 +1,256 @@
+import "server-only";
+import {
+  claimCartOrderConfirmationEmail,
+  markCartOrderPaid,
+  releaseCartOrderConfirmationEmail,
+  type CartOrder,
+} from "@/lib/store/cart-orders";
+import {
+  findGrantsByStripeSession,
+  fulfillCartDownloads,
+  type DownloadGrant,
+} from "@/lib/payments/tokens";
+import { recordSaleCommissions } from "@/lib/supabase/vendor-earnings";
+import { getListingById } from "@/lib/store/db";
+import { createRandomId } from "@/lib/random-id";
+import { splitSale } from "@/lib/commerce/commission";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
+import { notifyVendorsOfSale } from "@/lib/push/notify-sale";
+import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
+import {
+  runPostPaymentTranslation,
+  type PostPaymentTranslationResult,
+} from "@/lib/gemini/post-payment-translation";
+import { THAI_DOMESTIC_MARKET } from "@/lib/market/config";
+
+/** Claim → send Resend receipt+PDFs (+ localized pack) → release claim if send fails. */
+async function deliverBuyerConfirmationEmail(
+  order: CartOrder,
+  grants: DownloadGrant[],
+  translation?: PostPaymentTranslationResult,
+): Promise<boolean> {
+  if (!order.buyerEmail?.trim()) return false;
+  const claimed = await claimCartOrderConfirmationEmail(order.id);
+  if (!claimed) {
+    // Already claimed/sent on a prior fulfillment attempt.
+    return true;
+  }
+  const ok = await sendOrderConfirmationEmail(order, grants, translation);
+  if (!ok) {
+    await releaseCartOrderConfirmationEmail(order.id);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * After a cart payment succeeds:
+ *  1. Mark the order paid
+ *  2. Split each vendor listing 70/30 into the earnings ledger
+ *  3. Issue download grants (idempotent when stripeSessionId is present)
+ *  4. (International only) OCR → translation — skipped in Thai domestic mode
+ *  5. Email buyer confirmation with blueprint PDFs
+ */
+export async function finalizePaidCartSale(opts: {
+  cartOrderId: string;
+  stripeSessionId?: string;
+  buyerUserId?: string;
+}): Promise<{
+  order: CartOrder;
+  grants: DownloadGrant[];
+  planIds: string[];
+  translation?: PostPaymentTranslationResult;
+  emailSent?: boolean;
+} | null> {
+  const order = await markCartOrderPaid(opts.cartOrderId, opts.stripeSessionId);
+  if (!order) return null;
+
+  // Best-effort commission ledger — never block delivery. Idempotent per order line.
+  try {
+    await recordSaleCommissions(order);
+  } catch (err) {
+    console.error("[finalize-sale] commission recording failed", err);
+  }
+
+  let grants: DownloadGrant[];
+
+  if (opts.stripeSessionId) {
+    const existing = await findGrantsByStripeSession(opts.stripeSessionId);
+    if (existing.length > 0) {
+      grants = existing;
+      const translation = await runPostPayTranslationSafe(order);
+      const enriched = applyTranslationToOrder(order, translation);
+      let emailSent = false;
+      try {
+        emailSent = await deliverBuyerConfirmationEmail(enriched, grants, translation);
+      } catch (err) {
+        console.error("[finalize-sale] buyer email failed", err);
+      }
+      return {
+        order: enriched,
+        grants,
+        planIds: Array.from(new Set(existing.map((g) => g.planId))),
+        translation,
+        emailSent,
+      };
+    }
+  }
+
+  // Cart plans unlock PDF downloads; BOQ add-on is priced separately (not CAD unlock).
+  grants = await fulfillCartDownloads(
+    order.items,
+    false,
+    opts.buyerUserId,
+    opts.stripeSessionId,
+  );
+
+  // Fire-and-forget: wake the draftsman's phone even at 2am.
+  void notifyVendorsOfSale(
+    order.items.map((i) => ({
+      listingId: i.listingId,
+      planId: i.planId,
+      name: i.name,
+      priceThb: i.price,
+    })),
+  ).catch((err) => console.error("[finalize-sale] push notify failed", err));
+
+  // Auto pipeline: text-layer check → Vision OCR if scanned → Translation → email.
+  const translation = await runPostPayTranslationSafe(order);
+  const enriched = applyTranslationToOrder(order, translation);
+
+  let emailSent = false;
+  try {
+    emailSent = await deliverBuyerConfirmationEmail(enriched, grants, translation);
+  } catch (err) {
+    console.error("[finalize-sale] buyer email failed", err);
+  }
+
+  return {
+    order: enriched,
+    grants,
+    planIds: Array.from(new Set(order.items.map((i) => i.planId))),
+    translation,
+    emailSent,
+  };
+}
+
+async function runPostPayTranslationSafe(
+  order: CartOrder,
+): Promise<PostPaymentTranslationResult | undefined> {
+  // Thai-only market: no OCR / Cloud Translation pipeline.
+  if (THAI_DOMESTIC_MARKET) return undefined;
+  try {
+    return await runPostPaymentTranslation(order);
+  } catch (err) {
+    console.error("[finalize-sale] post-payment translation failed", err);
+    return undefined;
+  }
+}
+
+function applyTranslationToOrder(
+  order: CartOrder,
+  translation?: PostPaymentTranslationResult,
+): CartOrder {
+  if (!translation) return order;
+  return {
+    ...order,
+    translationStatus: translation.status,
+    translationResult: translation as unknown as Record<string, unknown>,
+  };
+}
+
+/**
+ * Single-listing purchase (Quick View / Buy Now). Same outcomes as cart:
+ * unlock download + credit the draftsman 70%.
+ */
+export async function finalizePaidListingSale(opts: {
+  listingId: string;
+  planId: string;
+  planDocumentId?: string;
+  format: "pdf" | "cad";
+  amountThb: number;
+  stripeSessionId?: string;
+  buyerUserId?: string;
+}): Promise<{ grants: DownloadGrant[]; planIds: string[] }> {
+  if (opts.stripeSessionId) {
+    const existing = await findGrantsByStripeSession(opts.stripeSessionId);
+    if (existing.length > 0) {
+      return {
+        grants: existing,
+        planIds: Array.from(new Set(existing.map((g) => g.planId))),
+      };
+    }
+  }
+
+  // Synthetic one-line order id so the earnings unique key still works.
+  const cartOrderId = opts.stripeSessionId
+    ? `single_${opts.stripeSessionId}`
+    : `single_${createRandomId()}`;
+
+  try {
+    await recordSingleListingCommission({
+      cartOrderId,
+      listingId: opts.listingId,
+      amountThb: opts.amountThb,
+    });
+  } catch (err) {
+    console.error("[finalize-sale] single commission failed", err);
+  }
+
+  // Prefer vendor blueprint grants (one token per uploaded PDF).
+  const grants = await fulfillCartDownloads(
+    [
+      {
+        planId: opts.planId,
+        planDocumentId: opts.planDocumentId,
+        listingId: opts.listingId,
+      },
+    ],
+    opts.format === "cad",
+    opts.buyerUserId,
+    opts.stripeSessionId,
+  );
+
+  void notifyVendorsOfSale([
+    {
+      listingId: opts.listingId,
+      planId: opts.planId,
+      name: opts.planId,
+      priceThb: opts.amountThb,
+    },
+  ]).catch((err) => console.error("[finalize-sale] push notify failed", err));
+
+  return { grants, planIds: [opts.planId] };
+}
+
+async function recordSingleListingCommission(opts: {
+  cartOrderId: string;
+  listingId: string;
+  amountThb: number;
+}): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const listing = await getListingById(opts.listingId);
+  const owner = listing?.ownerId?.trim();
+  if (!owner || owner === "seed-demo") return;
+
+  const split = splitSale(opts.amountThb);
+  const row = {
+    id: createRandomId(),
+    owner_key: owner,
+    listing_id: opts.listingId,
+    cart_order_id: opts.cartOrderId,
+    gross_thb: split.grossThb,
+    vendor_amount_thb: split.vendorAmountThb,
+    platform_amount_thb: split.platformAmountThb,
+    vendor_share: split.vendorShare,
+    platform_share: split.platformShare,
+    currency: "THB",
+    status: "available" as const,
+    created_at: new Date().toISOString(),
+  };
+
+  const { error } = await getSupabaseAdmin()
+    .from("vendor_earnings")
+    .upsert(row, { onConflict: "cart_order_id,listing_id", ignoreDuplicates: true });
+  if (error) console.error("[finalize-sale] single earning upsert", error);
+}

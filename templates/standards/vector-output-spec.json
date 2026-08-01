@@ -1,0 +1,90 @@
+{
+  "version": "1.0.0",
+  "outputFormat": "pure-vector-pdf",
+  "library": "pdf-lib",
+  "rasterAllowed": false,
+  "sheet": {
+    "size": "A3",
+    "orientation": "landscape",
+    "widthPt": 1190.55,
+    "heightPt": 841.89,
+    "marginPt": 40,
+    "titleBlockHeightPt": 100,
+    "titleBlockPosition": "bottom-full-width"
+  },
+  "coordinateSystem": {
+    "pageOrigin": "bottom-left",
+    "pageUnits": "points",
+    "modelOrigin": "building-origin-bottom-left",
+    "modelUnits": "meters",
+    "modelYAxis": "up",
+    "transformNote": "Use fitToArea + modelToPage from src/lib/pdf/vector/layout.ts conventions"
+  },
+  "fonts": {
+    "default": "Helvetica",
+    "bold": "HelveticaBold",
+    "minSizePt": 5,
+    "dimensionSizePt": 7,
+    "roomLabelSizePt": 8,
+    "titleSizePt": 10
+  },
+  "lineWeights": {
+    "wallCutPt": 1.2,
+    "wallOutlinePt": 0.8,
+    "dimensionPt": 0.35,
+    "gridPt": 0.25,
+    "hiddenPt": 0.25,
+    "titleBlockPt": 0.5
+  },
+  "colors": {
+    "default": "#000000",
+    "dimension": "#333333",
+    "grid": "#999999",
+    "note": "RGB hex strings; pdf-lib rgb() conversion required"
+  },
+  "primitiveTypes": [
+    {
+      "type": "line",
+      "params": ["x1", "y1", "x2", "y2", "strokeWidth", "color"]
+    },
+    {
+      "type": "rect",
+      "params": ["x", "y", "width", "height", "strokeWidth", "fill", "color"]
+    },
+    {
+      "type": "polyline",
+      "params": ["points", "closed", "strokeWidth", "color"]
+    },
+    {
+      "type": "arc",
+      "params": ["cx", "cy", "radius", "startAngle", "endAngle", "strokeWidth"]
+    },
+    {
+      "type": "text",
+      "params": ["x", "y", "text", "fontSize", "bold", "maxWidth"]
+    },
+    {
+      "type": "dimension",
+      "params": ["x1", "y1", "x2", "y2", "offset", "text", "fontSize"]
+    },
+    {
+      "type": "symbol",
+      "params": ["symbolId", "x", "y", "rotation", "scale"],
+      "note": "Door swing, window, north arrow, elevation marker — vector paths only"
+    }
+  ],
+  "titleBlockIntegration": {
+    "mandatory": true,
+    "templatePath": "templates/title-block/titan-box-standard.json",
+    "cadReference": "templates/title-block/STANDARD-TITLE-BLOCK.dwg",
+    "pdfReference": "templates/title-block/STANDARD-TITLE-BLOCK.plt",
+    "fieldSource": "doc.titleBlock + per-sheet index entry",
+    "platformRendersTitleBlock": true,
+    "agentNote": "Agent may omit title block if platform composes it; otherwise must match titan-box-standard.json geometry exactly"
+  },
+  "validation": {
+    "maxFileSizeMb": 50,
+    "requiredElementsPerSpec": true,
+    "sheetMustMatchIndex": true
+  }
+}

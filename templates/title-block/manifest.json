@@ -1,0 +1,53 @@
+{
+  "platform": "Titan Box",
+  "description": "Official Titan Box title block references for all permit drawing sheets (CAD + PDF plot).",
+  "references": [
+    {
+      "id": "titan-box-dwg",
+      "filename": "STANDARD-TITLE-BLOCK.dwg",
+      "role": "cad-master",
+      "format": "dwg",
+      "description": "Master CAD title block — geometry and attribute field layout (GstarCAD)."
+    },
+    {
+      "id": "titan-box-plt",
+      "filename": "STANDARD-TITLE-BLOCK.plt",
+      "role": "pdf-plot-reference",
+      "format": "pdf",
+      "description": "Standard PDF plot reference (PDF content, .plt extension) — visual standard for exported PDF title boxes. A3 portrait sheet."
+    }
+  ],
+  "vectorTemplate": "titan-box-standard.json",
+  "extractedDwgLabels": ["CUADRO DE", "OWNER", "APPROVED BY", "DESIGNED BY", "NO."],
+  "pdfReference": {
+    "format": "PDF-1.7",
+    "sheetSize": "A3",
+    "orientation": "portrait",
+    "sizeMm": { "width": 297, "height": 420 },
+    "usage": "Validates vector PDF title block rendering against the standard plot output"
+  },
+  "autoFilledFields": [
+    "projectName",
+    "ownerName",
+    "location",
+    "architectEngineer",
+    "sheetNo",
+    "sheetTitle",
+    "sheetTitleTh",
+    "scale",
+    "issueDate",
+    "drawnBy",
+    "checkedBy",
+    "approvedBy",
+    "revision",
+    "buildingCode",
+    "firmName"
+  ],
+  "aiMetadataPath": "doc.titleBlock",
+  "overrideOrder": [
+    "TITLE_BLOCK_TEMPLATE env",
+    "templates/title-block/custom.json",
+    "templates/title-block/active.json",
+    "templates/title-block/titan-box-standard.json"
+  ]
+}

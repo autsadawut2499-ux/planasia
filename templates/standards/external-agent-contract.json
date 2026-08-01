@@ -1,0 +1,86 @@
+{
+  "contractVersion": "1.0.0",
+  "description": "Contract between Planasia platform and external AI vector generation agents connected via API.",
+  "platformResponsibilities": [
+    "Provide complete drawing standards bundle (DPT layouts + Titan Box title block)",
+    "Provide structured project data (HousePlanDocument) per export job",
+    "Provide per-sheet vector generation specifications with required elements and acceptance criteria",
+    "Validate reference files exist and sheet index is complete before dispatch",
+    "Orchestrate multi-sheet PDF assembly after agent returns vector primitives or sheet PDFs"
+  ],
+  "agentResponsibilities": [
+    "Generate 100% pure vector geometry per sheet-vector-specs.json",
+    "Strictly follow DPT Golden Standard layout conventions for each sheet type",
+    "Render Titan Box title block on every sheet using provided field values (do not invent layout)",
+    "Use coordinate system and units defined in vector-output-spec.json",
+    "Return output in the agreed response format (see responseSchema)"
+  ],
+  "requestSchema": {
+    "type": "object",
+    "required": ["contractVersion", "jobId", "sheetCode", "standards", "projectData", "sheetSpec"],
+    "properties": {
+      "contractVersion": { "type": "string", "const": "1.0.0" },
+      "jobId": { "type": "string", "description": "Export job identifier" },
+      "sheetCode": { "type": "string", "description": "DPT sheet code e.g. A2.00, S1.00, SN-01" },
+      "rendererId": { "type": "string", "description": "Internal renderer dispatch id" },
+      "standards": {
+        "type": "object",
+        "description": "Subset of drawing standards bundle (layout authority, title block, output spec)"
+      },
+      "projectData": {
+        "type": "object",
+        "description": "HousePlanDocument — full or sheet-relevant slice"
+      },
+      "sheetSpec": {
+        "type": "object",
+        "description": "Entry from sheet-vector-specs.json for this sheet/renderer"
+      },
+      "titleBlockFields": {
+        "type": "object",
+        "description": "Resolved title block field values for this sheet"
+      },
+      "referenceFiles": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Paths to DPT reference DWG and Titan Box title block files"
+      }
+    }
+  },
+  "responseSchema": {
+    "type": "object",
+    "required": ["contractVersion", "jobId", "sheetCode", "status"],
+    "properties": {
+      "contractVersion": { "type": "string" },
+      "jobId": { "type": "string" },
+      "sheetCode": { "type": "string" },
+      "status": { "enum": ["complete", "partial", "failed"] },
+      "vectorPrimitives": {
+        "type": "array",
+        "description": "Array of vector primitive commands (see vector-output-spec.json primitiveTypes)",
+        "items": { "type": "object" }
+      },
+      "sheetPdfBase64": {
+        "type": "string",
+        "description": "Optional: single-sheet A3 landscape PDF as base64 if agent renders full page"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "rendererId": { "type": "string" },
+          "scaleUsed": { "type": "string" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "error": { "type": "string" }
+    }
+  },
+  "authentication": {
+    "note": "Configure via VECTOR_AGENT_API_KEY env on platform; agent presents Bearer token",
+    "header": "Authorization: Bearer {token}"
+  },
+  "dispatchModes": {
+    "perSheet": "One API call per sheet — recommended for incremental rollout",
+    "perPhase": "One API call per DPT drawing phase (cover-index, floor-layouts, etc.)",
+    "fullSet": "One API call for entire drawing set — requires agent capacity for ~28 sheets"
+  }
+}

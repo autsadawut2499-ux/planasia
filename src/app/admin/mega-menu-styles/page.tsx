@@ -1,0 +1,189 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  createEmptyMegaMenuStyle,
+  MAX_MEGA_MENU_STYLES,
+  type MegaMenuStyleCard,
+} from "@/lib/admin/mega-menu-styles";
+import {
+  AdminCard,
+  AdminCheckbox,
+  AdminField,
+  AdminInput,
+  AdminPageHeader,
+  AdminSaveButton,
+  AdminStatusMessage,
+} from "@/components/admin/AdminForm";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
+
+/**
+ * Admin: manage House Styles cards in the homepage header dropdown mega menu.
+ */
+export default function AdminMegaMenuStylesPage() {
+  const [cards, setCards] = useState<MegaMenuStyleCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    fetch("/api/admin/mega-menu-styles")
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error ?? "โหลดข้อมูลไม่สำเร็จ");
+        return data as { cards?: MegaMenuStyleCard[] };
+      })
+      .then((data) => {
+        if (data.cards) setCards(data.cards);
+      })
+      .catch((err) => {
+        setStatus({
+          type: "error",
+          message: err instanceof Error ? err.message : "โหลดข้อมูลไม่สำเร็จ",
+        });
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  function updateCard(index: number, patch: Partial<MegaMenuStyleCard>) {
+    setCards((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  }
+
+  function addCard() {
+    if (cards.length >= MAX_MEGA_MENU_STYLES) return;
+    setCards((prev) => [...prev, createEmptyMegaMenuStyle()]);
+  }
+
+  function removeCard(index: number) {
+    setCards((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function saveAll() {
+    setSaving(true);
+    setStatus(null);
+    try {
+      const res = await fetch("/api/admin/mega-menu-styles", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cards }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "บันทึกไม่สำเร็จ");
+      setCards(data.cards);
+      setStatus({
+        type: "success",
+        message:
+          "บันทึกการ์ดสไตล์ในเมนูแล้ว — รีเฟรชหน้าแรกแล้วเปิดเมนู Styles เพื่อดูผล",
+      });
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : "บันทึกไม่สำเร็จ",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return <p className="text-slate-500">กำลังโหลดการ์ดสไตล์เมนู…</p>;
+  }
+
+  return (
+    <div>
+      <AdminPageHeader
+        title="สไตล์ในเมนู (House Styles)"
+        description={`จัดการการ์ดสไตล์ในเมนูแบบเลื่อนลงบนหน้าแรก — อัปโหลดรูป แก้ไขชื่อ (EN/TH) ลิงก์ เพิ่ม/ลบ สูงสุด ${MAX_MEGA_MENU_STYLES} การ์ด`}
+      />
+
+      {status && (
+        <div className="mb-6">
+          <AdminStatusMessage type={status.type} message={status.message} />
+        </div>
+      )}
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">
+          {cards.length} / {MAX_MEGA_MENU_STYLES} การ์ด
+          {" · "}
+          แสดงในเมนู {cards.filter((c) => c.enabled).length} ใบ
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={addCard}
+            disabled={cards.length >= MAX_MEGA_MENU_STYLES}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />
+            เพิ่มการ์ด
+          </button>
+          <AdminSaveButton saving={saving} onClick={saveAll} label="บันทึกทั้งหมด" />
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.map((card, index) => (
+          <AdminCard key={card.id} title={`การ์ด ${index + 1}`}>
+            <div className="space-y-3">
+              <ImageUploadField
+                label="รูปภาพ"
+                hint="แนะนำอัตราส่วน 4:3 กว้างอย่างน้อย 480px"
+                value={card.imageUrl || null}
+                onChange={(url) => updateCard(index, { imageUrl: url ?? "" })}
+                category={`mega-styles/${card.id}`}
+                previewClassName="h-28 w-full"
+              />
+              <AdminField label="ชื่อ (ภาษาอังกฤษ)">
+                <AdminInput
+                  value={card.titleEn}
+                  onChange={(e) => updateCard(index, { titleEn: e.target.value })}
+                />
+              </AdminField>
+              <AdminField label="ชื่อ (ภาษาไทย)">
+                <AdminInput
+                  value={card.titleTh}
+                  onChange={(e) => updateCard(index, { titleTh: e.target.value })}
+                />
+              </AdminField>
+              <AdminField label="ลิงก์" hint="เช่น /store?style=modern">
+                <AdminInput
+                  value={card.href}
+                  onChange={(e) => updateCard(index, { href: e.target.value })}
+                />
+              </AdminField>
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <AdminCheckbox
+                  label="แสดงในเมนู"
+                  checked={card.enabled}
+                  onChange={(v) => updateCard(index, { enabled: v })}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeCard(index)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  ลบ
+                </button>
+              </div>
+            </div>
+          </AdminCard>
+        ))}
+      </div>
+
+      {cards.length === 0 && (
+        <p className="rounded-xl border border-dashed border-slate-200 bg-white py-16 text-center text-slate-400">
+          ยังไม่มีการ์ด — กด «เพิ่มการ์ด» หรือบันทึกเพื่อโหลดค่าเริ่มต้น
+        </p>
+      )}
+
+      <div className="mt-8">
+        <AdminSaveButton saving={saving} onClick={saveAll} label="บันทึกทั้งหมด" />
+      </div>
+    </div>
+  );
+}

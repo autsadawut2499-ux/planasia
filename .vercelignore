@@ -1,0 +1,16 @@
+# Local build/cache — Vercel builds on their servers
+node_modules
+.next
+.git
+data
+
+# Large local CAD reference libraries (JSON specs at templates/cad/*.json are kept)
+templates/cad/airport-asbuilt
+templates/cad/civil-samples
+templates/cad/**/*.dwg
+templates/cad/**/*.bak
+templates/cad/**/*.dwl
+templates/cad/**/*.dwl2
+
+# Internal reference PDFs — not needed at runtime on Vercel
+templates/master

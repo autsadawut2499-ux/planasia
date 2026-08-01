@@ -1,0 +1,48 @@
+{
+  "id": "standard-template-blocks",
+  "version": "1.0.0",
+  "purpose": "Reusable standard template blocks for external AI vector generation. Platform defines specs; AI agent renders geometry.",
+  "authority": "DPT Smart A TYPE E + Titan Box",
+  "categories": [
+    {
+      "id": "line-standards",
+      "label": "Line Standards & Types",
+      "labelTh": "มาตรฐานเส้นและประเภทเส้น",
+      "path": "templates/standards/template-blocks/line-standards.json",
+      "blockCount": 4
+    },
+    {
+      "id": "plan-skeletons",
+      "label": "Standard Plans & Recurring Details — Layout Skeletons",
+      "labelTh": "โครงแปลนมาตรฐาน — ตาราง Grid และพิกัดเสา",
+      "path": "templates/standards/template-blocks/plan-skeletons.json",
+      "blockCount": 2
+    },
+    {
+      "id": "recurring-details",
+      "label": "Standard Plans & Recurring Details — Detail Expansions",
+      "labelTh": "รายละเอียดมาตรฐานซ้ำ — โครงสร้างและสถาปัตยกรรม",
+      "path": "templates/standards/template-blocks/recurring-details.json",
+      "blockCount": 8
+    },
+    {
+      "id": "general-notes",
+      "label": "General Notes & Specifications",
+      "labelTh": "หมายเหตุทั่วไปและข้อกำหนด",
+      "path": "templates/standards/template-blocks/general-notes.json",
+      "blockCount": 3
+    },
+    {
+      "id": "symbols-markers",
+      "label": "Symbols & Markers",
+      "labelTh": "สัญลักษณ์และเครื่องหมาย",
+      "path": "templates/standards/template-blocks/symbols-markers.json",
+      "blockCount": 4
+    }
+  ],
+  "usage": {
+    "agentInstruction": "Reference blockId when placing geometry. All blocks are pure-vector (pdf-lib). Do not invent line styles or symbol shapes outside these definitions.",
+    "apiQuery": "/api/standards/drawing-spec?blocks={categoryId}",
+    "includedInPayload": "templateBlocks field on vector-generation API response"
+  }
+}
