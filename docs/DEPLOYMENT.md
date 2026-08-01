@@ -19,21 +19,31 @@
 npm run build  →  node scripts/check-production-env.mjs && next build
 ```
 
-When `VERCEL_ENV=production`, the env script **exits non-zero** if required secrets are missing or if `ADMIN_PIN` is still the example `501499`. A failed build does **not** update production — the previous Ready deployment stays aliased.
+### Env gate modes
 
-Locally you can soft-check with `npm run check:env` (non-production soft-warns unless `CI_PRODUCTION_ENV_CHECK=1`).
+| Mode | Behavior |
+|------|----------|
+| Default production | **Warn** if required keys are missing — build still succeeds (bootstrap). Hard-fails `ALLOW_MOCK_PAYMENTS=true` and `ADMIN_PIN=501499`. |
+| `STRICT_PRODUCTION_ENV=1` | Missing required keys **fail** the build (use after all secrets are in Vercel). |
+| `SKIP_PRODUCTION_ENV_CHECK=1` | Skip entirely (local only — do not set on Vercel). |
+
+A failed build does **not** update production — the previous Ready deployment stays aliased.
+
+Locally: `npm run check:env` (soft-warns unless `CI_PRODUCTION_ENV_CHECK=1`).
 
 ### Required production variables
 
-See the top of [`.env.example`](../.env.example). At minimum:
+See the top of [`.env.example`](../.env.example). For a full go-live set:
 
 - Auth: `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - Site: `NEXT_PUBLIC_SITE_URL`
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- Ops: `ADMIN_PIN`, `CRON_SECRET`
+- Ops: `ADMIN_PIN` (not `501499`), `CRON_SECRET`
 
 Recommended: `GEMINI_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`.
+
+**Bootstrap flow:** Deploy with whatever secrets you already have → confirm the site is online → add remaining live keys in Vercel → Redeploy → optionally set `STRICT_PRODUCTION_ENV=1`.
 
 ## Dual-project pitfall
 

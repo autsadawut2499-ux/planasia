@@ -30,7 +30,7 @@ Deployment runbook (Vercel env gate, dual-project pitfalls, SHA verification): [
 
 | Status | Item | Notes |
 |--------|------|--------|
-| ✅ Done | Production env gate in `npm run build` | `scripts/check-production-env.mjs` fails closed on Vercel production |
+| ✅ Done | Production env gate in `npm run build` | Bootstrap warns if keys missing; set `STRICT_PRODUCTION_ENV=1` for hard fail |
 | ✅ Done | Geo-IP local currency (display + charge) | `src/lib/currency.ts` + `/api/geo`; PromptPay remains THB+TH |
 | ✅ Done | TH/EN storefront locale clamp | `STOREFRONT_UI_LOCALES` when `THAI_DOMESTIC_MARKET` |
 | ⬜ | Single Vercel project only | Disconnect duplicate `planasia-n359` if still linked |

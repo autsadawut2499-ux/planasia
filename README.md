@@ -123,7 +123,7 @@ Listing sale prices are set by vendors (THB base). Platform share / vendor share
 
 1. Push to `main` on GitHub (Vercel Git integration).
 2. Ensure **one** Vercel project (`planasia`) is connected — avoid a second overlapping project.
-3. Production builds run `npm run build` → env check must pass or the deploy fails and the previous build stays live.
+3. Production builds run `npm run build`. By default missing secrets **warn** (bootstrap). Set `STRICT_PRODUCTION_ENV=1` after keys are filled to hard-fail incomplete deploys. `ADMIN_PIN=501499` and mock payments still fail closed.
 4. Confirm the Ready deployment cloned the expected commit SHA.
 
 Details: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).

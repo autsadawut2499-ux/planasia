@@ -30,7 +30,10 @@ export function formatMb(bytes: number): string {
 }
 
 export function getSiteAssetPublicUrl(storagePath: string): string {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/$/, "");
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
+  if (!base) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is required to build site-asset URLs");
+  }
   return `${base}/storage/v1/object/public/${SITE_ASSETS_BUCKET}/${storagePath}`;
 }
 

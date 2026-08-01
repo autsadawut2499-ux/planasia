@@ -1,7 +1,15 @@
 /**
- * Fail CI/build when required production env vars are missing.
+ * Production env gate for `npm run build`.
+ *
+ * Default (bootstrap-friendly):
+ *   - Warn when recommended secrets are missing (deploy can still succeed)
+ *   - Hard-fail only on unsafe production flags / default ADMIN_PIN
+ *
+ * When ready for a strict go-live gate, set STRICT_PRODUCTION_ENV=1 on Vercel
+ * so missing required keys fail the build.
+ *
  * Usage: node scripts/check-production-env.mjs
- * Set SKIP_PRODUCTION_ENV_CHECK=1 to bypass (local only).
+ * Bypass entirely (local only): SKIP_PRODUCTION_ENV_CHECK=1
  */
 
 const required = [
@@ -33,6 +41,9 @@ const isProd =
   process.env.VERCEL_ENV === "production" ||
   process.env.CI_PRODUCTION_ENV_CHECK === "1";
 
+/** When "1", missing required keys fail production builds (post-bootstrap). */
+const strict = process.env.STRICT_PRODUCTION_ENV === "1";
+
 if (!isProd) {
   console.log("[env-check] non-production — soft check only");
 }
@@ -55,11 +66,21 @@ if (isProd && adminPin === DEFAULT_ADMIN_PIN) {
 
 if (missing.length) {
   const msg = `[env-check] missing: ${missing.join(", ")}`;
-  if (isProd) {
+  if (isProd && strict) {
     console.error(msg);
+    console.error(
+      "[env-check] STRICT_PRODUCTION_ENV=1 — fill every required key (see .env.example / docs/DEPLOYMENT.md)",
+    );
     process.exit(1);
   }
-  console.warn(msg);
+  if (isProd) {
+    console.warn(msg);
+    console.warn(
+      "[env-check] bootstrap mode — build continues; set secrets in Vercel, then optionally STRICT_PRODUCTION_ENV=1",
+    );
+  } else {
+    console.warn(msg);
+  }
   process.exit(0);
 }
 
