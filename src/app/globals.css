@@ -342,12 +342,64 @@
     background-color: var(--color-surface);
   }
 
+  /*
+   * Cap public storefront width on ultrawide monitors so grids/images
+   * stay proportioned (desktop “mockup” width, not stretched edge-to-edge).
+   * Admin/dashboard omit data-storefront-cap so they stay full-bleed.
+   */
+  html[data-storefront-cap] {
+    background-color: #e8eaef;
+  }
+
+  html[data-storefront-cap] .storefront-frame {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    background-color: var(--color-surface);
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.06);
+  }
+
   .section-pad {
     @apply py-16 md:py-20 lg:py-24;
   }
 
   .section-inner {
-    @apply mx-auto max-w-6xl px-5 md:px-8;
+    @apply mx-auto w-full max-w-[1200px] px-5 md:px-8;
+  }
+
+  /* Locked media frames — never let cover photos squash flat on wide viewports */
+  .hero-cover {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    /* Mobile: natural 16:9 height — search card stacks below, not over the image */
+    min-height: 200px;
+  }
+
+  @media (min-width: 768px) {
+    .hero-cover {
+      min-height: 420px;
+    }
+  }
+
+  .hero-cover > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .media-cover {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 
   .card-surface {

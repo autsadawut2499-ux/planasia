@@ -67,14 +67,14 @@ export function HousePlanCard({
         onClick={() => track(item.id, "view", { source: "store-card" })}
       />
 
-      <div className="relative aspect-[16/10] overflow-hidden bg-surface-raised">
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-surface-raised">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={item.image}
           alt={localized.name}
           loading={index < 3 ? "eager" : "lazy"}
           decoding="async"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          className="media-cover transition-transform duration-500 group-hover:scale-[1.02]"
         />
         {imageBadge && <div className="pointer-events-none absolute inset-0 z-[2]">{imageBadge}</div>}
         {canFavorite && (

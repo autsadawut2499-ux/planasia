@@ -60,7 +60,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsBundle = {
   brand: {
     name: "Planasia",
     logoUrl: "/brand/planasia-lockup.png",
-    tagline: "แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI",
+    tagline: "ศูนย์รวมแบบแปลนและผลงานนักเขียนแบบไทย ก้าวไกลสู่สากล",
   },
   header: {
     showStoreLink: true,
@@ -81,7 +81,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsBundle = {
     copyrightText: "© {year} Planasia. All Rights Reserved.",
   },
   hero: {
-    badgeText: "แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI",
+    badgeText: "ศูนย์รวมแบบแปลนและผลงานนักเขียนแบบไทย ก้าวไกลสู่สากล",
     backgroundImageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80",
   },

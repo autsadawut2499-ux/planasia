@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import type { StoreListing } from "@/lib/store/db";
 import type { AboutPage } from "@/lib/content/about";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/admin/defaults";
+import {
+  asiaPositioningKeywords,
+  asiaPositioningMetaOther,
+} from "@/lib/seo/multilingual-positioning";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { listingStorePath } from "@/lib/seo/slug";
 
@@ -194,8 +198,8 @@ export function buildHomeMetadata(input: HomeMetadataInput = {}): Metadata {
     "แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI";
   const title = `${brandName} — ${tagline}`;
   const description = truncate(
-    `${tagline} สร้างแนวคิดแปลนบ้าน จัดโซนห้องเบื้องต้น และนำเสนอไอเดียดีไซน์ด้วย AI — เน้นความแม่นยำในระดับคอนเซปต์`,
-    160,
+    `${tagline} — Asia's largest prefab & modular house-plan collection. สร้างแนวคิดแปลนบ้านและนำเสนอไอเดียดีไซน์ด้วย AI`,
+    200,
   );
   const canonical = getSiteUrl();
   const heroImage = absoluteImageUrl(
@@ -208,6 +212,7 @@ export function buildHomeMetadata(input: HomeMetadataInput = {}): Metadata {
   return {
     title,
     description,
+    keywords: asiaPositioningKeywords(),
     alternates: { canonical, languages: hreflang(canonical) },
     openGraph: {
       type: "website",
@@ -237,6 +242,7 @@ export function buildHomeMetadata(input: HomeMetadataInput = {}): Metadata {
       "og:image:secure_url": heroImage,
       "og:image:alt": `${brandName} — ภาพปกหน้าแรก`,
       "og:logo": logoImage,
+      ...asiaPositioningMetaOther(),
     },
   };
 }

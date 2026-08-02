@@ -79,7 +79,7 @@ export function RecommendedForYou({
 
   return (
     <section className={`font-sans ${className ?? ""}`}>
-      <div className="mx-auto max-w-[1400px] px-5 md:px-8">
+      <div className="section-inner">
         <div className="mb-6 flex items-end justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">

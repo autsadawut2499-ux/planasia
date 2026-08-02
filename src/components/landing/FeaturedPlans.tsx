@@ -66,7 +66,7 @@ export function FeaturedPlans({ title, exclusive = false }: FeaturedPlansProps) 
 
   return (
     <section className="section-pad bg-transparent">
-      <div className="mx-auto w-full max-w-[1200px] px-5 md:px-[5%]">
+      <div className="section-inner">
         <h2 className="text-center text-2xl font-semibold text-[#2b3a4a] md:text-3xl">{heading}</h2>
 
         <div className="relative mt-10">

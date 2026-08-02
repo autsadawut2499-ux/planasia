@@ -41,7 +41,7 @@ export function PlanInfoBand() {
 
   return (
     <section className="bg-[#1e3a5f] py-20 text-white md:py-24">
-      <div className="mx-auto max-w-6xl px-5 md:px-8">
+      <div className="section-inner">
         <div className="grid gap-10 md:grid-cols-2 md:items-center md:gap-14">
           <div>
             <h2 className="text-2xl font-semibold leading-snug md:text-4xl">

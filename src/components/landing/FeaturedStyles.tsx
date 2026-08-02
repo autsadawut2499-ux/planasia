@@ -36,7 +36,7 @@ export function FeaturedStyles() {
               <Link
                 key={tile.id}
                 href={`/store?style=${encodeURIComponent(styleParam)}`}
-                className="group relative aspect-[3/4] overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
+                className="group relative aspect-[3/4] w-full shrink-0 overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -45,7 +45,7 @@ export function FeaturedStyles() {
                   alt={label}
                   loading="lazy"
                   decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="media-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <span className="absolute bottom-3 left-3 rounded bg-[#1e3a5f] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white">

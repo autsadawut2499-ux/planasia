@@ -114,7 +114,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       <LandingHeader />
       <main className="page-canvas min-h-screen font-sans">
         <div className="border-b border-border/70 bg-[var(--color-card,#fff)] px-5 py-6 md:px-8 md:py-8">
-          <div className="mx-auto max-w-[1400px]">
+          <div className="mx-auto w-full max-w-[1200px]">
             <h1 className="text-lg font-semibold text-[#1e3a5f] md:text-xl">
               {translate("store.pageTitle")}
             </h1>
@@ -156,7 +156,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
           limit={8}
         />
 
-        <div className="mx-auto grid max-w-[1400px] gap-8 px-5 py-8 sm:px-6 md:px-8 md:py-12 lg:grid-cols-[300px_1fr] lg:gap-10">
+        <div className="mx-auto grid w-full max-w-[1200px] gap-8 px-5 py-8 sm:px-6 md:px-8 md:py-12 lg:grid-cols-[280px_1fr] lg:gap-10">
           {/* Desktop / tablet landscape sidebar */}
           <div className="hidden lg:block">
             <StoreFilters

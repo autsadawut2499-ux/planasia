@@ -2,6 +2,10 @@ import type { StoreListing } from "@/lib/store/db";
 import type { PlanReview, RatingAggregate } from "@/lib/supabase/reviews";
 import type { DraftsmanCard } from "@/lib/vendors/directory";
 import { buildRealEstateListingJsonLd } from "@/lib/seo/listing-seo-generate";
+import {
+  asiaPositioningJsonLdDescriptions,
+  asiaPositioningLanguages,
+} from "@/lib/seo/multilingual-positioning";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { listingStorePath } from "@/lib/seo/slug";
 
@@ -116,6 +120,8 @@ export function buildBreadcrumbJsonLd(
 /** Organization + WebSite with SearchAction (sitelinks searchbox). */
 export function buildOrganizationJsonLd(): Record<string, unknown>[] {
   const base = getSiteUrl();
+  const multilingualDescriptions = asiaPositioningJsonLdDescriptions();
+  const availableLanguages = asiaPositioningLanguages();
   return [
     {
       "@context": "https://schema.org",
@@ -124,8 +130,9 @@ export function buildOrganizationJsonLd(): Record<string, unknown>[] {
       name: ORG_NAME,
       url: base,
       logo: `${base}/icon.png`,
-      description:
-        "Planasia — ตลาดกลางซื้อขายแบบบ้านและแปลนพิมพ์เขียว (ไฟล์ PDF) พร้อมช่างเขียนแบบมืออาชีพ",
+      description: multilingualDescriptions,
+      areaServed: { "@type": "Place", name: "Asia" },
+      knowsLanguage: availableLanguages,
     },
     {
       "@context": "https://schema.org",
@@ -134,7 +141,13 @@ export function buildOrganizationJsonLd(): Record<string, unknown>[] {
       url: base,
       name: ORG_NAME,
       publisher: { "@id": `${base}#organization` },
-      inLanguage: "th-TH",
+      description: multilingualDescriptions,
+      inLanguage: availableLanguages,
+      about: {
+        "@type": "Thing",
+        name: "Prefab and modular house designs",
+        description: multilingualDescriptions,
+      },
       potentialAction: {
         "@type": "SearchAction",
         target: { "@type": "EntryPoint", urlTemplate: `${base}/store?search={search_term_string}` },

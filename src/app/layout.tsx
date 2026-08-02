@@ -36,7 +36,12 @@ import { AiPlanChat } from "@/components/chat/AiPlanChat";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme-bootstrap";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { MultilingualSeoHead } from "@/components/seo/MultilingualSeoHead";
 import { buildOrganizationJsonLd } from "@/lib/seo/json-ld";
+import {
+  asiaPositioningKeywords,
+  asiaPositioningMetaOther,
+} from "@/lib/seo/multilingual-positioning";
 import { loadSiteConfig } from "@/lib/supabase/site-config";
 import "./globals.css";
 
@@ -73,7 +78,8 @@ export const metadata: Metadata = {
     template: "%s | Planasia",
   },
   description:
-    "สร้างแนวคิดแปลนบ้าน จัดโซนห้องเบื้องต้น และนำเสนอไอเดียดีไซน์ด้วย AI — เน้นความแม่นยำในระดับคอนเซปต์ ไม่ใช่ชุดแบบก่อสร้างเชิงลึก",
+    "Asia's largest collection of prefab and modular house designs — สร้างแนวคิดแปลนบ้าน จัดโซนห้องเบื้องต้น และนำเสนอไอเดียดีไซน์ด้วย AI",
+  keywords: asiaPositioningKeywords(),
   applicationName: "Planasia",
   robots: { index: true, follow: true },
   // Site-wide defaults; homepage `generateMetadata` overrides with live hero cover.
@@ -84,13 +90,13 @@ export const metadata: Metadata = {
     siteName: "Planasia",
     title: "Planasia",
     description:
-      "แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI — สร้างแนวคิดแปลนบ้านและนำเสนอไอเดียดีไซน์",
+      "Asia's largest prefab & modular house-plan collection — แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI",
   },
   twitter: {
     card: "summary_large_image",
     title: "Planasia",
     description:
-      "แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI — สร้างแนวคิดแปลนบ้านและนำเสนอไอเดียดีไซน์",
+      "Asia's largest prefab & modular house-plan collection — แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI",
   },
   appleWebApp: {
     capable: true,
@@ -101,6 +107,7 @@ export const metadata: Metadata = {
     icon: "/icons/icon.svg",
     apple: "/icons/icon.svg",
   },
+  other: asiaPositioningMetaOther(),
 };
 
 export const viewport = {
@@ -119,6 +126,9 @@ export default async function RootLayout({
 
   return (
     <html lang="th" suppressHydrationWarning>
+      <head>
+        <MultilingualSeoHead />
+      </head>
       <body
         className={`${prompt.variable} ${plusJakarta.variable} ${montserrat.variable} min-h-screen font-sans font-medium antialiased`}
       >
@@ -133,7 +143,7 @@ export default async function RootLayout({
               <PwaProvider>
                 <StoreCartProvider>
                   <StoreBrowseProvider>
-                    <div className="flex min-h-screen flex-col">
+                    <div className="storefront-frame flex min-h-screen flex-col">
                       <div className="flex min-h-0 flex-1 flex-col">
                         <Suspense fallback={null}>
                           <ThemeProvider>{children}</ThemeProvider>

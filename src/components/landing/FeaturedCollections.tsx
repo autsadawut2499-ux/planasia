@@ -38,7 +38,7 @@ export function FeaturedCollections() {
               <Link
                 key={tile.id}
                 href={tile.href || "/store"}
-                className="group relative aspect-[4/3] overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
+                className="group relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -46,7 +46,7 @@ export function FeaturedCollections() {
                   alt={label}
                   loading="lazy"
                   decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="media-cover transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {
                     const el = e.currentTarget;
                     if (el.src !== fallbackImg) el.src = fallbackImg;

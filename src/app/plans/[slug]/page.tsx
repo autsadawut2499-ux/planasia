@@ -66,7 +66,7 @@ export default async function PlanLandingPage({ params }: PageProps) {
       <LandingHeader />
       <main>
         <section className="border-b border-border/70 bg-surface-raised/60 py-12 md:py-14">
-          <div className="mx-auto max-w-[1400px] px-5 md:px-8">
+          <div className="section-inner">
             <nav className="mb-4 text-xs text-text-muted" aria-label="breadcrumb">
               <Link href="/" className="hover:text-[#1e40af]">
                 หน้าแรก
@@ -86,7 +86,7 @@ export default async function PlanLandingPage({ params }: PageProps) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1400px] px-5 py-12 md:px-8 md:py-16">
+        <section className="section-inner py-12 md:py-16">
           <h2 className="mb-7 text-lg font-bold text-[#1e3a5f]">{page.h2}</h2>
           {listings.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-[var(--color-card,#fff)] py-20 text-center">

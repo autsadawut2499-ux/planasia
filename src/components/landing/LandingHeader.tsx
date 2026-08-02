@@ -122,11 +122,11 @@ export function LandingHeader() {
     <header className="sticky top-0 z-50 border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
       {/* Top bar — brand navy utility strip (centered tagline + phone) */}
       <div className="bg-[#1A2744] text-white">
-        <div className="relative mx-auto flex min-h-11 max-w-[1400px] items-center px-4 py-2 md:min-h-10 md:px-6 md:py-1.5">
-          <p className="mx-auto max-w-[min(100%,42rem)] truncate px-20 text-center text-[11px] font-semibold tracking-[0.01em] text-white sm:px-28 sm:text-xs md:max-w-none md:px-36 md:text-[13px]">
+        <div className="relative mx-auto flex min-h-11 w-full max-w-[1440px] items-center px-4 py-2 md:min-h-10 md:px-6 md:py-1.5">
+          <p className="mx-auto max-w-[min(100%,46rem)] px-16 text-center text-[11px] font-semibold leading-snug tracking-[0.01em] text-white sm:px-28 sm:text-xs md:max-w-none md:truncate md:px-36 md:text-[13px]">
             {L(
-              "The marketplace for house plans and designer work nationwide",
-              "ตลาดกลางรวมแบบบ้านและผลงานจากนักเขียนแบบทั่วประเทศ",
+              "The hub for Thai designers' blueprints and portfolios — going global",
+              "ศูนย์รวมแบบแปลนและผลงานนักเขียนแบบไทย ก้าวไกลสู่สากล",
             )}
           </p>
           <a
@@ -141,7 +141,7 @@ export function LandingHeader() {
       </div>
 
       {/* Main header — logo | nav | clear gap | actions (no overlap) */}
-      <div className="mx-auto flex h-[72px] max-w-[1400px] flex-nowrap items-center gap-3 px-3 sm:h-20 sm:px-4 md:gap-4 md:px-6 lg:h-[88px]">
+      <div className="mx-auto flex h-[72px] w-full max-w-[1440px] flex-nowrap items-center gap-3 px-3 sm:h-20 sm:px-4 md:gap-4 md:px-6 lg:h-[88px]">
         <div className="flex shrink-0 items-center py-1.5">
           <BrandLogo variant="light" />
         </div>

@@ -1,2 +1,2 @@
 /** Runs before paint to avoid landing/store theme flash (FOUC). */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var p=location.pathname;var t=p.indexOf("/store")===0?"store":"landing";document.documentElement.setAttribute("data-theme",t);document.documentElement.classList.remove("dark");}catch(e){}})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var p=location.pathname;var t=p.indexOf("/store")===0?"store":"landing";document.documentElement.setAttribute("data-theme",t);document.documentElement.classList.remove("dark");var cap=p.indexOf("/admin")!==0&&p.indexOf("/dashboard")!==0;if(cap){document.documentElement.setAttribute("data-storefront-cap","")}else{document.documentElement.removeAttribute("data-storefront-cap")}}catch(e){}})();`;

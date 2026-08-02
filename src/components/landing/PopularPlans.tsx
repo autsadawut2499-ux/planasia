@@ -83,14 +83,14 @@ export function PopularPlans({ className }: { className?: string }) {
                 loading ? "animate-pulse" : ""
               }`}
             >
-              <div className="relative aspect-[4/3] overflow-hidden bg-surface-raised">
+              <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-surface-raised">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={card.imageUrl}
                   alt={L(card.titleEn, card.titleTh)}
                   loading={i < 2 ? "eager" : "lazy"}
                   decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="media-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
               </div>

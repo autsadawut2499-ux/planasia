@@ -55,7 +55,7 @@ export function CollectionsMegaMenuPanel({ onNavigate }: CollectionsMegaMenuPane
                   alt={L(tile.titleEn, tile.titleTh)}
                   loading="lazy"
                   decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  className="media-cover transition-transform duration-500 group-hover:scale-[1.04]"
                   onError={(e) => {
                     const el = e.currentTarget;
                     if (el.src !== fallbackImg) el.src = fallbackImg;
