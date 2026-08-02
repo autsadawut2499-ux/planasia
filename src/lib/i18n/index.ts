@@ -242,7 +242,6 @@ export type TranslationKey =
   | "download.readyPdf"
   | "download.readyCad"
   | "store.subtitle"
-  | "store.autoListingNote"
   | "store.communityBadge"
   | "store.empty"
   | "country.select"
@@ -851,7 +850,6 @@ const translations: Translations = {
     "download.readyPdf": "PDF permit drawing set — click Export PDF to download.",
     "download.readyCad": "CAD floor plan export — click Export CAD to download.",
     "store.subtitle": "Curated architectural house plans ready for construction",
-    "store.autoListingNote": "After you pay and unlock, your design auto-lists on the Store for others — you won't see your own listing here.",
     "store.communityBadge": "AI Community Design",
     "store.empty": "No community listings yet. Create a design in Workspace to populate the store.",
     "country.select": "Country / Region",
@@ -1461,7 +1459,6 @@ const translations: Translations = {
     "download.readyPdf": "ชุดแบบ PDF พร้อมแล้ว — กดส่งออก PDF เพื่อดาวน์โหลด",
     "download.readyCad": "ไฟล์ CAD พร้อมแล้ว — กดส่งออก CAD เพื่อดาวน์โหลด",
     "store.subtitle": "คลังแบบบ้านพร้อมสร้าง คัดสรรจากสถาปนิกมืออาชีพ",
-    "store.autoListingNote": "หลังชำระเงินปลดล็อก แบบจะลงร้านแบบบ้านให้คนอื่นซื้อ — คุณจะไม่เห็นแบบของตัวเองในหน้านี้",
     "store.communityBadge": "แบบชุมชน AI",
     "store.empty": "ยังไม่มีสินค้า — สร้างแบบในพื้นที่ทำงานเพื่อลงร้าน",
     "country.select": "ประเทศ / ภูมิภาค",
@@ -2064,7 +2061,6 @@ const translations: Translations = {
     "download.readyPdf": "PDF ready — click Export PDF to download.",
     "download.readyCad": "CAD ready — click Export CAD to download.",
     "store.subtitle": "Curated architectural house plans ready for construction",
-    "store.autoListingNote": "After payment, your design auto-lists for others — hidden from your view.",
     "store.communityBadge": "AI Community Design",
     "store.empty": "No listings yet.",
     "country.select": "देश / क्षेत्र",
@@ -2669,7 +2665,6 @@ const translations: Translations = {
     "download.readyPdf": "PDF sẵn sàng — nhấn Export PDF để tải.",
     "download.readyCad": "CAD sẵn sàng — nhấn Export CAD để tải.",
     "store.subtitle": "Kho bản vẽ nhà sẵn sàng xây dựng, tuyển chọn từ kiến trúc sư chuyên nghiệp",
-    "store.autoListingNote": "Sau khi thanh toán, thiết kế tự động lên store — ẩn khỏi bạn.",
     "store.communityBadge": "Thiết kế cộng đồng AI",
     "store.empty": "Chưa có sản phẩm.",
     "country.select": "Quốc gia / Khu vực",

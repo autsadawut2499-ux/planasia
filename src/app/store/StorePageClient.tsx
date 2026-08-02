@@ -137,9 +137,6 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
                 )}
               </div>
             )}
-            <p className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] leading-relaxed text-blue-900 md:text-xs">
-              {translate("store.autoListingNote")}
-            </p>
           </div>
         </div>
 
