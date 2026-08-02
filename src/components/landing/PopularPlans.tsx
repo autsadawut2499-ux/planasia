@@ -79,18 +79,16 @@ export function PopularPlans({ className }: { className?: string }) {
             <Link
               key={card.id}
               href={card.href || "/store"}
-              className={`group overflow-hidden rounded-xl border border-border bg-[var(--color-card,#fff)] shadow-sm transition-shadow hover:shadow-md ${
-                loading ? "animate-pulse" : ""
-              }`}
+              className={`store-card group ${loading ? "animate-pulse" : ""}`}
             >
-              <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-surface-raised">
+              <div className="store-card__media">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={card.imageUrl}
                   alt={L(card.titleEn, card.titleTh)}
                   loading={i < 2 ? "eager" : "lazy"}
                   decoding="async"
-                  className="media-cover transition-transform duration-500 group-hover:scale-105"
+                  className="transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
               </div>

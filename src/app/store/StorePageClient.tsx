@@ -144,7 +144,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
         </div>
 
         <RecommendedForYou
-          className="border-b border-border/70 py-12 md:py-14"
+          className="border-b border-border/70 py-10 md:py-12"
           filters={{
             beds: filters.beds,
             baths: filters.baths,
@@ -156,7 +156,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
           limit={8}
         />
 
-        <div className="mx-auto grid w-full max-w-[1200px] gap-6 px-4 py-8 sm:gap-8 sm:px-6 md:px-8 md:py-12 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-8">
+        <div className="mx-auto grid w-full max-w-[1440px] gap-6 px-4 py-8 sm:gap-8 sm:px-5 md:px-6 md:py-12 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)] lg:gap-6 xl:gap-7">
           {/* Desktop / tablet landscape sidebar */}
           <div className="hidden min-w-0 lg:block">
             <StoreFilters
@@ -190,8 +190,8 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
 
             {loading ? (
               <div className="store-card-grid">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="store-card h-80 animate-pulse" />
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="store-card h-72 animate-pulse" />
                 ))}
               </div>
             ) : filtered.length === 0 ? (

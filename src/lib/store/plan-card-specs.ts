@@ -18,7 +18,8 @@ export function parseListingAreaNumber(area: string): string {
 function formatMeters(value: number | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—";
   const n = Number(value);
-  return `${n % 1 === 0 ? String(n) : n.toFixed(1)} ม.`;
+  // Compact unit so narrow card columns don't clip ("12 ม" fits 3-col row)
+  return `${n % 1 === 0 ? String(n) : n.toFixed(1)} ม`;
 }
 
 /**

@@ -12,8 +12,8 @@ interface FeaturedPlansProps {
   exclusive?: boolean;
 }
 
-/** Gap between cards — 20px, matches the brief. */
-const CARD_GAP_PX = 20;
+/** Gap between cards — kept in sync with .store-card-rail--compact gap. */
+const CARD_GAP_PX = 24;
 
 export function FeaturedPlans({ title, exclusive = false }: FeaturedPlansProps) {
   const L = useBilingual();
@@ -55,7 +55,8 @@ export function FeaturedPlans({ title, exclusive = false }: FeaturedPlansProps) 
   const scroll = (dir: -1 | 1) => {
     const el = trackRef.current;
     if (!el) return;
-    const step = (el.clientWidth + CARD_GAP_PX) / 3;
+    const cols = el.clientWidth >= 1024 ? 4 : 2;
+    const step = (el.clientWidth + CARD_GAP_PX) / cols;
     el.scrollBy({ left: dir * step, behavior: "smooth" });
   };
 
@@ -81,14 +82,10 @@ export function FeaturedPlans({ title, exclusive = false }: FeaturedPlansProps) 
 
           <div
             ref={trackRef}
-            className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            style={{ gap: CARD_GAP_PX }}
+            className="store-card-rail store-card-rail--compact scroll-smooth"
           >
             {plans.map((plan, index) => (
-              <div
-                key={plan.id}
-                className="w-[min(300px,85%)] shrink-0 snap-start sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]"
-              >
+              <div key={plan.id} className="store-card-rail__slide">
                 <HousePlanCard
                   item={plan}
                   index={index}

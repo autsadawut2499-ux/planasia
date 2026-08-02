@@ -27,8 +27,7 @@ export interface HousePlanCardProps {
 }
 
 /**
- * Compact clickable house-plan card — entire card opens the detail page.
- * No bottom action buttons (View / Cart / Buy).
+ * House-plan product card — chrome matches Popular Plans (4:3 media, rounded-xl, soft shadow).
  */
 export function HousePlanCard({
   item,
@@ -60,9 +59,8 @@ export function HousePlanCard({
 
   return (
     <article
-      className={`store-card group relative flex h-full w-full min-w-0 flex-col font-sans antialiased tracking-[-0.01em] ${className}`}
+      className={`store-card group relative h-full font-sans antialiased tracking-[-0.01em] ${className}`}
     >
-      {/* Stretch link — click anywhere on the card → detail page */}
       <Link
         href={detailHref}
         className="absolute inset-0 z-[1] rounded-[inherit]"
@@ -70,21 +68,21 @@ export function HousePlanCard({
         onClick={() => track(item.id, "view", { source: "store-card" })}
       />
 
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-surface-raised">
+      <div className="store-card__media">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={item.image}
           alt={localized.name}
           loading={index < 3 ? "eager" : "lazy"}
           decoding="async"
-          className="media-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          className="transition-transform duration-500 group-hover:scale-105"
         />
         {imageBadge && <div className="pointer-events-none absolute inset-0 z-[2]">{imageBadge}</div>}
         {canFavorite && (
           <button
             type="button"
             onClick={handleFavorite}
-            className="absolute bottom-2.5 right-2.5 z-[3] flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-black/5 active:scale-95"
+            className="store-card__fav active:scale-95"
             aria-label={
               favorited ? translate("store.aria.removeFavorite") : translate("store.aria.save")
             }
@@ -99,68 +97,70 @@ export function HousePlanCard({
         )}
       </div>
 
-      <div className="relative z-0 flex min-w-0 items-start justify-between gap-2 px-3 pt-3 sm:gap-3 sm:px-4 sm:pt-3.5">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold leading-none text-[#334155] sm:text-[11px]">
-            {L("Plan number", "แผนงานหมายเลข")}
-          </p>
-          <p className="mt-1 truncate text-[14px] font-extrabold leading-tight text-[#0b1220] sm:text-[16px]">
-            #{item.planId}
-          </p>
-        </div>
-        <div className="max-w-[45%] shrink-0 text-right">
-          {sale.price <= 0 ? (
-            <p className="pt-3 text-[14px] font-extrabold leading-none text-emerald-800 sm:text-[16px]">
-              {L("Free", "ฟรี")}
+      <div className="store-card__body">
+        <div className="store-card-title-row relative z-0">
+          <div className="min-w-0 flex-1">
+            <p className="store-card-kicker truncate text-[11px] font-semibold leading-none text-[#64748b]">
+              {L("Plan number", "แผนงานหมายเลข")}
             </p>
-          ) : sale.compareAt != null ? (
-            <>
-              <p className="text-[10px] font-semibold leading-none text-[#b91c1c] sm:text-[11px]">
-                {L("Sale", "ลดราคา")}
+            <p className="store-card-plan-id mt-1.5 truncate text-sm font-bold leading-tight text-[#1e3a5f] md:text-base">
+              #{item.planId}
+            </p>
+          </div>
+          <div className="max-w-[46%] shrink-0 text-right">
+            {sale.price <= 0 ? (
+              <p className="store-card-price pt-4 text-sm font-bold leading-none text-emerald-800 md:text-base">
+                {L("Free", "ฟรี")}
               </p>
-              <p className="mt-0.5 truncate text-[10px] font-semibold text-[#64748b] line-through sm:text-[11px]">
-                {formatMoney(sale.compareAt)}
-              </p>
-              <p className="truncate text-[14px] font-extrabold leading-none text-[#1e3a8a] sm:text-[16px]">
-                {formatMoney(sale.price)}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-[10px] font-semibold leading-none text-[#64748b] sm:text-[11px]">
-                {L("Starting at", "เริ่มต้นที่")}
-              </p>
-              <p className="mt-1 truncate text-[14px] font-extrabold leading-none text-[#1e3a8a] sm:text-[16px]">
-                {formatMoney(sale.price)}
-              </p>
-            </>
-          )}
+            ) : sale.compareAt != null ? (
+              <>
+                <p className="store-card-kicker text-[11px] font-semibold leading-none text-[#b91c1c]">
+                  {L("Sale", "ลดราคา")}
+                </p>
+                <p className="mt-1 truncate text-[11px] font-semibold text-[#94a3b8] line-through">
+                  {formatMoney(sale.compareAt)}
+                </p>
+                <p className="store-card-price truncate text-sm font-bold leading-none text-[#1e40af] md:text-base">
+                  {formatMoney(sale.price)}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="store-card-kicker text-[11px] font-semibold leading-none text-[#64748b]">
+                  {L("Starting at", "เริ่มต้นที่")}
+                </p>
+                <p className="store-card-price mt-1.5 truncate text-sm font-bold leading-none text-[#1e40af] md:text-base">
+                  {formatMoney(sale.price)}
+                </p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="relative z-0 mt-auto min-w-0 border-t border-[#e8eaee] px-2.5 pb-3 pt-2.5 sm:px-3 sm:pb-3.5 sm:pt-3">
-        <div className="grid grid-cols-4 gap-y-1">
-          {primarySpecs.map((spec, i) => (
-            <SpecCell
-              key={`${spec.labelEn}-${i}`}
-              spec={spec}
-              label={L(spec.labelEn, spec.labelTh)}
-              showDivider={i < primarySpecs.length - 1}
-            />
-          ))}
-        </div>
-        {secondarySpecs.length > 0 && (
-          <div className="mt-2 grid grid-cols-3 gap-y-1 border-t border-[#eef0f4] pt-2">
-            {secondarySpecs.map((spec, i) => (
+        <div className="store-card__specs-wrap relative z-0">
+          <div className="store-card__specs">
+            {primarySpecs.map((spec, i) => (
               <SpecCell
                 key={`${spec.labelEn}-${i}`}
                 spec={spec}
                 label={L(spec.labelEn, spec.labelTh)}
-                showDivider={i < secondarySpecs.length - 1}
+                showDivider={i < primarySpecs.length - 1}
               />
             ))}
           </div>
-        )}
+          {secondarySpecs.length > 0 && (
+            <div className="store-card__specs store-card__specs--secondary">
+              {secondarySpecs.map((spec, i) => (
+                <SpecCell
+                  key={`${spec.labelEn}-${i}`}
+                  spec={spec}
+                  label={L(spec.labelEn, spec.labelTh)}
+                  showDivider={i < secondarySpecs.length - 1}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </article>
   );
@@ -177,14 +177,14 @@ function SpecCell({
 }) {
   return (
     <div
-      className={`min-w-0 px-0.5 py-0.5 text-center sm:px-1 sm:py-1 ${
+      className={`min-w-0 overflow-hidden px-0.5 py-0.5 text-center ${
         showDivider ? "border-r border-[#e5e7eb]" : ""
       }`}
     >
-      <p className="text-[9px] font-semibold leading-tight text-[#64748b] sm:text-[10px]">
+      <p className="truncate text-[10px] font-semibold leading-tight text-[#64748b]">
         {label}
       </p>
-      <p className="mt-0.5 truncate text-[12px] font-extrabold tabular-nums leading-tight text-[#0b1220] sm:mt-1 sm:text-[14px]">
+      <p className="mt-1 truncate text-[13px] font-bold tabular-nums leading-tight text-[#0b1220]">
         {spec.value}
       </p>
     </div>

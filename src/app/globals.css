@@ -316,34 +316,159 @@
     background: rgba(34, 197, 94, 0.06) !important;
   }
 
-  /* ── Store / public product cards ── */
+  /*
+   * Store / public product cards — matched to “Popular House Plans” chrome:
+   * rounded-xl, soft shadow, 4:3 media, breathable body, 4-up desktop grid.
+   */
   .store-card {
-    @apply w-full min-w-0 overflow-hidden rounded-xl border transition-shadow duration-200;
+    @apply flex w-full min-w-0 flex-col overflow-hidden rounded-xl border transition-shadow duration-200;
     background-color: var(--color-card, #ffffff);
     border-color: var(--color-border);
-    box-shadow: 0 1px 2px rgba(26, 35, 50, 0.04), 0 4px 16px rgba(26, 35, 50, 0.05);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
   .store-card:hover {
-    box-shadow: 0 4px 12px rgba(26, 35, 50, 0.06), 0 12px 32px rgba(26, 35, 50, 0.08);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
   }
 
-  /* Fluid centered listing grids — cards never overflow their track */
+  .store-card__media {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    background-color: var(--color-surface-raised, #f1f5f9);
+  }
+
+  .store-card__media > img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .store-card__body {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .store-card-title-row {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.05rem 1.15rem 0;
+  }
+
+  .store-card__specs-wrap {
+    margin-top: auto;
+    min-width: 0;
+    border-top: 1px solid #e8eaee;
+    padding: 0.75rem 1rem 1.05rem;
+  }
+
+  .store-card__specs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+  }
+
+  .store-card__specs--secondary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0.55rem;
+    border-top: 1px solid #eef0f4;
+    padding-top: 0.55rem;
+  }
+
+  .store-card__fav {
+    position: absolute;
+    right: 0.65rem;
+    bottom: 0.65rem;
+    z-index: 3;
+    display: flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  }
+
+  /* Horizontal carousels — same 4-up rhythm as Popular / store grid */
+  .store-card-rail {
+    display: flex;
+    align-items: stretch;
+    gap: 1.25rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 1rem;
+    scrollbar-width: none;
+  }
+
+  .store-card-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .store-card-rail {
+      gap: 1.5rem;
+    }
+  }
+
+  .store-card-rail__slide {
+    flex: 0 0 auto;
+    width: min(280px, calc(100vw - 3rem));
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .store-card-rail--compact {
+    gap: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .store-card-rail--compact {
+      gap: 1.5rem;
+    }
+
+    .store-card-rail--compact .store-card-rail__slide {
+      width: calc((100% - 1.5rem) / 2);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .store-card-rail--compact .store-card-rail__slide {
+      width: calc((100% - 4.5rem) / 4);
+    }
+  }
+
+  /* Listing grids — matches PopularPlans: 2-up → 4-up on desktop */
   .store-card-grid {
-    @apply mx-auto grid w-full min-w-0 grid-cols-1 gap-5;
+    @apply mx-auto grid w-full min-w-0 gap-5;
     grid-template-columns: minmax(0, 1fr);
   }
 
   @media (min-width: 640px) {
     .store-card-grid {
-      @apply gap-6;
+      gap: 1.5rem;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1024px) {
     .store-card-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
