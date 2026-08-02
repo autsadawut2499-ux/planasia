@@ -120,10 +120,10 @@ export function LandingHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
-      {/* Top bar — brand navy utility strip (centered tagline + phone) */}
+      {/* Top bar — brand navy utility strip (tagline + phone, no overlap) */}
       <div className="bg-[#1A2744] text-white">
-        <div className="relative mx-auto flex min-h-11 w-full max-w-[1440px] items-center px-4 py-2 md:min-h-10 md:px-6 md:py-1.5">
-          <p className="mx-auto max-w-[min(100%,46rem)] px-16 text-center text-[11px] font-semibold leading-snug tracking-[0.01em] text-white sm:px-28 sm:text-xs md:max-w-none md:truncate md:px-36 md:text-[13px]">
+        <div className="relative mx-auto flex w-full max-w-[1440px] flex-col items-center gap-1.5 px-4 py-2.5 md:min-h-10 md:flex-row md:items-center md:justify-end md:gap-0 md:px-6 md:py-1.5">
+          <p className="w-full max-w-prose text-center text-[11px] font-semibold leading-snug tracking-[0.01em] text-white sm:text-xs md:absolute md:inset-x-0 md:max-w-none md:truncate md:px-48 md:text-[13px]">
             {L(
               "The hub for Thai designers' blueprints and portfolios — going global",
               "ศูนย์รวมแบบแปลนและผลงานนักเขียนแบบไทย ก้าวไกลสู่สากล",
@@ -132,30 +132,32 @@ export function LandingHeader() {
           <a
             href={`tel:${phoneTel}`}
             aria-label={`${L("Call", "โทร")} ${contactPhone}`}
-            className="absolute right-4 top-1/2 inline-flex -translate-y-1/2 shrink-0 items-center gap-2 rounded-sm px-1.5 py-0.5 text-[17px] font-bold tabular-nums leading-none text-white transition-colors hover:bg-white/10 hover:text-white md:right-6 md:text-[15px]"
+            className="topbar-phone relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-white transition-colors hover:bg-white/10 hover:text-white md:gap-2"
           >
-            <Phone className="h-5 w-5 md:h-[18px] md:w-[18px]" strokeWidth={2.25} aria-hidden />
-            <span>{contactPhone}</span>
+            <Phone className="h-4 w-4 shrink-0 md:h-[18px] md:w-[18px]" strokeWidth={2.25} aria-hidden />
+            <span className="topbar-phone__number">{contactPhone}</span>
           </a>
         </div>
       </div>
 
-      {/* Main header — logo | nav | clear gap | actions (no overlap) */}
-      <div className="mx-auto flex h-[72px] w-full max-w-[1440px] flex-nowrap items-center gap-3 px-3 sm:h-20 sm:px-4 md:gap-4 md:px-6 lg:h-[88px]">
-        <div className="flex shrink-0 items-center py-1.5">
+      {/*
+        Balanced header grid:
+        Left brand+Store | Center nav (true center) | Right tools
+      */}
+      <div className="site-header-bar mx-auto w-full max-w-[1440px] px-4 sm:px-5 md:px-6 lg:px-8">
+        {/* LEFT */}
+        <div className="site-header-brand">
           <BrandLogo variant="light" />
-        </div>
-
-        <nav
-          aria-label={L("Main navigation", "เมนูหลัก")}
-          className="hidden min-w-0 flex-1 flex-nowrap items-center justify-start gap-x-0.5 overflow-visible pr-2 md:flex md:gap-x-1 md:pr-3 xl:gap-x-1.5"
-        >
           <Link
             href="/store"
-            className="nav-store-btn inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-semibold tracking-[0.01em] text-white 2xl:px-2.5 2xl:text-[12px]"
+            className="nav-store-btn header-control hidden text-white md:inline-flex"
           >
             {storeLabel}
           </Link>
+        </div>
+
+        {/* CENTER — optically centered between equal side columns */}
+        <nav aria-label={L("Main navigation", "เมนูหลัก")} className="site-header-nav">
           <NavDropdown label={L("Collections", "คอลเลคชั่น")} items={collectionItems} mega="collections" />
           <NavLink href="/whats-included" label={planIncludesLabel} />
           <NavDropdown
@@ -168,12 +170,12 @@ export function LandingHeader() {
           <NavLink href="/home-building" label={homeBuildingLabel} />
         </nav>
 
-        <div className="relative z-10 ml-auto flex h-9 shrink-0 flex-nowrap items-center gap-1.5 border-l border-transparent pl-1 sm:gap-2 md:border-border/60 md:pl-3">
-          {/* Plan-code search */}
+        {/* RIGHT — search · account · icons · seller */}
+        <div className="site-header-tools">
           <form onSubmit={submitPlanSearch} className="hidden md:block">
-            <div className="flex h-9 w-[120px] items-stretch overflow-hidden rounded-md border border-border bg-white shadow-sm focus-within:border-[#1e40af]/50 focus-within:ring-1 focus-within:ring-[#1e40af]/20 lg:w-[148px] xl:w-[156px] 2xl:w-[180px]">
+            <div className="header-search border border-border bg-white shadow-sm focus-within:border-[#1e40af]/50 focus-within:ring-1 focus-within:ring-[#1e40af]/20">
               <span
-                className="flex shrink-0 items-center pl-2.5 text-[11px] font-bold text-[#1e40af]"
+                className="flex shrink-0 items-center pl-2 text-[11px] font-semibold text-[#1e40af]"
                 aria-hidden
               >
                 #
@@ -186,56 +188,62 @@ export function LandingHeader() {
                 aria-label={translate("nav.searchByPlan")}
                 inputMode="search"
                 autoComplete="off"
-                className="min-w-0 flex-1 border-none bg-transparent px-1.5 text-[11px] font-medium text-[#1e3a5f] outline-none placeholder:text-slate-500"
+                className="min-w-0 flex-1 border-none bg-transparent px-1 text-[#1e3a5f] outline-none placeholder:text-slate-500"
               />
               <button
                 type="submit"
                 aria-label={translate("nav.searchByPlan")}
-                className="flex shrink-0 items-center justify-center bg-[#1e40af] px-2.5 text-white transition-colors hover:bg-[#1e3a8a]"
+                className="flex shrink-0 items-center justify-center bg-[#1e40af] px-2 text-white transition-colors hover:bg-[#1e3a8a]"
               >
-                <Search className="h-3.5 w-3.5" strokeWidth={2.25} />
+                <Search className="h-3 w-3" strokeWidth={2.25} />
               </button>
             </div>
           </form>
 
-          <div className="hidden h-9 items-center md:flex">
-            <LanguageToggle variant="light" className="h-9 [&_button]:h-9" />
+          <span className="site-header-tools__divider" aria-hidden />
+
+          <div className="site-header-tools__cluster">
+            <div className="hidden md:block">
+              <LanguageToggle variant="light" />
+            </div>
+
+            {status === "authenticated" ? (
+              <AccountMenu
+                image={session?.user?.image}
+                name={session?.user?.name}
+                email={session?.user?.email}
+                draftsmanLabel={L("Seller dashboard", "แดชบอร์ดผู้เขียนแบบ")}
+                signOutLabel={L("Sign out", "ออกจากระบบ")}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => signIn("google")}
+                aria-label={translate("nav.signIn")}
+                className="header-control hidden text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af] sm:inline-flex"
+              >
+                <CircleUser className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden />
+                <span className="hidden xl:inline">{translate("nav.signIn")}</span>
+              </button>
+            )}
           </div>
 
-          {status === "authenticated" ? (
-            <AccountMenu
-              image={session?.user?.image}
-              name={session?.user?.name}
-              email={session?.user?.email}
-              draftsmanLabel={L("Seller dashboard", "แดชบอร์ดผู้เขียนแบบ")}
-              signOutLabel={L("Sign out", "ออกจากระบบ")}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => signIn("google")}
-              aria-label={translate("nav.signIn")}
-              className="hidden h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-2 text-[13px] font-medium tracking-tight text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af] sm:inline-flex"
-            >
-              <CircleUser className="h-[22px] w-[22px]" strokeWidth={1.6} aria-hidden />
-              <span>{translate("nav.signIn")}</span>
-            </button>
-          )}
+          <span className="site-header-tools__divider" aria-hidden />
 
-          <div className="flex h-9 items-center gap-0.5">
+          <div className="site-header-tools__cluster">
             <button
               type="button"
               onClick={openWishlist}
               aria-label={translate("nav.wishlist")}
               title={translate("nav.wishlist")}
-              className="relative flex h-9 w-9 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+              className="header-action-icon relative flex items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
             >
               <Heart
                 className={`h-[18px] w-[18px] ${favoriteCount > 0 ? "fill-[#1e40af] text-[#1e40af]" : ""}`}
-                strokeWidth={1.85}
+                strokeWidth={1.75}
               />
               {favoriteCount > 0 && (
-                <span className="absolute right-0.5 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-1 text-[9px] font-semibold text-white">
+                <span className="absolute right-0 top-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-0.5 text-[9px] font-semibold text-white">
                   {favoriteCount}
                 </span>
               )}
@@ -245,26 +253,27 @@ export function LandingHeader() {
               onClick={openCart}
               aria-label={translate("nav.cart")}
               title={translate("nav.cart")}
-              className="relative flex h-9 w-9 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+              className="header-action-icon relative flex items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
             >
-              <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.85} />
+              <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.75} />
               {cartCount > 0 && (
-                <span className="absolute right-0.5 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-1 text-[9px] font-semibold text-white">
+                <span className="absolute right-0 top-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-0.5 text-[9px] font-semibold text-white">
                   {cartCount}
                 </span>
               )}
             </button>
           </div>
 
-          <SellerEntryButton className="h-9" />
+          <SellerEntryButton />
 
+          {/* Mobile only — hidden from md (desktop) upward */}
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-[#1e3a5f] hover:bg-surface-raised hover:text-[#1e40af] md:hidden"
+            className="header-control-icon flex items-center justify-center rounded-md text-[#1e3a5f] hover:bg-surface-raised hover:text-[#1e40af] md:hidden"
             aria-label={translate("nav.menu")}
           >
-            <Menu className="h-4 w-4" strokeWidth={2} />
+            <Menu className="h-3.5 w-3.5" strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -386,7 +395,7 @@ function AccountMenu({
         aria-controls={menuId}
         aria-label={name || email || "Account"}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-border transition hover:ring-[#1e40af]/50"
+        className="header-control-icon flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-border transition hover:ring-[#1e40af]/50"
       >
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -440,7 +449,7 @@ function NavLink({ href, label }: NavItem) {
   return (
     <Link
       href={href}
-      className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-1.5 py-1 text-[11px] font-semibold tracking-[0.01em] text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A] 2xl:px-2 2xl:text-[12px]"
+      className="header-control text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A]"
     >
       {label}
     </Link>
@@ -495,14 +504,12 @@ function NavDropdown({
     closeTimer.current = setTimeout(() => setOpen(false), 160);
   };
 
-  // Store = brand pill; other triggers stay single-line without crowding search.
+  // Store = brand pill reference; all nav triggers share header-control scale.
   const triggerClass = primary
-    ? `nav-store-btn inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-semibold tracking-[0.01em] text-white 2xl:px-2.5 2xl:text-[12px] ${
-        open ? "brightness-110" : ""
-      }`
+    ? `nav-store-btn header-control text-white ${open ? "brightness-110" : ""}`
     : open
-      ? "inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-md bg-[#1A2744] px-1.5 py-1 text-[11px] font-semibold tracking-[0.01em] text-white 2xl:px-2 2xl:text-[12px]"
-      : "inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-1 text-[11px] font-semibold tracking-[0.01em] text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A] 2xl:px-2 2xl:text-[12px]";
+      ? "header-control bg-[#1A2744] text-white"
+      : "header-control text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A]";
 
   return (
     <div

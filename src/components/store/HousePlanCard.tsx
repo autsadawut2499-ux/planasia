@@ -12,6 +12,7 @@ import { listingStorePath } from "@/lib/seo/slug";
 import {
   buildPlanCardSpecs,
   resolveListingSale,
+  type PlanCardSpec,
 } from "@/lib/store/plan-card-specs";
 import type { StoreListing } from "@/lib/store/db";
 
@@ -43,6 +44,8 @@ export function HousePlanCard({
   const localized = useStoreListingCopy(item);
   const detailHref = listingStorePath(item.slug);
   const specs = buildPlanCardSpecs(item);
+  const primarySpecs = specs.slice(0, 4);
+  const secondarySpecs = specs.slice(4);
   const sale = resolveListingSale(item);
   const favorited = browse ? browse.isFavorite(item.id) : false;
   const canFavorite = favoritable && Boolean(browse);
@@ -57,7 +60,7 @@ export function HousePlanCard({
 
   return (
     <article
-      className={`store-card group relative font-sans antialiased tracking-[-0.01em] ${className}`}
+      className={`store-card group relative flex h-full w-full min-w-0 flex-col font-sans antialiased tracking-[-0.01em] ${className}`}
     >
       {/* Stretch link — click anywhere on the card → detail page */}
       <Link
@@ -96,38 +99,38 @@ export function HousePlanCard({
         )}
       </div>
 
-      <div className="relative z-0 flex items-start justify-between gap-3 px-4 pt-3.5">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold leading-none text-[#334155]">
+      <div className="relative z-0 flex min-w-0 items-start justify-between gap-2 px-3 pt-3 sm:gap-3 sm:px-4 sm:pt-3.5">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold leading-none text-[#334155] sm:text-[11px]">
             {L("Plan number", "แผนงานหมายเลข")}
           </p>
-          <p className="mt-1 truncate text-[15px] font-extrabold leading-tight text-[#0b1220] sm:text-[16px]">
+          <p className="mt-1 truncate text-[14px] font-extrabold leading-tight text-[#0b1220] sm:text-[16px]">
             #{item.planId}
           </p>
         </div>
-        <div className="shrink-0 text-right">
+        <div className="max-w-[45%] shrink-0 text-right">
           {sale.price <= 0 ? (
-            <p className="pt-3 text-[15px] font-extrabold leading-none text-emerald-800 sm:text-[16px]">
+            <p className="pt-3 text-[14px] font-extrabold leading-none text-emerald-800 sm:text-[16px]">
               {L("Free", "ฟรี")}
             </p>
           ) : sale.compareAt != null ? (
             <>
-              <p className="text-[11px] font-semibold leading-none text-[#b91c1c]">
+              <p className="text-[10px] font-semibold leading-none text-[#b91c1c] sm:text-[11px]">
                 {L("Sale", "ลดราคา")}
               </p>
-              <p className="mt-0.5 text-[11px] font-semibold text-[#64748b] line-through">
+              <p className="mt-0.5 truncate text-[10px] font-semibold text-[#64748b] line-through sm:text-[11px]">
                 {formatMoney(sale.compareAt)}
               </p>
-              <p className="text-[15px] font-extrabold leading-none text-[#1e3a8a] sm:text-[16px]">
+              <p className="truncate text-[14px] font-extrabold leading-none text-[#1e3a8a] sm:text-[16px]">
                 {formatMoney(sale.price)}
               </p>
             </>
           ) : (
             <>
-              <p className="text-[11px] font-semibold leading-none text-[#64748b]">
+              <p className="text-[10px] font-semibold leading-none text-[#64748b] sm:text-[11px]">
                 {L("Starting at", "เริ่มต้นที่")}
               </p>
-              <p className="mt-1 text-[15px] font-extrabold leading-none text-[#1e3a8a] sm:text-[16px]">
+              <p className="mt-1 truncate text-[14px] font-extrabold leading-none text-[#1e3a8a] sm:text-[16px]">
                 {formatMoney(sale.price)}
               </p>
             </>
@@ -135,28 +138,55 @@ export function HousePlanCard({
         </div>
       </div>
 
-      <div className="relative z-0 mt-3 border-t border-[#e8eaee] px-2 pb-3.5 pt-3 sm:px-3">
-        <div className="grid grid-cols-4">
-          {specs.map((spec, i) => {
-            const endOfRow = (i + 1) % 4 === 0;
-            return (
-              <div
-                key={`${spec.labelEn}-${i}`}
-                className={`min-w-0 px-1 py-1 text-center ${
-                  endOfRow ? "" : "border-r border-[#e5e7eb]"
-                }`}
-              >
-                <p className="truncate text-[10px] font-semibold leading-tight text-[#475569]">
-                  {L(spec.labelEn, spec.labelTh)}
-                </p>
-                <p className="mt-1 truncate text-[14px] font-extrabold leading-none text-[#0b1220] sm:text-[15px]">
-                  {spec.value}
-                </p>
-              </div>
-            );
-          })}
+      <div className="relative z-0 mt-auto min-w-0 border-t border-[#e8eaee] px-2.5 pb-3 pt-2.5 sm:px-3 sm:pb-3.5 sm:pt-3">
+        <div className="grid grid-cols-4 gap-y-1">
+          {primarySpecs.map((spec, i) => (
+            <SpecCell
+              key={`${spec.labelEn}-${i}`}
+              spec={spec}
+              label={L(spec.labelEn, spec.labelTh)}
+              showDivider={i < primarySpecs.length - 1}
+            />
+          ))}
         </div>
+        {secondarySpecs.length > 0 && (
+          <div className="mt-2 grid grid-cols-3 gap-y-1 border-t border-[#eef0f4] pt-2">
+            {secondarySpecs.map((spec, i) => (
+              <SpecCell
+                key={`${spec.labelEn}-${i}`}
+                spec={spec}
+                label={L(spec.labelEn, spec.labelTh)}
+                showDivider={i < secondarySpecs.length - 1}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </article>
+  );
+}
+
+function SpecCell({
+  spec,
+  label,
+  showDivider,
+}: {
+  spec: PlanCardSpec;
+  label: string;
+  showDivider: boolean;
+}) {
+  return (
+    <div
+      className={`min-w-0 px-0.5 py-0.5 text-center sm:px-1 sm:py-1 ${
+        showDivider ? "border-r border-[#e5e7eb]" : ""
+      }`}
+    >
+      <p className="text-[9px] font-semibold leading-tight text-[#64748b] sm:text-[10px]">
+        {label}
+      </p>
+      <p className="mt-0.5 truncate text-[12px] font-extrabold tabular-nums leading-tight text-[#0b1220] sm:mt-1 sm:text-[14px]">
+        {spec.value}
+      </p>
+    </div>
   );
 }

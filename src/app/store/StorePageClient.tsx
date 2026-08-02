@@ -156,9 +156,9 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
           limit={8}
         />
 
-        <div className="mx-auto grid w-full max-w-[1200px] gap-8 px-5 py-8 sm:px-6 md:px-8 md:py-12 lg:grid-cols-[280px_1fr] lg:gap-10">
+        <div className="mx-auto grid w-full max-w-[1200px] gap-6 px-4 py-8 sm:gap-8 sm:px-6 md:px-8 md:py-12 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-8">
           {/* Desktop / tablet landscape sidebar */}
-          <div className="hidden lg:block">
+          <div className="hidden min-w-0 lg:block">
             <StoreFilters
               filters={filters}
               onChange={(u) => setFilters((f) => ({ ...f, ...u }))}
@@ -170,7 +170,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
             />
           </div>
 
-          <div>
+          <div className="min-w-0 w-full">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
@@ -189,7 +189,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 xl:grid-cols-3 xl:gap-8">
+              <div className="store-card-grid">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="store-card h-80 animate-pulse" />
                 ))}
@@ -200,7 +200,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 xl:grid-cols-3 xl:gap-8">
+                <div className="store-card-grid">
                   {filtered.map((item, i) => (
                     <StorePlanCard key={item.id} item={item} index={i} />
                   ))}
@@ -209,7 +209,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
                 <StoreUpsellSection
                   listings={listings}
                   variant="full"
-                  className="mt-12 rounded-xl border border-border bg-[var(--color-card,#fff)] p-5 sm:p-7"
+                  className="mt-12 rounded-xl border border-border bg-[var(--color-card,#fff)] p-4 sm:p-6"
                 />
               </>
             )}

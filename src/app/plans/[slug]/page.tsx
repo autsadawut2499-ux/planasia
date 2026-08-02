@@ -98,9 +98,11 @@ export default async function PlanLandingPage({ params }: PageProps) {
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3 xl:grid-cols-4 xl:gap-8">
+            <div className="store-card-grid">
               {listings.map((listing, index) => (
-                <HousePlanCard key={listing.id} item={listing} index={index} />
+                <div key={listing.id} className="min-w-0">
+                  <HousePlanCard item={listing} index={index} />
+                </div>
               ))}
             </div>
           )}

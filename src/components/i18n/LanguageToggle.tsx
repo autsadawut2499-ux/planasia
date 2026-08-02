@@ -37,16 +37,16 @@ export function LanguageToggle({ variant = "dark", className = "" }: LanguageTog
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={translate("language.select")}
-        className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-semibold tracking-wide transition-colors ${
+        className={`header-control border transition-colors ${
           isDark
             ? "border-white/25 bg-white/10 text-white hover:bg-white/15"
-            : "border-border bg-surface-raised text-[#1e3a5f] hover:text-[#1e40af]"
+            : "border-border bg-white text-[#1e3a5f] hover:border-[#1e40af]/40 hover:text-[#1e40af]"
         }`}
       >
-        <Globe className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+        <Globe className="h-3 w-3 shrink-0" strokeWidth={1.75} aria-hidden />
         <span>{active.short}</span>
         <ChevronDown
-          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3 w-3 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
           strokeWidth={2}
           aria-hidden
         />

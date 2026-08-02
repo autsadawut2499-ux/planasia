@@ -131,9 +131,11 @@ export function StoreUpsellSection({
           ))}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="store-card-grid">
           {suggestions.map((listing, index) => (
-            <HousePlanCard key={listing.id} item={listing} index={index} />
+            <div key={listing.id} className="min-w-0">
+              <HousePlanCard item={listing} index={index} />
+            </div>
           ))}
         </div>
       )}

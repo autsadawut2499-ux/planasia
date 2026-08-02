@@ -58,23 +58,23 @@ export function BrandLogo({
       ? "border-white/90"
       : "border-white";
 
-  const wordmarkClass = `font-brand whitespace-nowrap text-[15px] font-extralight uppercase leading-none tracking-[0.42em] sm:text-[16px] md:text-[17px] md:tracking-[0.48em] ${textClass}`;
+  const wordmarkClass = `font-brand whitespace-nowrap text-[17px] font-light uppercase leading-none tracking-[0.16em] sm:text-[18px] md:text-[19px] md:tracking-[0.18em] ${textClass}`;
 
   return (
     <Link
       href={href}
-      className={`group inline-flex shrink-0 items-center gap-2.5 sm:gap-3 ${
+      className={`group inline-flex shrink-0 items-center gap-2 sm:gap-2.5 ${
         centered ? "justify-center" : ""
       } ${className}`}
       aria-label={wordmark}
     >
-      {markOnly && <PlanasiaMark className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10" />}
+      {markOnly && <PlanasiaMark className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9" />}
       <span
         className={`relative inline-flex flex-col ${centered ? "items-center" : "items-start"}`}
       >
         <span
           aria-hidden
-          className={`mx-auto mb-0.5 h-1.5 w-1.5 rotate-45 border-l-[1px] border-t-[1px] ${chevronClass}`}
+          className={`mx-auto mb-0.5 h-1.5 w-1.5 rotate-45 border-l-[1.5px] border-t-[1.5px] ${chevronClass}`}
         />
         <span className={wordmarkClass}>{wordmark}</span>
       </span>

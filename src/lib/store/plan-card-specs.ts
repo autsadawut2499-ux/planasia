@@ -22,9 +22,9 @@ function formatMeters(value: number | undefined): string {
 }
 
 /**
- * Specs for the master product card (open whitespace layout, no table lines):
+ * Specs for the product card — short labels so 2-row grids stay readable
+ * on narrow columns without truncation/overflow.
  * Area · Beds · Baths · Cars · Stories · Width · Depth
- * (Half baths removed from product UI / filters.)
  */
 export function buildPlanCardSpecs(listing: StoreListing): PlanCardSpec[] {
   return [
@@ -35,32 +35,32 @@ export function buildPlanCardSpecs(listing: StoreListing): PlanCardSpec[] {
     },
     {
       labelEn: "Beds",
-      labelTh: "ห้องนอน",
+      labelTh: "นอน",
       value: String(listing.beds),
     },
     {
       labelEn: "Baths",
-      labelTh: "ห้องน้ำ",
+      labelTh: "น้ำ",
       value: String(listing.baths),
     },
     {
-      labelEn: "Cars",
-      labelTh: "ที่จอดรถ",
+      labelEn: "Park",
+      labelTh: "จอด",
       value: listing.parking != null ? String(listing.parking) : "—",
     },
     {
-      labelEn: "Stories",
+      labelEn: "Flrs",
       labelTh: "ชั้น",
       value: String(listing.floors),
     },
     {
-      labelEn: "Width",
-      labelTh: "ความกว้าง",
+      labelEn: "W",
+      labelTh: "กว้าง",
       value: formatMeters(listing.widthMeters),
     },
     {
-      labelEn: "Depth",
-      labelTh: "ความลึก",
+      labelEn: "D",
+      labelTh: "ลึก",
       value: formatMeters(listing.lengthMeters),
     },
   ];

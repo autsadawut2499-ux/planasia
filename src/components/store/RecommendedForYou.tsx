@@ -119,12 +119,12 @@ export function RecommendedForYou({
 
         <div
           ref={scrollerRef}
-          className="flex snap-x gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6"
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5"
         >
           {items.map(({ listing, matchScore }, index) => (
             <div
               key={listing.id}
-              className="w-[min(280px,85vw)] shrink-0 snap-start"
+              className="w-[min(300px,calc(100vw-3rem))] shrink-0 snap-start sm:w-[min(280px,42vw)]"
               onClick={() => track(listing.id, "view", { source: "recommendation" })}
             >
               <HousePlanCard

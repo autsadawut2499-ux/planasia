@@ -87,7 +87,7 @@ export function FeaturedPlans({ title, exclusive = false }: FeaturedPlansProps) 
             {plans.map((plan, index) => (
               <div
                 key={plan.id}
-                className="w-[85%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-40px)/3)]"
+                className="w-[min(300px,85%)] shrink-0 snap-start sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]"
               >
                 <HousePlanCard
                   item={plan}
