@@ -32,6 +32,7 @@ import { StoreCartShell } from "@/components/store/StoreCartShell";
 import { StoreFavoritesDrawer } from "@/components/store/StoreFavoritesDrawer";
 import { GlobalSiteFooter } from "@/components/layout/GlobalSiteFooter";
 import { FloatingContactFab } from "@/components/layout/FloatingContactFab";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AiPlanChat } from "@/components/chat/AiPlanChat";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme-bootstrap";
 import { getSiteUrl } from "@/lib/seo/site-url";
@@ -143,14 +144,15 @@ export default async function RootLayout({
               <PwaProvider>
                 <StoreCartProvider>
                   <StoreBrowseProvider>
-                    <div className="storefront-frame flex min-h-screen flex-col">
-                      <div className="flex min-h-0 flex-1 flex-col">
+                    <div className="storefront-frame flex min-h-screen w-full max-w-full min-w-0 flex-col overflow-x-clip">
+                      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                         <Suspense fallback={null}>
                           <ThemeProvider>{children}</ThemeProvider>
                         </Suspense>
                       </div>
                       <GlobalSiteFooter />
                     </div>
+                    <MobileBottomNav />
                     <FloatingContactFab />
                     <AiPlanChat />
                     <Suspense fallback={null}>

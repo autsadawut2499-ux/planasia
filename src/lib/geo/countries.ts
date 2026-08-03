@@ -185,16 +185,16 @@ export function formatDimension(valueMeters: number, unitSystem: UnitSystem): st
 }
 
 export const HOUSE_STYLES = [
-  { id: "minimal", label: { en: "Minimal", th: "มินิมอล", hi: "मिनिमल", vi: "Tối giản" } },
-  { id: "modern", label: { en: "Modern", th: "โมเดิร์น", hi: "आधुनिक", vi: "Hiện đại" } },
-  { id: "loft", label: { en: "Loft", th: "ลอฟท์", hi: "लॉफ्ट", vi: "Loft" } },
-  { id: "nordic", label: { en: "Nordic", th: "นอร์ดิก", hi: "नॉर्डिक", vi: "Bắc Âu" } },
-  { id: "contemporary", label: { en: "Contemporary", th: "ร่วมสมัย", hi: "समकालीन", vi: "Đương đại" } },
-  { id: "tropical", label: { en: "Tropical", th: "โทรปิคัล", hi: "उष्णकटिबंधीय", vi: "Nhiệt đới" } },
-  { id: "industrial", label: { en: "Industrial", th: "อินดัสเทรียล", hi: "औद्योगिक", vi: "Công nghiệp" } },
-  { id: "japanese", label: { en: "Japanese", th: "ญี่ปุ่น", hi: "जापानी", vi: "Nhật Bản" } },
-  { id: "scandinavian", label: { en: "Scandinavian", th: "สแกนดินาเวีย", hi: "स्कैंडिनेवियाई", vi: "Scandinavia" } },
-  { id: "tropical-minimal", label: { en: "Tropical Minimal", th: "โทรปิคัล มินิมอล", hi: "उष्णकटिबंधीय मिनिमल", vi: "Nhiệt đới tối giản" } },
+  { id: "minimal", label: { en: "แบบบ้าน Minimal", th: "แบบบ้านมินิมอล", hi: "แบบบ้าน मिनिमल", vi: "แบบบ้าน Tối giản" } },
+  { id: "modern", label: { en: "แบบบ้าน Modern", th: "แบบบ้านโมเดิร์น", hi: "แบบบ้าน आधुनिक", vi: "แบบบ้าน Hiện đại" } },
+  { id: "loft", label: { en: "แบบบ้าน Loft", th: "แบบบ้านลอฟท์", hi: "แบบบ้าน लॉफ्ट", vi: "แบบบ้าน Loft" } },
+  { id: "nordic", label: { en: "แบบบ้าน Nordic", th: "แบบบ้านนอร์ดิก", hi: "แบบบ้าน नॉर्डिक", vi: "แบบบ้าน Bắc Âu" } },
+  { id: "contemporary", label: { en: "แบบบ้าน Contemporary", th: "แบบบ้านร่วมสมัย", hi: "แบบบ้าน समकालीन", vi: "แบบบ้าน Đương đại" } },
+  { id: "tropical", label: { en: "แบบบ้าน Tropical", th: "แบบบ้านทรอปิคอล", hi: "แบบบ้าน उष्णकटिबंधीय", vi: "แบบบ้าน Nhiệt đới" } },
+  { id: "industrial", label: { en: "แบบบ้าน Industrial", th: "แบบบ้านอินดัสเทรียล", hi: "แบบบ้าน औद्योगिक", vi: "แบบบ้าน Công nghiệp" } },
+  { id: "japanese", label: { en: "แบบบ้าน Japanese", th: "แบบบ้านญี่ปุ่น", hi: "แบบบ้าน जापानी", vi: "แบบบ้าน Nhật Bản" } },
+  { id: "scandinavian", label: { en: "แบบบ้าน Scandinavian", th: "แบบบ้านสแกนดินาเวีย", hi: "แบบบ้าน स्कैंडिनेवियाई", vi: "แบบบ้าน Scandinavia" } },
+  { id: "tropical-minimal", label: { en: "แบบบ้าน Tropical Minimal", th: "แบบบ้านทรอปิคอล มินิมอล", hi: "แบบบ้าน उष्णकटिबंधीय मिनिमल", vi: "แบบบ้าน Nhiệt đới tối giản" } },
 ] as const;
 
 export const PRICING = {

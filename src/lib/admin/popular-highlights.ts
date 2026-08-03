@@ -3,6 +3,8 @@
  * Stored in site_settings under key `popular_highlights`.
  */
 
+import { withBanBaanPrefix } from "@/lib/store/style-label";
+
 export const MAX_POPULAR_HIGHLIGHTS = 4;
 
 export interface PopularHighlightCard {
@@ -23,8 +25,8 @@ export const DEFAULT_POPULAR_HIGHLIGHTS: PopularHighlightCard[] = [
     id: "ph-1",
     imageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
-    titleEn: "Single-Storey Favorites",
-    titleTh: "บ้านชั้นเดียวยอดนิยม",
+    titleEn: withBanBaanPrefix("Single-Storey Favorites"),
+    titleTh: withBanBaanPrefix("บ้านชั้นเดียวยอดนิยม"),
     descriptionEn: "Practical one-level plans for everyday living.",
     descriptionTh: "แบบบ้านชั้นเดียวใช้งานง่าย เหมาะกับชีวิตประจำวัน",
     href: "/store?collection=single-storey",
@@ -34,10 +36,10 @@ export const DEFAULT_POPULAR_HIGHLIGHTS: PopularHighlightCard[] = [
     id: "ph-2",
     imageUrl:
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80",
-    titleEn: "Modern Two-Storey",
-    titleTh: "บ้านสองชั้นโมเดิร์น",
+    titleEn: withBanBaanPrefix("Modern Two-Storey"),
+    titleTh: withBanBaanPrefix("บ้านสองชั้นโมเดิร์น"),
     descriptionEn: "Contemporary homes with flexible upper floors.",
-    descriptionTh: "บ้านสองชั้นร่วมสมัย พื้นที่ใช้สอยยืดหยุ่น",
+    descriptionTh: "แบบบ้านสองชั้นร่วมสมัย พื้นที่ใช้สอยยืดหยุ่น",
     href: "/store?collection=two-storey",
     enabled: true,
   },
@@ -45,8 +47,8 @@ export const DEFAULT_POPULAR_HIGHLIGHTS: PopularHighlightCard[] = [
     id: "ph-3",
     imageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
-    titleEn: "Small & Narrow Lots",
-    titleTh: "บ้านเล็ก / ที่ดินหน้าแคบ",
+    titleEn: withBanBaanPrefix("Small & Narrow Lots"),
+    titleTh: withBanBaanPrefix("บ้านเล็ก / ที่ดินหน้าแคบ"),
     descriptionEn: "Smart layouts for compact or narrow plots.",
     descriptionTh: "แปลนฉลาดสำหรับที่ดินเล็กหรือหน้าแคบ",
     href: "/store?collection=small",
@@ -56,8 +58,8 @@ export const DEFAULT_POPULAR_HIGHLIGHTS: PopularHighlightCard[] = [
     id: "ph-4",
     imageUrl:
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80",
-    titleEn: "Tropical Living",
-    titleTh: "บ้านสไตล์ทรอปิคอล",
+    titleEn: withBanBaanPrefix("Tropical Living"),
+    titleTh: withBanBaanPrefix("บ้านสไตล์ทรอปิคอล"),
     descriptionEn: "Breezy designs made for Thailand’s climate.",
     descriptionTh: "ดีไซน์โปร่งโล่ง เหมาะกับอากาศไทย",
     href: "/store?style=tropical",
@@ -88,8 +90,8 @@ export function normalizePopularHighlights(
         if (url) return url;
         return fallback?.imageUrl ?? "";
       })(),
-      titleEn: (raw.titleEn ?? "").trim() || "Untitled",
-      titleTh: (raw.titleTh ?? "").trim() || "ไม่มีชื่อ",
+      titleEn: withBanBaanPrefix((raw.titleEn ?? "").trim() || "Untitled"),
+      titleTh: withBanBaanPrefix((raw.titleTh ?? "").trim() || "ไม่มีชื่อ"),
       descriptionEn: (raw.descriptionEn ?? "").trim(),
       descriptionTh: (raw.descriptionTh ?? "").trim(),
       href: (raw.href ?? "").trim() || "/store",
@@ -107,8 +109,8 @@ export function createEmptyPopularHighlight(): PopularHighlightCard {
   return {
     id: newId(),
     imageUrl: "",
-    titleEn: "New topic",
-    titleTh: "หัวข้อใหม่",
+    titleEn: withBanBaanPrefix("New topic"),
+    titleTh: withBanBaanPrefix("หัวข้อใหม่"),
     descriptionEn: "",
     descriptionTh: "",
     href: "/store",

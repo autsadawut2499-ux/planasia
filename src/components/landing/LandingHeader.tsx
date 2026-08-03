@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   Package,
+  PenLine,
   Phone,
   Search,
   ShoppingCart,
@@ -119,45 +120,87 @@ export function LandingHeader() {
     router.push("/store");
   };
 
+  const sloganText = L(
+    "The hub for Thai designers' blueprints and portfolios — going global",
+    "ศูนย์รวมแบบแปลนและผลงานนักเขียนแบบไทย ก้าวไกลสู่สากล",
+  );
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
-      {/* Top bar — brand navy utility strip (tagline + phone, no overlap) */}
+    <header className="sticky top-0 z-50 max-w-full overflow-x-clip border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
+      {/* 1) Top phone banner — phone only on mobile (ABHP-style) */}
       <div className="bg-[#1A2744] text-white">
-        <div className="relative mx-auto flex w-full max-w-[1440px] flex-col items-center gap-1.5 px-4 py-2.5 md:min-h-10 md:flex-row md:items-center md:justify-end md:gap-0 md:px-6 md:py-1.5">
-          <p className="w-full max-w-prose text-center text-[11px] font-semibold leading-snug tracking-[0.01em] text-white sm:text-xs md:absolute md:inset-x-0 md:max-w-none md:truncate md:px-48 md:text-[13px]">
-            {L(
-              "The hub for Thai designers' blueprints and portfolios — going global",
-              "ศูนย์รวมแบบแปลนและผลงานนักเขียนแบบไทย ก้าวไกลสู่สากล",
-            )}
+        <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-end px-3 py-1.5 sm:px-4 md:min-h-10 md:px-6">
+          {/* Desktop: centered slogan in the navy bar */}
+          <p
+            className="site-topbar-slogan header-desktop-only absolute inset-x-0 truncate px-48 text-center text-[13px] font-semibold leading-none tracking-[0.01em] text-white"
+            title={sloganText}
+          >
+            {sloganText}
           </p>
           <a
             href={`tel:${phoneTel}`}
             aria-label={`${L("Call", "โทร")} ${contactPhone}`}
-            className="topbar-phone relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-white transition-colors hover:bg-white/10 hover:text-white md:gap-2"
+            className="topbar-phone relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm px-1 py-0.5 text-white transition-colors hover:bg-white/10 md:gap-2 md:px-1.5"
           >
-            <Phone className="h-4 w-4 shrink-0 md:h-[18px] md:w-[18px]" strokeWidth={2.25} aria-hidden />
-            <span className="topbar-phone__number">{contactPhone}</span>
+            <Phone className="h-3.5 w-3.5 shrink-0 md:h-[18px] md:w-[18px]" strokeWidth={2.25} aria-hidden />
+            <span className="topbar-phone__number text-[13px] md:text-[0.9375rem]">{contactPhone}</span>
           </a>
         </div>
       </div>
 
+      {/* 2) Mobile slogan strip — single neat line under the phone bar */}
+      <div className="border-b border-[#e6e8ee] bg-[#f7f8fa] md:hidden">
+        <p
+          className="site-topbar-slogan mx-auto max-w-[1440px] truncate px-3 py-1 text-center text-[10px] font-medium leading-none tracking-[0.01em] text-[#1A2744]/80"
+          title={sloganText}
+        >
+          {sloganText}
+        </p>
+      </div>
+
       {/*
-        Balanced header grid:
-        Left brand+Store | Center nav (true center) | Right tools
+        3) Main header row
+        Mobile: [logo | search | menu]
+        Desktop: [brand+Store | nav | tools]
       */}
-      <div className="site-header-bar mx-auto w-full max-w-[1440px] px-4 sm:px-5 md:px-6 lg:px-8">
-        {/* LEFT */}
+      <div className="site-header-bar mx-auto w-full max-w-[1440px] px-3 sm:px-5 md:px-6 lg:px-8">
+        {/* LEFT — logo */}
         <div className="site-header-brand">
-          <BrandLogo variant="light" />
+          <BrandLogo variant="light" className="site-header-logo" />
           <Link
             href="/store"
-            className="nav-store-btn header-control hidden text-white md:inline-flex"
+            className="nav-store-btn header-control header-desktop-only text-white"
           >
             {storeLabel}
           </Link>
         </div>
 
-        {/* CENTER — optically centered between equal side columns */}
+        {/* CENTER — mobile search OR desktop nav */}
+        <form
+          onSubmit={submitPlanSearch}
+          className="site-header-mobile-search min-w-0 flex-1 md:hidden"
+        >
+          <div className="flex h-9 w-full min-w-0 items-stretch overflow-hidden rounded-md border border-[#d5d9e0] bg-white focus-within:border-[#1e40af] focus-within:ring-1 focus-within:ring-[#1e40af]/25">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={translate("nav.searchByPlan")}
+              aria-label={translate("nav.searchByPlan")}
+              inputMode="search"
+              autoComplete="off"
+              className="min-w-0 flex-1 border-none bg-transparent px-2.5 text-[12px] font-medium text-[#1e3a5f] outline-none placeholder:text-slate-400"
+            />
+            <button
+              type="submit"
+              aria-label={translate("nav.searchByPlan")}
+              className="flex w-9 shrink-0 items-center justify-center bg-[#1A2744] text-white transition-colors hover:bg-[#243556]"
+            >
+              <Search className="h-3.5 w-3.5" strokeWidth={2.25} />
+            </button>
+          </div>
+        </form>
+
         <nav aria-label={L("Main navigation", "เมนูหลัก")} className="site-header-nav">
           <NavDropdown label={L("Collections", "คอลเลคชั่น")} items={collectionItems} mega="collections" />
           <NavLink href="/whats-included" label={planIncludesLabel} />
@@ -171,9 +214,9 @@ export function LandingHeader() {
           <NavLink href="/home-building" label={homeBuildingLabel} />
         </nav>
 
-        {/* RIGHT — search · account · icons · seller */}
+        {/* RIGHT — mobile: menu only · desktop: full tools */}
         <div className="site-header-tools">
-          <form onSubmit={submitPlanSearch} className="hidden md:block">
+          <form onSubmit={submitPlanSearch} className="header-desktop-only">
             <div className="header-search border border-border bg-white shadow-sm focus-within:border-[#1e40af]/50 focus-within:ring-1 focus-within:ring-[#1e40af]/20">
               <span
                 className="flex shrink-0 items-center pl-2 text-[11px] font-semibold text-[#1e40af]"
@@ -203,10 +246,8 @@ export function LandingHeader() {
 
           <span className="site-header-tools__divider" aria-hidden />
 
-          <div className="site-header-tools__cluster">
-            <div className="hidden md:block">
-              <LanguageToggle variant="light" />
-            </div>
+          <div className="site-header-tools__cluster header-desktop-only flex">
+            <LanguageToggle variant="light" />
 
             {status === "authenticated" ? (
               <AccountMenu
@@ -222,7 +263,7 @@ export function LandingHeader() {
                 type="button"
                 onClick={() => signIn("google")}
                 aria-label={translate("nav.signIn")}
-                className="header-control hidden text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af] sm:inline-flex"
+                className="header-control text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
               >
                 <CircleUser className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden />
                 <span className="hidden xl:inline">{translate("nav.signIn")}</span>
@@ -232,20 +273,20 @@ export function LandingHeader() {
 
           <span className="site-header-tools__divider" aria-hidden />
 
-          <div className="site-header-tools__cluster">
+          <div className="site-header-tools__cluster header-desktop-only flex">
             <button
               type="button"
               onClick={openWishlist}
               aria-label={translate("nav.wishlist")}
               title={translate("nav.wishlist")}
-              className="header-action-icon relative flex items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+              className="header-action-icon relative flex shrink-0 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
             >
               <Heart
                 className={`h-[18px] w-[18px] ${favoriteCount > 0 ? "fill-[#1e40af] text-[#1e40af]" : ""}`}
                 strokeWidth={1.75}
               />
               {favoriteCount > 0 && (
-                <span className="absolute right-0 top-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-0.5 text-[9px] font-semibold text-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-0.5 text-[9px] font-semibold text-white">
                   {favoriteCount}
                 </span>
               )}
@@ -255,27 +296,26 @@ export function LandingHeader() {
               onClick={openCart}
               aria-label={translate("nav.cart")}
               title={translate("nav.cart")}
-              className="header-action-icon relative flex items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+              className="header-action-icon relative flex shrink-0 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
             >
               <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.75} />
               {cartCount > 0 && (
-                <span className="absolute right-0 top-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-0.5 text-[9px] font-semibold text-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#1e40af] px-0.5 text-[9px] font-semibold text-white">
                   {cartCount}
                 </span>
               )}
             </button>
           </div>
 
-          <SellerEntryButton />
+          <SellerEntryButton className="header-desktop-only" />
 
-          {/* Mobile only — hidden from md (desktop) upward */}
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="header-control-icon flex items-center justify-center rounded-md text-[#1e3a5f] hover:bg-surface-raised hover:text-[#1e40af] md:hidden"
+            className="header-control-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#1e3a5f] hover:bg-surface-raised hover:text-[#1e40af] md:hidden"
             aria-label={translate("nav.menu")}
           >
-            <Menu className="h-3.5 w-3.5" strokeWidth={2} />
+            <Menu className="h-5 w-5" strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -287,33 +327,53 @@ export function LandingHeader() {
         variant="light"
         footer={
           <div className="space-y-4">
-            <form onSubmit={submitPlanSearch} className="md:hidden">
-              <div className="flex h-11 items-stretch overflow-hidden rounded-lg border border-border bg-white focus-within:border-[#1e40af]">
-                <span className="flex items-center pl-3 text-sm font-bold text-[#1e40af]" aria-hidden>
-                  #
-                </span>
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={translate("nav.searchByPlan")}
-                  aria-label={translate("nav.searchByPlan")}
-                  className="min-w-0 flex-1 border-none bg-transparent px-2 text-sm font-medium text-[#1e3a5f] outline-none placeholder:text-slate-500"
-                />
-                <button
-                  type="submit"
-                  aria-label={translate("nav.searchByPlan")}
-                  className="flex w-11 items-center justify-center bg-[#1e40af] text-white"
-                >
-                  <Search className="h-4 w-4" strokeWidth={2.25} />
-                </button>
-              </div>
-            </form>
+            <div className="grid grid-cols-2 gap-2 md:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  openWishlist();
+                }}
+                className="relative flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
+              >
+                <Heart className="h-4 w-4" />
+                {translate("nav.wishlist")}
+                {favoriteCount > 0 && (
+                  <span className="absolute right-2 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1e40af] px-1 text-[10px] font-semibold text-white">
+                    {favoriteCount}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  openCart();
+                }}
+                className="relative flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                {translate("nav.cart")}
+                {cartCount > 0 && (
+                  <span className="absolute right-2 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1e40af] px-1 text-[10px] font-semibold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2 md:hidden">
               <LanguageToggle variant="light" />
             </div>
+            <Link
+              href="/dashboard/draftsman"
+              onClick={() => setMenuOpen(false)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A2744] py-2.5 text-sm font-semibold text-white md:hidden"
+            >
+              <PenLine className="h-4 w-4" />
+              {translate("nav.seller")}
+            </Link>
             {status === "authenticated" ? (
-              <div className="space-y-2 sm:hidden">
+              <div className="space-y-2 md:hidden">
                 <Link
                   href="/purchases"
                   onClick={() => setMenuOpen(false)}
@@ -343,7 +403,7 @@ export function LandingHeader() {
               <button
                 type="button"
                 onClick={() => signIn("google")}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-medium text-text-primary sm:hidden"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-medium text-text-primary md:hidden"
               >
                 <CircleUser className="h-5 w-5" strokeWidth={1.6} aria-hidden />
                 {translate("nav.signIn")}

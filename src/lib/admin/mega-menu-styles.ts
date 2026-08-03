@@ -3,6 +3,8 @@
  * Stored in site_settings under key `mega_menu_styles`.
  */
 
+import { withBanBaanPrefix } from "@/lib/store/style-label";
+
 export const MAX_MEGA_MENU_STYLES = 16;
 
 export interface MegaMenuStyleCard {
@@ -20,8 +22,8 @@ export interface MegaMenuStyleCard {
 export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   {
     id: "modern-farmhouse",
-    titleEn: "Modern Farmhouse",
-    titleTh: "โมเดิร์นฟาร์มเฮาส์",
+    titleEn: withBanBaanPrefix("Modern Farmhouse"),
+    titleTh: withBanBaanPrefix("โมเดิร์นฟาร์มเฮาส์"),
     imageUrl:
       "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=modern",
@@ -29,8 +31,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "barndominium",
-    titleEn: "Barndominium",
-    titleTh: "บาร์นโดมิเนียม",
+    titleEn: withBanBaanPrefix("Barndominium"),
+    titleTh: withBanBaanPrefix("บาร์นโดมิเนียม"),
     imageUrl:
       "https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=industrial",
@@ -38,8 +40,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "craftsman",
-    titleEn: "Craftsman",
-    titleTh: "คราฟต์สแมน",
+    titleEn: withBanBaanPrefix("Craftsman"),
+    titleTh: withBanBaanPrefix("คราฟต์สแมน"),
     imageUrl:
       "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=contemporary",
@@ -47,8 +49,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "small",
-    titleEn: "Small",
-    titleTh: "บ้านขนาดเล็ก",
+    titleEn: withBanBaanPrefix("Small"),
+    titleTh: withBanBaanPrefix("บ้านขนาดเล็ก"),
     imageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=480&q=80",
     href: "/store?collection=small",
@@ -56,8 +58,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "farmhouse",
-    titleEn: "Farmhouse",
-    titleTh: "ฟาร์มเฮาส์",
+    titleEn: withBanBaanPrefix("Farmhouse"),
+    titleTh: withBanBaanPrefix("ฟาร์มเฮาส์"),
     imageUrl:
       "https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=classic",
@@ -65,9 +67,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "ranch",
-    titleEn: "Ranch",
-    titleTh: "แรนช์",
-    // Fixed: previous photo-1605276374101 404'd
+    titleEn: withBanBaanPrefix("Ranch"),
+    titleTh: withBanBaanPrefix("แรนช์"),
     imageUrl:
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=480&q=80",
     href: "/store?collection=single-storey",
@@ -75,9 +76,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "country",
-    titleEn: "Country",
-    titleTh: "คันทรี",
-    // Fixed: previous photo-1600047509807 404'd
+    titleEn: withBanBaanPrefix("Country"),
+    titleTh: withBanBaanPrefix("คันทรี"),
     imageUrl:
       "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=tropical",
@@ -85,8 +85,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "modern",
-    titleEn: "Modern",
-    titleTh: "โมเดิร์น",
+    titleEn: withBanBaanPrefix("Modern"),
+    titleTh: withBanBaanPrefix("โมเดิร์น"),
     imageUrl:
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=modern",
@@ -94,8 +94,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "cottage",
-    titleEn: "Cottage",
-    titleTh: "คอตเทจ",
+    titleEn: withBanBaanPrefix("Cottage"),
+    titleTh: withBanBaanPrefix("คอตเทจ"),
     imageUrl:
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=muji",
@@ -103,8 +103,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "mountain",
-    titleEn: "Mountain",
-    titleTh: "เมาน์เทน",
+    titleEn: withBanBaanPrefix("Mountain"),
+    titleTh: withBanBaanPrefix("เมาน์เทน"),
     imageUrl:
       "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=loft",
@@ -112,8 +112,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "lake",
-    titleEn: "Lake",
-    titleTh: "เลคเฮาส์",
+    titleEn: withBanBaanPrefix("Lake"),
+    titleTh: withBanBaanPrefix("เลคเฮาส์"),
     imageUrl:
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=nordic",
@@ -121,8 +121,8 @@ export const DEFAULT_MEGA_MENU_STYLES: MegaMenuStyleCard[] = [
   },
   {
     id: "traditional",
-    titleEn: "Traditional",
-    titleTh: "ทราดิชันนัล",
+    titleEn: withBanBaanPrefix("Traditional"),
+    titleTh: withBanBaanPrefix("ทราดิชันนัล"),
     imageUrl:
       "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=480&q=80",
     href: "/store?style=classic",
@@ -150,12 +150,14 @@ export function normalizeMegaMenuStyles(
 
   return input.slice(0, MAX_MEGA_MENU_STYLES).map((raw, index) => {
     const fallback = DEFAULT_MEGA_MENU_STYLES[index] ?? DEFAULT_MEGA_MENU_STYLES[0];
+    const titleEn = (raw.titleEn ?? raw.en ?? "").trim() || "Untitled";
+    const titleTh = (raw.titleTh ?? raw.th ?? "").trim() || "ไม่มีชื่อ";
     return {
       id: typeof raw.id === "string" && raw.id.trim() ? raw.id.trim() : newId(),
       imageUrl:
         (raw.imageUrl ?? raw.image ?? "").trim() || fallback.imageUrl,
-      titleEn: (raw.titleEn ?? raw.en ?? "").trim() || "Untitled",
-      titleTh: (raw.titleTh ?? raw.th ?? "").trim() || "ไม่มีชื่อ",
+      titleEn: withBanBaanPrefix(titleEn),
+      titleTh: withBanBaanPrefix(titleTh),
       href: (raw.href ?? "").trim() || "/store",
       enabled: raw.enabled !== false,
     };
@@ -170,8 +172,8 @@ export function createEmptyMegaMenuStyle(): MegaMenuStyleCard {
   return {
     id: newId(),
     imageUrl: "",
-    titleEn: "New style",
-    titleTh: "สไตล์ใหม่",
+    titleEn: withBanBaanPrefix("New style"),
+    titleTh: withBanBaanPrefix("สไตล์ใหม่"),
     href: "/store",
     enabled: true,
   };

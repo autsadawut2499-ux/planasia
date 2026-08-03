@@ -70,12 +70,12 @@ export function FeaturedPlans({ title, exclusive = false }: FeaturedPlansProps) 
       <div className="section-inner">
         <h2 className="text-center text-2xl font-semibold text-[#2b3a4a] md:text-3xl">{heading}</h2>
 
-        <div className="relative mt-10">
+        <div className="relative mt-10 min-w-0 max-w-full overflow-x-clip">
           <button
             type="button"
             onClick={() => scroll(-1)}
             aria-label={L("Previous plans", "ก่อนหน้า")}
-            className="absolute -left-1 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-[var(--color-card,#fff)] p-2.5 text-text-secondary shadow-md hover:text-[#1e40af] md:block lg:-left-3"
+            className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-[var(--color-card,#fff)] p-2.5 text-text-secondary shadow-md hover:text-[#1e40af] md:block lg:left-0"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -105,7 +105,7 @@ export function FeaturedPlans({ title, exclusive = false }: FeaturedPlansProps) 
             type="button"
             onClick={() => scroll(1)}
             aria-label={L("Next plans", "ถัดไป")}
-            className="absolute -right-1 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-[var(--color-card,#fff)] p-2.5 text-text-secondary shadow-md hover:text-[#1e40af] md:block lg:-right-3"
+            className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-[var(--color-card,#fff)] p-2.5 text-text-secondary shadow-md hover:text-[#1e40af] md:block lg:right-0"
           >
             <ChevronRight className="h-5 w-5" />
           </button>

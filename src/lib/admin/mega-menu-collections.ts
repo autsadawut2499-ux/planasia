@@ -3,6 +3,8 @@
  * Stored in site_settings under key `mega_menu_collections`.
  */
 
+import { withBanBaanPrefix } from "@/lib/store/style-label";
+
 export const MAX_MEGA_MENU_COLLECTIONS = 12;
 
 export interface MegaMenuCollectionCard {
@@ -19,8 +21,8 @@ export interface MegaMenuCollectionCard {
 export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
   {
     id: "single-storey",
-    titleEn: "Single-Storey",
-    titleTh: "บ้านชั้นเดียว",
+    titleEn: withBanBaanPrefix("Single-Storey"),
+    titleTh: withBanBaanPrefix("บ้านชั้นเดียว"),
     imageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80",
     href: "/store?collection=single-storey",
@@ -28,8 +30,8 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
   },
   {
     id: "two-storey",
-    titleEn: "Two-Storey",
-    titleTh: "บ้านสองชั้น",
+    titleEn: withBanBaanPrefix("Two-Storey"),
+    titleTh: withBanBaanPrefix("บ้านสองชั้น"),
     imageUrl:
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=400&q=80",
     href: "/store?collection=two-storey",
@@ -37,9 +39,8 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
   },
   {
     id: "small",
-    titleEn: "Small / Narrow",
-    titleTh: "บ้านเล็ก / หน้าแคบ",
-    // Fixed: previous photo-1600047509807 404'd
+    titleEn: withBanBaanPrefix("Small / Narrow"),
+    titleTh: withBanBaanPrefix("บ้านเล็ก / หน้าแคบ"),
     imageUrl:
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=400&q=80",
     href: "/store?collection=small",
@@ -47,8 +48,8 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
   },
   {
     id: "commercial",
-    titleEn: "Commercial",
-    titleTh: "อาคารพาณิชย์",
+    titleEn: withBanBaanPrefix("Commercial"),
+    titleTh: withBanBaanPrefix("อาคารพาณิชย์"),
     imageUrl:
       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80",
     href: "/store?collection=commercial",
@@ -56,8 +57,8 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
   },
   {
     id: "warehouse",
-    titleEn: "Warehouse",
-    titleTh: "โกดัง / โรงงาน",
+    titleEn: withBanBaanPrefix("Warehouse"),
+    titleTh: withBanBaanPrefix("โกดัง / โรงงาน"),
     imageUrl:
       "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=80",
     href: "/store?collection=warehouse",
@@ -65,8 +66,8 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
   },
   {
     id: "resort",
-    titleEn: "Resort / Bungalow",
-    titleTh: "รีสอร์ท / บังกะโล",
+    titleEn: withBanBaanPrefix("Resort / Bungalow"),
+    titleTh: withBanBaanPrefix("รีสอร์ท / บังกะโล"),
     imageUrl:
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=400&q=80",
     href: "/store?collection=resort",
@@ -107,8 +108,12 @@ export function normalizeMegaMenuCollections(
     return {
       id,
       imageUrl: (raw.imageUrl ?? raw.image ?? "").trim() || byId?.imageUrl || fallback.imageUrl,
-      titleEn: (raw.titleEn ?? raw.en ?? "").trim() || byId?.titleEn || "Untitled",
-      titleTh: (raw.titleTh ?? raw.th ?? "").trim() || byId?.titleTh || "ไม่มีชื่อ",
+      titleEn: withBanBaanPrefix(
+        (raw.titleEn ?? raw.en ?? "").trim() || byId?.titleEn || "Untitled",
+      ),
+      titleTh: withBanBaanPrefix(
+        (raw.titleTh ?? raw.th ?? "").trim() || byId?.titleTh || "ไม่มีชื่อ",
+      ),
       href,
       enabled: raw.enabled !== false,
     };
@@ -125,8 +130,8 @@ export function createEmptyMegaMenuCollection(): MegaMenuCollectionCard {
   return {
     id: newId(),
     imageUrl: "",
-    titleEn: "New collection",
-    titleTh: "คอลเลกชันใหม่",
+    titleEn: withBanBaanPrefix("New collection"),
+    titleTh: withBanBaanPrefix("คอลเลกชันใหม่"),
     href: "/store",
     enabled: true,
   };

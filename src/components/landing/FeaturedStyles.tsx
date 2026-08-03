@@ -25,7 +25,7 @@ export function FeaturedStyles() {
     <section className="section-pad bg-transparent">
       <div className="section-inner">
         <h2 className="text-center text-2xl font-semibold text-[#2b3a4a] md:text-3xl">
-          {L("Featured Styles", "สไตล์แนะนำ")}
+          {L("Featured Styles", "แบบบ้านแนะนำ")}
         </h2>
 
         <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-4 md:gap-7">

@@ -1,7 +1,11 @@
 /**
  * Central store taxonomy — single source of truth for the header dropdowns,
  * store filters and the vendor submission form. Bilingual (en / th).
+ *
+ * Style labels always start with "แบบบ้าน" for storefront display.
  */
+
+import { withBanBaanPrefix } from "@/lib/store/style-label";
 
 export interface TaxonomyItem {
   /** Filter value used in ?style= / ?collection= query params + DB column. */
@@ -17,29 +21,57 @@ export interface TaxonomyItem {
  * `collection` column on store_listings and the vendor form values.
  */
 export const COLLECTIONS: TaxonomyItem[] = [
-  { id: "single-storey", en: "Single-Storey Houses", th: "บ้านชั้นเดียว" },
-  { id: "two-storey", en: "Two-Storey Houses", th: "บ้านสองชั้น" },
-  { id: "small", en: "Small / Narrow Houses", th: "บ้านขนาดเล็ก / หน้าแคบ" },
-  { id: "commercial", en: "Commercial Building", th: "อาคารพาณิชย์ / ตึกแถว" },
-  { id: "warehouse", en: "Warehouse / Factory", th: "โกดัง / โรงงาน" },
-  { id: "resort", en: "Resort / Bungalow", th: "รีสอร์ท / บังกะโล" },
+  {
+    id: "single-storey",
+    en: withBanBaanPrefix("Single-Storey Houses"),
+    th: withBanBaanPrefix("บ้านชั้นเดียว"),
+  },
+  {
+    id: "two-storey",
+    en: withBanBaanPrefix("Two-Storey Houses"),
+    th: withBanBaanPrefix("บ้านสองชั้น"),
+  },
+  {
+    id: "small",
+    en: withBanBaanPrefix("Small / Narrow Houses"),
+    th: withBanBaanPrefix("บ้านขนาดเล็ก / หน้าแคบ"),
+  },
+  {
+    id: "commercial",
+    en: withBanBaanPrefix("Commercial Building"),
+    th: withBanBaanPrefix("อาคารพาณิชย์ / ตึกแถว"),
+  },
+  {
+    id: "warehouse",
+    en: withBanBaanPrefix("Warehouse / Factory"),
+    th: withBanBaanPrefix("โกดัง / โรงงาน"),
+  },
+  {
+    id: "resort",
+    en: withBanBaanPrefix("Resort / Bungalow"),
+    th: withBanBaanPrefix("รีสอร์ท / บังกะโล"),
+  },
 ];
 
 /**
  * 10 style slots. `id` matches the `style` column and the ?style= filter.
- * Copy/imagery can be enriched later without touching the header.
+ * Display labels are prefixed with "แบบบ้าน".
  */
 export const STYLES: TaxonomyItem[] = [
-  { id: "modern", en: "Modern", th: "โมเดิร์น" },
-  { id: "contemporary", en: "Contemporary", th: "คอนเทมโพรารี" },
-  { id: "minimal", en: "Minimal", th: "มินิมอล" },
-  { id: "tropical", en: "Tropical", th: "ทรอปิคอล" },
-  { id: "nordic", en: "Nordic / Scandinavian", th: "นอร์ดิก / สแกนดิเนเวียน" },
-  { id: "loft", en: "Loft", th: "ลอฟท์" },
-  { id: "classic", en: "Classic", th: "คลาสสิก" },
-  { id: "muji", en: "Muji / Japanese", th: "มูจิ / ญี่ปุ่น" },
-  { id: "industrial", en: "Industrial", th: "อินดัสเทรียล" },
-  { id: "custom", en: "Custom / Other", th: "อื่นๆ / ตามสั่ง" },
+  { id: "modern", en: withBanBaanPrefix("Modern"), th: withBanBaanPrefix("โมเดิร์น") },
+  { id: "contemporary", en: withBanBaanPrefix("Contemporary"), th: withBanBaanPrefix("คอนเทมโพรารี") },
+  { id: "minimal", en: withBanBaanPrefix("Minimal"), th: withBanBaanPrefix("มินิมอล") },
+  { id: "tropical", en: withBanBaanPrefix("Tropical"), th: withBanBaanPrefix("ทรอปิคอล") },
+  {
+    id: "nordic",
+    en: withBanBaanPrefix("Nordic / Scandinavian"),
+    th: withBanBaanPrefix("นอร์ดิก / สแกนดิเนเวียน"),
+  },
+  { id: "loft", en: withBanBaanPrefix("Loft"), th: withBanBaanPrefix("ลอฟท์") },
+  { id: "classic", en: withBanBaanPrefix("Classic"), th: withBanBaanPrefix("คลาสสิก") },
+  { id: "muji", en: withBanBaanPrefix("Muji / Japanese"), th: withBanBaanPrefix("มูจิ / ญี่ปุ่น") },
+  { id: "industrial", en: withBanBaanPrefix("Industrial"), th: withBanBaanPrefix("อินดัสเทรียล") },
+  { id: "custom", en: withBanBaanPrefix("Custom / Other"), th: withBanBaanPrefix("อื่นๆ / ตามสั่ง") },
 ];
 
 /**

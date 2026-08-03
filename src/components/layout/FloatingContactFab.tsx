@@ -6,6 +6,9 @@ import { MessageCircle, Phone, X } from "lucide-react";
 import { useSiteConfigOptional } from "@/context/SiteConfigContext";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/admin/defaults";
 
+/** Dispatched by MobileBottomNav Chat tab to open this contact menu. */
+export const OPEN_CONTACT_EVENT = "planasia:open-contact";
+
 function shouldHideFab(pathname: string | null): boolean {
   if (!pathname) return false;
   return pathname === "/admin" || pathname.startsWith("/admin/");
@@ -81,6 +84,14 @@ export function FloatingContactFab() {
     setOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    function onOpenContact() {
+      setOpen(true);
+    }
+    window.addEventListener(OPEN_CONTACT_EVENT, onOpenContact);
+    return () => window.removeEventListener(OPEN_CONTACT_EVENT, onOpenContact);
+  }, []);
+
   if (shouldHideFab(pathname)) return null;
 
   return (
@@ -148,16 +159,17 @@ export function FloatingContactFab() {
         )}
       </div>
 
+      {/* Mobile uses bottom-nav Chat; keep FAB trigger on desktop only. */}
       <button
         type="button"
         aria-label={open ? "ปิดเมนูติดต่อ" : "เปิดเมนูติดต่อ"}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
-        className={`group relative inline-flex h-14 w-14 items-center justify-center rounded-full text-white transition duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0066FF] active:scale-95 ${
+        className={`group relative h-14 w-14 items-center justify-center rounded-full text-white transition duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0066FF] active:scale-95 ${
           open
-            ? "bg-blue-700 shadow-[0_10px_28px_rgba(0,102,255,0.4)]"
-            : "bg-[#0066FF] shadow-[0_12px_32px_rgba(0,102,255,0.45)] hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-[0_16px_36px_rgba(0,102,255,0.55)]"
+            ? "inline-flex bg-blue-700 shadow-[0_10px_28px_rgba(0,102,255,0.4)]"
+            : "hidden bg-[#0066FF] shadow-[0_12px_32px_rgba(0,102,255,0.45)] hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-[0_16px_36px_rgba(0,102,255,0.55)] lg:inline-flex"
         }`}
       >
         <span

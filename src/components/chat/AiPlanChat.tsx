@@ -20,9 +20,28 @@ interface ChatTurn {
   listings?: PlanChatListingCard[];
 }
 
-function shouldHideFab(pathname: string | null): boolean {
+/** Open the AI plan finder; optional `message` auto-sends after open. */
+export const OPEN_AI_CHAT_EVENT = "planasia:open-ai-chat";
+
+export function openAiPlanChat(message?: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(OPEN_AI_CHAT_EVENT, {
+      detail: { message: message?.trim() || undefined },
+    }),
+  );
+}
+
+function shouldHideAiChat(pathname: string | null): boolean {
   if (!pathname) return false;
   return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
+function shouldHideFab(pathname: string | null): boolean {
+  if (!pathname) return false;
+  // Home uses the in-hero AI search entry — hide the floating FAB there.
+  if (pathname === "/") return true;
+  return shouldHideAiChat(pathname);
 }
 
 function makeId(): string {
@@ -60,6 +79,8 @@ export function AiPlanChat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState<ChatTurn[]>([]);
+  const [pendingLaunch, setPendingLaunch] = useState<string | null>(null);
+  const sendingRef = useRef(false);
 
   const welcomeText = L(
     "Hi — I’m Planasia’s plan finder. Tell me your budget, bedrooms, style, or land size and I’ll recommend real listings from our store.",
@@ -75,6 +96,17 @@ export function AiPlanChat() {
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    function onOpenAiChat(event: Event) {
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      setOpen(true);
+      const msg = detail?.message?.trim();
+      if (msg) setPendingLaunch(msg);
+    }
+    window.addEventListener(OPEN_AI_CHAT_EVENT, onOpenAiChat);
+    return () => window.removeEventListener(OPEN_AI_CHAT_EVENT, onOpenAiChat);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -104,7 +136,7 @@ export function AiPlanChat() {
 
   async function sendMessage(raw: string) {
     const text = raw.trim();
-    if (!text || sending) return;
+    if (!text || sendingRef.current) return;
 
     const userTurn: ChatTurn = { id: makeId(), role: "user", content: text };
     const nextHistory = [...messages, userTurn]
@@ -113,6 +145,7 @@ export function AiPlanChat() {
 
     setMessages((prev) => [...prev, userTurn]);
     setInput("");
+    sendingRef.current = true;
     setSending(true);
 
     try {
@@ -182,44 +215,59 @@ export function AiPlanChat() {
         },
       ]);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   }
 
-  if (shouldHideFab(pathname)) return null;
+  useEffect(() => {
+    if (!open || !pendingLaunch) return;
+    const msg = pendingLaunch;
+    setPendingLaunch(null);
+    void sendMessage(msg);
+    // Intentionally run once per pending launch when the panel opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, pendingLaunch]);
+
+  if (shouldHideAiChat(pathname)) return null;
+
+  // Panel stays mounted on public pages; FAB is hidden on home (hero entry).
+  const hideFab = shouldHideFab(pathname);
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={
-          open
-            ? L("Close AI chat", "ปิดแชท AI")
-            : L("AI house-plan finder", "AI ค้นหาแบบบ้าน")
-        }
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((v) => !v)}
-        className={`ai-plan-fab${open ? " ai-plan-fab--open" : ""}`}
-      >
-        <span className="ai-plan-fab__orbit" aria-hidden />
-        <span className="ai-plan-fab__glow" aria-hidden />
-        <span className="ai-plan-fab__inner">
-          {open ? (
-            <>
-              <X className="h-4 w-4 shrink-0" strokeWidth={2.4} />
-              <span className="ai-plan-fab__label">{L("Close", "ปิด")}</span>
-            </>
-          ) : (
-            <>
-              <span className="ai-plan-fab__emoji" aria-hidden>
-                ✨
-              </span>
-              <span className="ai-plan-fab__label">AI ค้นหาแบบบ้าน</span>
-            </>
-          )}
-        </span>
-      </button>
+      {!hideFab && (
+        <button
+          type="button"
+          aria-label={
+            open
+              ? L("Close AI chat", "ปิดแชท AI")
+              : L("AI house-plan finder", "AI ค้นหาแบบบ้าน")
+          }
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((v) => !v)}
+          className={`ai-plan-fab${open ? " ai-plan-fab--open" : ""}`}
+        >
+          <span className="ai-plan-fab__orbit" aria-hidden />
+          <span className="ai-plan-fab__glow" aria-hidden />
+          <span className="ai-plan-fab__inner">
+            {open ? (
+              <>
+                <X className="h-4 w-4 shrink-0" strokeWidth={2.4} />
+                <span className="ai-plan-fab__label">{L("Close", "ปิด")}</span>
+              </>
+            ) : (
+              <>
+                <span className="ai-plan-fab__emoji" aria-hidden>
+                  ✨
+                </span>
+                <span className="ai-plan-fab__label">AI ค้นหาแบบบ้าน</span>
+              </>
+            )}
+          </span>
+        </button>
+      )}
 
       {open && (
         <>

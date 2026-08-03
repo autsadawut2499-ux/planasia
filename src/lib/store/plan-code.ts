@@ -6,6 +6,7 @@
 
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import { STYLES } from "@/lib/store/taxonomy";
+import { stripBanBaanPrefix } from "@/lib/store/style-label";
 import { createRandomId } from "@/lib/random-id";
 
 /** Short codes shown on cards, search, and invoices. */
@@ -36,7 +37,7 @@ export function planPrefixForStyle(style: string | null | undefined): string {
 export function styleLabelForListingName(style: string | null | undefined): string {
   const key = (style ?? "custom").trim().toLowerCase();
   const known = STYLES.find((s) => s.id === key);
-  const en = known?.en ?? "Custom";
+  const en = stripBanBaanPrefix(known?.en ?? "Custom");
   // Prefer the short head before a slash (e.g. "Nordic / Scandinavian" → "Nordic").
   return en.split(" / ")[0]?.trim() || "Custom";
 }

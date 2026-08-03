@@ -1,4 +1,5 @@
 import { HOUSE_STYLES, type Locale } from "@/lib/geo/countries";
+import { withBanBaanPrefix } from "@/lib/store/style-label";
 
 export interface CuratedStyleItem {
   id: string;
@@ -30,15 +31,27 @@ export const DEFAULT_CURATED_STYLES: CuratedStyleItem[] = HOUSE_STYLES.map((styl
   },
 }));
 
+function prefixCaptions(
+  caption: Partial<Record<Locale, string>>,
+): Partial<Record<Locale, string>> {
+  const next: Partial<Record<Locale, string>> = {};
+  for (const [locale, value] of Object.entries(caption) as [Locale, string | undefined][]) {
+    if (typeof value === "string" && value.trim()) {
+      next[locale] = withBanBaanPrefix(value);
+    }
+  }
+  return next;
+}
+
 export function mergeCuratedStyles(stored: CuratedStyleItem[] | null | undefined): CuratedStyleItem[] {
   const byId = new Map((stored ?? []).map((item) => [item.id, item]));
   return DEFAULT_CURATED_STYLES.map((defaults) => {
     const saved = byId.get(defaults.id);
-    if (!saved) return defaults;
+    if (!saved) return { ...defaults, caption: prefixCaptions(defaults.caption) };
     return {
       id: defaults.id,
       imageUrl: saved.imageUrl || defaults.imageUrl,
-      caption: { ...defaults.caption, ...saved.caption },
+      caption: prefixCaptions({ ...defaults.caption, ...saved.caption }),
     };
   });
 }
@@ -48,5 +61,6 @@ export function captionForStyle(
   locale: Locale,
   fallbackEn?: string,
 ): string {
-  return item.caption[locale] ?? item.caption.en ?? fallbackEn ?? item.id;
+  const raw = item.caption[locale] ?? item.caption.en ?? fallbackEn ?? item.id;
+  return withBanBaanPrefix(raw);
 }
