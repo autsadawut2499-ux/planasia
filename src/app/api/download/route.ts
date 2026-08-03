@@ -5,8 +5,9 @@ import { findCartOrderByStripeSession } from "@/lib/store/cart-orders";
 import {
   filenameFromUrl,
   findListingIdByPlanCode,
-  getListingBlueprintUrls,
-} from "@/lib/store/listing-blueprints";
+  getListingAssetUrls,
+  type ListingFileKind,
+} from "@/lib/store/listing-assets";
 import {
   parseDocumentLanguage,
   resolveTranslatedBlueprintForGrant,
@@ -20,9 +21,24 @@ import { resolveUnitSystem } from "@/lib/units/format";
 import { isUiLocale, type UnitSystem, type UiLocale } from "@/lib/geo/countries";
 import { isPlanDocumentUuid } from "@/lib/store/plan-identity";
 
+function resolveFileKind(grant: {
+  fileKind?: ListingFileKind;
+  format: "pdf" | "cad";
+}): ListingFileKind {
+  if (
+    grant.fileKind === "blueprint" ||
+    grant.fileKind === "cad" ||
+    grant.fileKind === "boq" ||
+    grant.fileKind === "calc"
+  ) {
+    return grant.fileKind;
+  }
+  return grant.format === "cad" ? "cad" : "blueprint";
+}
+
 /**
  * Post-payment download (vendor-first):
- *   paid grant → fetch vendor-uploaded blueprint PDF → stream to buyer
+ *   paid grant → fetch vendor-uploaded asset by file_kind → stream to buyer
  *
  * Legacy generative house_plans PDFs are only used when a listing has no
  * uploaded blueprints (old AI-workspace path).
@@ -52,33 +68,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Token format mismatch" }, { status: 403 });
   }
 
+  const fileKind = resolveFileKind(grant);
   const listingId =
     grant.listingId || (await findListingIdByPlanCode(grant.planId)) || undefined;
-  const blueprintUrls = listingId ? await getListingBlueprintUrls(listingId) : [];
+  const assetUrls = listingId ? await getListingAssetUrls(listingId, fileKind) : [];
 
-  // ── Primary path: vendor / architect uploaded PDFs ───────────────────────
-  if (blueprintUrls.length > 0) {
-    if (format === "cad") {
-      return NextResponse.json(
-        {
-          error:
-            "CAD export is not available for vendor-uploaded plans. Download the PDF blueprints instead.",
-        },
-        { status: 404 },
-      );
-    }
-
+  // ── Primary path: vendor / architect uploaded assets ─────────────────────
+  if (assetUrls.length > 0) {
     const index = Math.min(
       Math.max(0, grant.fileIndex ?? 0),
-      blueprintUrls.length - 1,
+      assetUrls.length - 1,
     );
-    const sourceUrl = blueprintUrls[index];
+    const sourceUrl = assetUrls[index];
+    const fallbackExt = format === "cad" ? "dwg" : "pdf";
     const filename = filenameFromUrl(
       sourceUrl,
-      `${grant.planId}-${index + 1}.pdf`,
+      `${grant.planId}-${fileKind}-${index + 1}.${fallbackExt}`,
     );
 
     if (
+      fileKind === "blueprint" &&
       shouldAttemptTranslatedDownload({
         format,
         docLang,
@@ -101,6 +110,7 @@ export async function GET(request: NextRequest) {
               planId: grant.planId,
               listingId,
               index,
+              fileKind,
               docLang,
               provider: translated.provider,
             });
@@ -111,8 +121,9 @@ export async function GET(request: NextRequest) {
                 "Content-Disposition": `attachment; filename="${translated.translatedFilename}"`,
                 "Cache-Control": "no-store",
                 "X-Planasia-Source": "translated-upload",
+                "X-Planasia-File-Kind": fileKind,
                 "X-Planasia-File-Index": String(index),
-                "X-Planasia-File-Count": String(blueprintUrls.length),
+                "X-Planasia-File-Count": String(assetUrls.length),
               },
             });
           }
@@ -131,7 +142,9 @@ export async function GET(request: NextRequest) {
     try {
       const asset = await fetchAssetBytes(sourceUrl);
       if (!asset) {
-        console.error(`[download] vendor file fetch failed for ${grant.planId}#${index}`);
+        console.error(
+          `[download] vendor file fetch failed for ${grant.planId}#${fileKind}#${index}`,
+        );
         return NextResponse.json(
           { error: "Could not retrieve the uploaded plan file" },
           { status: 502 },
@@ -142,17 +155,21 @@ export async function GET(request: NextRequest) {
         planId: grant.planId,
         listingId,
         index,
+        fileKind,
         requestedDocLang: docLang,
         variant,
       });
       return new NextResponse(new Uint8Array(asset.bytes), {
         headers: {
-          "Content-Type": asset.contentType || "application/pdf",
+          "Content-Type":
+            asset.contentType ||
+            (format === "cad" ? "application/acad" : "application/pdf"),
           "Content-Disposition": `attachment; filename="${filename}"`,
           "Cache-Control": "no-store",
           "X-Planasia-Source": "vendor-upload",
+          "X-Planasia-File-Kind": fileKind,
           "X-Planasia-File-Index": String(index),
-          "X-Planasia-File-Count": String(blueprintUrls.length),
+          "X-Planasia-File-Count": String(assetUrls.length),
         },
       });
     } catch (err) {
@@ -162,6 +179,16 @@ export async function GET(request: NextRequest) {
         { status: 502 },
       );
     }
+  }
+
+  // CAD / BOQ / calc with no uploaded assets cannot fall back to generative CAD.
+  if (fileKind !== "blueprint") {
+    return NextResponse.json(
+      {
+        error: `No ${fileKind} files are linked to this purchase. Ask the seller to upload the files.`,
+      },
+      { status: 404 },
+    );
   }
 
   // ── Legacy fallback: generative house_plans document ─────────────────────

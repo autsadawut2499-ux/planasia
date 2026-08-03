@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
@@ -16,15 +16,18 @@ import { RecommendedForYou } from "@/components/store/RecommendedForYou";
 import { useApp } from "@/context/AppContext";
 import { listingMatchesSearch, useStoreBrowse } from "@/context/StoreBrowseContext";
 import { useStoreViewer } from "@/hooks/useStoreViewer";
+import { STORE_GRID_PAGE_SIZE } from "@/lib/store/catalogue-columns";
 import type { StoreListing } from "@/lib/store/db";
 
 interface StorePageClientProps {
   initialListings?: StoreListing[];
 }
 
+const FOCUS_REFRESH_MIN_MS = 60_000;
+
 function StorePageContent({ initialListings = [] }: StorePageClientProps) {
   const searchParams = useSearchParams();
-  const { translate } = useApp();
+  const { translate, locale } = useApp();
   const { searchQuery, setSearchQuery, showFavoritesOnly, setShowFavoritesOnly, isFavorite } =
     useStoreBrowse();
   const viewer = useStoreViewer();
@@ -34,7 +37,9 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
   const [areaRange, setAreaRange] = useState<{ min: number; max: number }>({ min: 0, max: 0 });
   const [loading, setLoading] = useState(initialListings.length === 0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(STORE_GRID_PAGE_SIZE);
   const hasSsrData = initialListings.length > 0;
+  const lastFetchAt = useRef(hasSsrData ? Date.now() : 0);
 
   // Apply filters coming from the home hero search / nav
   // (e.g. /store?areaMin=100&areaMax=250&beds=3&baths=2&style=modern). Areas are in m².
@@ -78,18 +83,22 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       });
       const data = await res.json();
       setListings(data.listings ?? []);
+      lastFetchAt.current = Date.now();
     } finally {
       setLoading(false);
     }
   }, [viewer, hasSsrData]);
 
+  // Skip the immediate client refetch when SSR already delivered the catalogue.
   useEffect(() => {
+    if (hasSsrData) return;
     void loadListings();
-  }, [loadListings]);
+  }, [hasSsrData, loadListings]);
 
-  // Re-sync when the tab regains focus so admin Approve / new uploads appear quickly.
+  // Re-sync on focus at most once per minute (admin Approve / new uploads).
   useEffect(() => {
     const onFocus = () => {
+      if (Date.now() - lastFetchAt.current < FOCUS_REFRESH_MIN_MS) return;
       void loadListings();
     };
     window.addEventListener("focus", onFocus);
@@ -103,6 +112,17 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       return listingMatchesStoreFilters(item, filters, areaRange);
     });
   }, [listings, filters, areaRange, searchQuery, showFavoritesOnly, isFavorite]);
+
+  // Reset lazy page window whenever the active filter/search set changes.
+  useEffect(() => {
+    setVisibleCount(STORE_GRID_PAGE_SIZE);
+  }, [filters, areaRange, searchQuery, showFavoritesOnly]);
+
+  const visible = useMemo(
+    () => filtered.slice(0, visibleCount),
+    [filtered, visibleCount],
+  );
+  const hasMore = visibleCount < filtered.length;
 
   const clearFilters = () => {
     setFilters(DEFAULT_STORE_FILTERS);
@@ -198,10 +218,26 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
             ) : (
               <>
                 <div className="store-card-grid">
-                  {filtered.map((item, i) => (
+                  {visible.map((item, i) => (
                     <StorePlanCard key={item.id} item={item} index={i} />
                   ))}
                 </div>
+
+                {hasMore && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleCount((n) => n + STORE_GRID_PAGE_SIZE)
+                      }
+                      className="min-h-11 rounded-lg border border-border bg-white px-6 py-2.5 text-sm font-semibold text-[#1e3a5f] shadow-sm transition hover:border-[#1e40af]/40 hover:text-[#1e40af]"
+                    >
+                      {locale === "th"
+                        ? `โหลดเพิ่มเติม (${Math.min(STORE_GRID_PAGE_SIZE, filtered.length - visibleCount)} จาก ${filtered.length - visibleCount} ที่เหลือ)`
+                        : `Load more (${Math.min(STORE_GRID_PAGE_SIZE, filtered.length - visibleCount)} of ${filtered.length - visibleCount} left)`}
+                    </button>
+                  </div>
+                )}
 
                 <StoreUpsellSection
                   listings={listings}

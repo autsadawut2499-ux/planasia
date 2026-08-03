@@ -61,6 +61,7 @@ export async function createCheckoutSession(params: {
   userId?: string;
   buyerName?: string;
   buyerEmail?: string;
+  buyerPhone?: string;
   documentLanguage?: string;
   cartOrderId?: string;
   /** Extra THB line items (language surcharge, BOQ, …). Base plan uses amountThb − extras. */
@@ -142,6 +143,7 @@ export async function createCheckoutSession(params: {
       cartOrderId: params.cartOrderId ?? "",
       buyerName: (params.buyerName ?? "").slice(0, 200),
       buyerEmail: (params.buyerEmail ?? "").slice(0, 200),
+      buyerPhone: (params.buyerPhone ?? "").slice(0, 32),
       documentLanguage: params.documentLanguage ?? "th",
       target_country: (params.targetCountry ?? params.countryCode ?? "TH").slice(0, 8),
     },
@@ -182,6 +184,7 @@ export async function createCartCheckoutSession(params: {
   documentLanguage?: string;
   buyerName?: string;
   buyerEmail?: string;
+  buyerPhone?: string;
   successUrl: string;
   cancelUrl: string;
 }): Promise<{ sessionId: string; url: string; currency: Currency; totalDisplay: number } | null> {
@@ -234,6 +237,7 @@ export async function createCartCheckoutSession(params: {
       target_country: (params.targetCountry ?? params.countryCode ?? "TH").slice(0, 8),
       buyerName: (params.buyerName ?? "").slice(0, 200),
       buyerEmail: (params.buyerEmail ?? "").slice(0, 200),
+      buyerPhone: (params.buyerPhone ?? "").slice(0, 32),
       // Stripe metadata values max 500 chars — enough for ~40 plan codes.
       planIds: planIdsCsv.slice(0, 500),
     },

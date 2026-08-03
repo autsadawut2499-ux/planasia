@@ -19,10 +19,19 @@
   /* Official PLANASIA mark palette */
   --color-brand-navy: #1a2744;
   --color-brand-terracotta: #c45c3a;
-  /* Modern UI: Prompt (Thai) + Plus Jakarta Sans (Latin) */
-  --font-sans: var(--font-prompt), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  /* Navbar / brand wordmark — geometric sans */
-  --font-brand: var(--font-montserrat), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  /*
+   * Typography system (Thai-first architectural UI)
+   * Headings: Prompt 600/700 · Body: IBM Plex Sans Thai 400/500 → Sarabun
+   */
+  --font-sans: var(--font-body), var(--font-sarabun), "IBM Plex Sans Thai", Sarabun,
+    ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-prompt), var(--font-body), var(--font-sarabun), Prompt,
+    ui-sans-serif, system-ui, sans-serif;
+  /* Navbar / brand wordmark uses the heading face */
+  --font-brand: var(--font-heading);
+  /* Back-compat aliases used by a few decorative brand-mark styles */
+  --font-jakarta: var(--font-body);
+  --font-montserrat: var(--font-prompt);
 }
 
 /* ── Store (Clean American house-plan catalog) ── */
@@ -43,7 +52,7 @@
   --color-text-muted: #8b939e;
   --color-card: #ffffff;
   color-scheme: light;
-  font-family: var(--font-prompt), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* ── Landing (same soft canvas as store for a unified public look) ── */
@@ -62,7 +71,7 @@
   --color-text-muted: #8b939e;
   --color-card: #ffffff;
   color-scheme: light;
-  font-family: var(--font-prompt), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 @layer base {
@@ -71,15 +80,104 @@
   }
 
   body {
-    @apply bg-surface text-text-primary font-sans font-medium antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply bg-surface text-text-primary font-sans font-normal antialiased;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    line-height: 1.65;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Headings — Prompt SemiBold/Bold, tight architectural hierarchy */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  h2,
+  h3 {
+    font-weight: 600;
+  }
+
+  p {
+    line-height: 1.7;
+  }
+
+  /* UI chrome inherits the open body face */
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  option {
+    font-family: var(--font-sans);
+  }
+
+  button,
+  [type="button"],
+  [type="submit"],
+  [type="reset"] {
+    font-weight: 500;
+  }
+
   ::selection {
     background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+
+  /*
+   * Hand cursor on interactive controls project-wide.
+   * Overrides Tailwind preflight’s default button cursor.
+   */
+  a[href],
+  area[href],
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]):not([disabled]),
+  [role="link"],
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="menuitemradio"],
+  [role="option"],
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="checkbox"]:not([aria-disabled="true"]),
+  [role="radio"]:not([aria-disabled="true"]),
+  [role="combobox"]:not([aria-disabled="true"]),
+  summary,
+  label,
+  select:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  input[type="image"]:not(:disabled),
+  input[type="range"]:not(:disabled),
+  input[type="color"]:not(:disabled),
+  /* Custom clickable surfaces that are keyboard-focusable */
+  [tabindex="0"]:not(input):not(textarea):not(select):not([contenteditable="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  button[aria-disabled="true"],
+  [role="button"][aria-disabled="true"],
+  [role="button"][disabled],
+  select:disabled,
+  input:disabled,
+  input[aria-disabled="true"],
+  optgroup:disabled,
+  option:disabled {
+    cursor: not-allowed;
   }
 }
 
@@ -367,6 +465,18 @@
     padding: 1.05rem 1.15rem 0;
   }
 
+  /* Product / plan names on cards use the heading face */
+  .store-card-plan-id {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .store-card-price {
+    font-family: var(--font-sans);
+    font-weight: 500;
+  }
+
   .store-card__specs-wrap {
     margin-top: auto;
     min-width: 0;
@@ -481,12 +591,12 @@
       0 8px 28px -18px rgba(30, 64, 175, 0.28);
   }
 
-  /* Top-bar phone — clean geometric numerals (Montserrat), light weight */
+  /* Top-bar phone — crisp body numerals */
   .topbar-phone__number {
-    font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-weight: 500;
     font-size: 0.9375rem;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     font-variant-numeric: tabular-nums;
     line-height: 1;
     white-space: nowrap;
@@ -1042,7 +1152,7 @@
 }
 
 .ai-plan-fab__label {
-  font-family: var(--font-brand), var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.01em;

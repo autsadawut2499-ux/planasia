@@ -8,22 +8,39 @@ import {
   listPushSubscriptions,
 } from "@/lib/push/subscriptions";
 import { vendorNetPreview } from "@/lib/commerce/commission";
+import { getVendorByOwnerKey } from "@/lib/supabase/vendors";
+import { toE164Phone } from "@/lib/sms/phone";
+import { isSmsConfigured, sendSms } from "@/lib/sms/twilio";
+import {
+  buildDesignerSaleSms,
+  type DesignerSaleLine,
+} from "@/lib/notifications/designer-sale-message";
+import {
+  claimSaleNotification,
+  updateSaleNotificationChannels,
+  type NotifyChannelStatus,
+} from "@/lib/notifications/sale-notify-log";
+import { sendDesignerSaleEmail } from "@/lib/email/designer-sale";
 
-export interface SalePushItem {
-  listingId: string;
-  planId: string;
-  name: string;
-  priceThb: number;
-}
+/** Alias kept for call sites — same shape as designer sale notification lines. */
+export type SalePushItem = DesignerSaleLine;
 
 /**
- * After payment clears: find each listing's draftsman and fire a Web Push
- * notification to every device they registered. Never throws — sale unlock
- * must not fail because a phone was offline.
+ * After payment clears (Paid / Success):
+ *  1. Map each listing → designer (store_listings.owner_id → vendor_profiles)
+ *  2. Web Push to registered devices
+ *  3. SMS to contact_phone (Twilio) when configured
+ *  4. Email fallback to contact_email (Resend)
+ *
+ * Never throws — sale unlock must not fail because a phone was offline.
  */
-export async function notifyVendorsOfSale(items: SalePushItem[]): Promise<void> {
-  if (!items.length || !isWebPushConfigured()) return;
+export async function notifyVendorsOfSale(
+  items: SalePushItem[],
+  opts?: { cartOrderId?: string },
+): Promise<void> {
+  if (!items.length) return;
 
+  const cartOrderId = opts?.cartOrderId?.trim() || `sale_${Date.now()}`;
   const byOwner = new Map<string, SalePushItem[]>();
 
   for (const item of items) {
@@ -40,27 +57,105 @@ export async function notifyVendorsOfSale(items: SalePushItem[]): Promise<void> 
       });
       byOwner.set(ownerKey, list);
     } catch (err) {
-      console.error("[push] owner lookup failed", item.listingId, err);
+      console.error("[sale-notify] owner lookup failed", item.listingId, err);
     }
   }
 
   await Promise.all(
     Array.from(byOwner.entries()).map(([ownerKey, sold]) =>
-      sendSalePushToOwner(ownerKey, sold).catch((err) =>
-        console.error("[push] send failed", ownerKey, err),
+      notifyOwnerOfSale(ownerKey, sold, cartOrderId).catch((err) =>
+        console.error("[sale-notify] owner notify failed", ownerKey, err),
       ),
     ),
   );
 }
 
-async function sendSalePushToOwner(ownerKey: string, items: SalePushItem[]): Promise<void> {
+async function notifyOwnerOfSale(
+  ownerKey: string,
+  items: SalePushItem[],
+  cartOrderId: string,
+): Promise<void> {
+  const vendor = await getVendorByOwnerKey(ownerKey).catch(() => null);
+  const phoneE164 = toE164Phone(vendor?.contactPhone);
+
+  const claim = await claimSaleNotification({
+    cartOrderId,
+    ownerKey,
+    listingIds: items.map((i) => i.listingId),
+    planCodes: items.map((i) => i.planId),
+    phoneE164,
+  });
+  if (!claim) {
+    console.info(
+      `[sale-notify] already notified ${ownerKey.slice(0, 8)}… for order ${cartOrderId}`,
+    );
+    return;
+  }
+
+  const [pushStatus, smsOutcome, emailStatus] = await Promise.all([
+    sendSalePushToOwner(ownerKey, items),
+    sendSaleSmsToOwner(phoneE164, items, cartOrderId),
+    sendSaleEmailToOwner(vendor?.contactEmail, vendor?.displayName ?? "", items, cartOrderId),
+  ]);
+
+  await updateSaleNotificationChannels(claim.id, {
+    phoneE164,
+    pushStatus,
+    smsStatus: smsOutcome.status,
+    smsError: smsOutcome.error ?? null,
+    emailStatus,
+  });
+}
+
+async function sendSaleSmsToOwner(
+  phoneE164: string | null,
+  items: SalePushItem[],
+  cartOrderId: string,
+): Promise<{ status: NotifyChannelStatus; error?: string }> {
+  if (!phoneE164) {
+    console.info("[sms] skipped — designer has no contact_phone on vendor_profiles");
+    return { status: "skipped", error: "no_phone" };
+  }
+  if (!isSmsConfigured()) {
+    return { status: "skipped", error: "twilio_not_configured" };
+  }
+
+  const body = buildDesignerSaleSms({ items, cartOrderId });
+  const result = await sendSms(phoneE164, body);
+  if (result.skipped) return { status: "skipped", error: result.error };
+  if (!result.ok) return { status: "failed", error: result.error };
+  return { status: "sent" };
+}
+
+async function sendSaleEmailToOwner(
+  email: string | undefined,
+  displayName: string,
+  items: SalePushItem[],
+  cartOrderId: string,
+): Promise<NotifyChannelStatus> {
+  if (!email?.trim()) return "skipped";
+  const ok = await sendDesignerSaleEmail({
+    to: email,
+    displayName,
+    items,
+    cartOrderId,
+  });
+  return ok ? "sent" : "failed";
+}
+
+async function sendSalePushToOwner(
+  ownerKey: string,
+  items: SalePushItem[],
+): Promise<NotifyChannelStatus> {
+  if (!isWebPushConfigured()) return "skipped";
+
   const vapid = getVapidConfig();
-  if (!vapid) return;
+  if (!vapid) return "skipped";
 
   const subs = await listPushSubscriptions(ownerKey);
   if (subs.length === 0) {
     console.info(`[push] no devices for owner ${ownerKey.slice(0, 8)}… — sale still recorded`);
-    return;
+    return "skipped";
   }
 
   webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
@@ -83,6 +178,7 @@ async function sendSalePushToOwner(ownerKey: string, items: SalePushItem[]): Pro
     tag: `sale-${items.map((i) => i.planId).join("-")}`.slice(0, 64),
   });
 
+  let sent = 0;
   await Promise.all(
     subs.map(async (sub) => {
       try {
@@ -94,9 +190,9 @@ async function sendSalePushToOwner(ownerKey: string, items: SalePushItem[]): Pro
           payload,
           { urgency: "high", TTL: 60 * 60 * 24 },
         );
+        sent += 1;
       } catch (err: unknown) {
         const status = (err as { statusCode?: number })?.statusCode;
-        // Gone / expired subscription — prune so we stop retrying.
         if (status === 404 || status === 410) {
           await deletePushSubscription(sub.endpoint, ownerKey);
         } else {
@@ -107,6 +203,7 @@ async function sendSalePushToOwner(ownerKey: string, items: SalePushItem[]): Pro
   );
 
   console.info(
-    `[push] notified ${subs.length} device(s) for ${ownerKey.slice(0, 8)}… → ${planCodes}`,
+    `[push] notified ${sent}/${subs.length} device(s) for ${ownerKey.slice(0, 8)}… → ${planCodes}`,
   );
+  return sent > 0 ? "sent" : "failed";
 }

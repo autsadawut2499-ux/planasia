@@ -16,10 +16,23 @@ export {
 /** Private bucket for KYC identity photos and paid blueprint / BOQ PDFs. */
 export const VENDOR_PRIVATE_BUCKET = "vendor-private";
 
-export type SensitiveUploadKind = "pdf" | "document" | "boq" | "kyc";
+export type SensitiveUploadKind =
+  | "pdf"
+  | "document"
+  | "boq"
+  | "cad"
+  | "calc"
+  | "kyc";
 
 export function isSensitiveUploadKind(kind: string): kind is SensitiveUploadKind {
-  return kind === "pdf" || kind === "document" || kind === "boq" || kind === "kyc";
+  return (
+    kind === "pdf" ||
+    kind === "document" ||
+    kind === "boq" ||
+    kind === "cad" ||
+    kind === "calc" ||
+    kind === "kyc"
+  );
 }
 
 export async function createPrivateSignedReadUrl(

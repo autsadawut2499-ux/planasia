@@ -20,8 +20,8 @@ interface SiteFooterProps {
 const POLICY_LINKS = [
   {
     href: "/refund",
-    label: "นโยบายการคืนเงินและคืนสินค้า",
-    hint: "สำหรับไฟล์แบบบ้านดิจิทัล",
+    label: "นโยบายการคืนสินค้า",
+    hint: "ไม่รับคืนหลังดำเนินการคำสั่งซื้อ",
   },
   {
     href: "/privacy",
@@ -31,7 +31,12 @@ const POLICY_LINKS = [
   {
     href: "/terms",
     label: "เงื่อนไขและข้อตกลงการใช้บริการ",
-    hint: "ข้อกำหนดในการใช้แพลตฟอร์ม",
+    hint: "ลิขสิทธิ์และ Construction License",
+  },
+  {
+    href: "/construction",
+    label: "ข้อกำหนดด้านการก่อสร้าง",
+    hint: "รหัสอาคารและความรับผิดชอบท้องถิ่น",
   },
   {
     href: "/shipping",

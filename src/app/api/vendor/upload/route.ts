@@ -14,8 +14,11 @@ import {
   toPrivateAssetRef,
   VENDOR_PRIVATE_BUCKET,
 } from "@/lib/supabase/private-assets";
+import { compressImageBuffer } from "@/lib/uploads/compress-image-server";
 import {
   bufferLooksLikePdf,
+  looksLikeCalcDoc,
+  looksLikeDwg,
   resolveDocumentContentType,
   resolveImageContentType,
 } from "@/lib/uploads/mime";
@@ -34,11 +37,30 @@ const ALLOWED_KINDS = new Set([
   "pdf",
   "document",
   "boq",
+  "cad",
+  "calc",
   "kyc",
 ]);
 
 function isDocKind(kind: string): boolean {
-  return kind === "pdf" || kind === "document" || kind === "boq";
+  return (
+    kind === "pdf" ||
+    kind === "document" ||
+    kind === "boq" ||
+    kind === "cad" ||
+    kind === "calc"
+  );
+}
+
+function docKindError(kind: string): string {
+  if (kind === "cad") return "อัปโหลดได้เฉพาะไฟล์ AutoCAD (.dwg)";
+  if (kind === "calc" || kind === "pdf" || kind === "document" || kind === "boq") {
+    return "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)";
+  }
+  if (kind === "kyc") {
+    return "KYC รับเฉพาะรูปภาพ (JPG, PNG, WEBP, GIF) — ไม่รับไฟล์ PDF";
+  }
+  return "รูปแบบรูปภาพไม่รองรับ (ใช้ JPG, PNG, WEBP หรือ GIF)";
 }
 
 function resolveContentType(
@@ -134,11 +156,7 @@ async function signUpload(request: NextRequest, ownerKey: string) {
   if (!resolved) {
     return NextResponse.json(
       {
-        error: isDocKind(kind)
-          ? "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf) สำหรับชุดแบบแปลน / เอกสาร"
-          : kind === "kyc"
-            ? "KYC รับเฉพาะรูปภาพ (JPG, PNG, WEBP, GIF) — ไม่รับไฟล์ PDF"
-            : "รูปแบบรูปภาพไม่รองรับ (ใช้ JPG, PNG, WEBP หรือ GIF)",
+        error: docKindError(kind),
       },
       { status: 400 },
     );
@@ -193,16 +211,7 @@ async function proxyUpload(request: NextRequest, ownerKey: string) {
   const maxBytes = isDocKind(kind) ? DOC_MAX : IMAGE_MAX;
   const contentType = resolveContentType(kind, file);
   if (!contentType) {
-    return NextResponse.json(
-      {
-        error: isDocKind(kind)
-          ? "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf) สำหรับชุดแบบแปลน / เอกสาร"
-          : kind === "kyc"
-            ? "KYC รับเฉพาะรูปภาพ (JPG, PNG, WEBP, GIF) — ไม่รับไฟล์ PDF"
-            : "รูปแบบรูปภาพไม่รองรับ (ใช้ JPG, PNG, WEBP หรือ GIF)",
-      },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: docKindError(kind) }, { status: 400 });
   }
   if (file.size > maxBytes) {
     return NextResponse.json(
@@ -214,20 +223,55 @@ async function proxyUpload(request: NextRequest, ownerKey: string) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  if (isDocKind(kind) && !bufferLooksLikePdf(buffer)) {
+  // PDF magic-byte check for all PDF-only kinds (blueprint / BOQ / calc).
+  if (
+    (kind === "pdf" || kind === "document" || kind === "boq" || kind === "calc") &&
+    !bufferLooksLikePdf(buffer)
+  ) {
     return NextResponse.json(
       { error: "เนื้อหาไฟล์ไม่ใช่ PDF ที่ถูกต้อง — ตรวจว่าเป็นไฟล์ .pdf จริง" },
       { status: 400 },
     );
   }
+  if (kind === "cad" && !looksLikeDwg(file)) {
+    return NextResponse.json(
+      { error: "อัปโหลดได้เฉพาะไฟล์ AutoCAD (.dwg)" },
+      { status: 400 },
+    );
+  }
+  if (kind === "calc" && !looksLikeCalcDoc(file)) {
+    return NextResponse.json(
+      { error: "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)" },
+      { status: 400 },
+    );
+  }
+
+  let uploadBuffer: Buffer = Buffer.from(buffer);
+  let uploadType = contentType;
+  let uploadName = file.name;
+
+  // Auto-compress images before storage (resize + WebP) for faster storefront LCP.
+  if (!isDocKind(kind)) {
+    try {
+      const compressed = await compressImageBuffer(buffer, file.name, {
+        maxEdge: kind === "kyc" ? 1600 : undefined,
+        quality: kind === "kyc" ? 85 : undefined,
+      });
+      uploadBuffer = Buffer.from(compressed.buffer);
+      uploadType = compressed.contentType;
+      uploadName = compressed.fileName;
+    } catch (err) {
+      console.warn("[vendor/upload] image compress skipped", err);
+    }
+  }
 
   const safeOwner = ownerKey.replace(/[^a-zA-Z0-9_-]/g, "_");
-  const storagePath = siteAssetPath(`vendor/${safeOwner}/${kind}`, file.name);
+  const storagePath = siteAssetPath(`vendor/${safeOwner}/${kind}`, uploadName);
   const bucket = bucketForKind(kind);
 
   const { error } = await getSupabaseAdmin()
     .storage.from(bucket)
-    .upload(storagePath, buffer, { contentType, upsert: true });
+    .upload(storagePath, uploadBuffer, { contentType: uploadType, upsert: true });
   if (error) throw error;
 
   const persistUrl = persistUrlFor(kind, storagePath);
@@ -237,8 +281,8 @@ async function proxyUpload(request: NextRequest, ownerKey: string) {
     publicUrl: persistUrl,
     persistUrl,
     private: isSensitiveUploadKind(kind),
-    mimeType: contentType,
-    sizeBytes: file.size,
+    mimeType: uploadType,
+    sizeBytes: uploadBuffer.length,
     kind,
   });
 }

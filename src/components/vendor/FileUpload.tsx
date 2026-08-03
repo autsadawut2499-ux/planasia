@@ -4,6 +4,11 @@ import { useRef, useState } from "react";
 import { FileText, Loader2, Upload, X } from "lucide-react";
 import { displayAssetUrl } from "@/lib/assets/display-url";
 import type { UploadKind } from "@/hooks/useVendorDashboard";
+import {
+  SITE_ASSETS_DOC_MAX_BYTES,
+  SITE_ASSETS_IMAGE_MAX_BYTES,
+  formatMb,
+} from "@/lib/supabase/site-assets";
 
 interface FileUploadProps {
   kind: UploadKind;
@@ -51,9 +56,9 @@ export function FileUpload({
         onError?.("อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)");
         return;
       }
-      if (file.size > 100 * 1024 * 1024) {
+      if (file.size > SITE_ASSETS_DOC_MAX_BYTES) {
         onError?.(
-          `ไฟล์ใหญ่เกินไป (${(file.size / 1024 / 1024).toFixed(1)}MB) — สูงสุด 100MB`,
+          `ไฟล์ใหญ่เกินไป (${(file.size / 1024 / 1024).toFixed(1)}MB) — สูงสุด ${formatMb(SITE_ASSETS_DOC_MAX_BYTES)}MB`,
         );
         return;
       }
@@ -67,9 +72,9 @@ export function FileUpload({
         onError?.("อัปโหลดได้เฉพาะไฟล์รูปภาพ (JPG, PNG, WEBP, GIF)");
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
+      if (file.size > SITE_ASSETS_IMAGE_MAX_BYTES) {
         onError?.(
-          `ไฟล์ใหญ่เกินไป (${(file.size / 1024 / 1024).toFixed(1)}MB) — สูงสุด 10MB`,
+          `ไฟล์ใหญ่เกินไป (${(file.size / 1024 / 1024).toFixed(1)}MB) — สูงสุด ${formatMb(SITE_ASSETS_IMAGE_MAX_BYTES)}MB`,
         );
         return;
       }

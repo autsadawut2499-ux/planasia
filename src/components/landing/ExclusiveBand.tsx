@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useBilingual } from "@/components/landing/useBilingual";
 
+const DOCTRANSLATOR_LOGIN_URL = "https://dashboard.doctranslator.com/login";
+
 const MOD_IMAGE =
   "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1600&q=80";
 
@@ -52,14 +54,27 @@ export function ExclusiveBand() {
       <section className="section-pad bg-transparent text-center">
         <div className="section-inner max-w-3xl">
           <h2 className="text-2xl font-semibold text-[#2b3a4a] md:text-3xl">
-            {L("One-of-a-kind exclusive home designs", "แบบบ้าน Exclusive หนึ่งเดียว")}
+            {L(
+              "Dream homes where language is no barrier",
+              "บ้านในฝันที่ภาษาไม่ใช่อุปสรรค",
+            )}
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-text-secondary md:text-[15px]">
             {L(
-              "If you're looking for a home like no other, browse our collection of home designs found exclusively on Planasia. We work with world-class designers and architects to create floor plans you won't find anywhere else.",
-              "หากคุณกำลังมองหาบ้านที่ไม่เหมือนใคร เลือกชมคอลเลกชันแบบบ้านที่มีเฉพาะบน Planasia เท่านั้น เราร่วมงานกับนักออกแบบและสถาปนิกระดับโลกเพื่อสร้างแบบแปลนที่หาที่อื่นไม่ได้",
+              "No matter where in the world you are looking for a house, we have crafted an accessible web experience for everyone. With an instant translation system that you can choose yourself, discover exclusive house plans only on Planasia smoothly.",
+              "ไม่ว่าจะมองหาแบบบ้านที่ไหนบนโลก เราได้สร้างสรรค์ประสบการณ์การชมเว็บไซต์ที่เข้าถึงได้สำหรับทุกคน ด้วยระบบแปลภาษาที่คุณเลือกเองได้ทันที ค้นพบแบบบ้าน Exclusive เฉพาะบน Planasia ได้อย่างราบรื่น",
             )}
           </p>
+          <div className="mt-6 flex justify-center">
+            <a
+              href={DOCTRANSLATOR_LOGIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-md bg-[#1e40af] px-6 py-2.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#1d4ed8]"
+            >
+              {L("Translate plan documents", "แปลเอกสารแบบแปลน")}
+            </a>
+          </div>
         </div>
       </section>
     </>

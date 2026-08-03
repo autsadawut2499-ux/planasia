@@ -17,7 +17,7 @@
  */
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Montserrat, Plus_Jakarta_Sans, Prompt } from "next/font/google";
+import { IBM_Plex_Sans_Thai, Prompt, Sarabun } from "next/font/google";
 import { ClientRecovery } from "@/components/ClientRecovery";
 import { LocaleHtmlLang } from "@/components/i18n/LocaleHtmlLang";
 import { AppProvider } from "@/context/AppContext";
@@ -45,27 +45,27 @@ import {
 import { loadSiteConfig } from "@/lib/supabase/site-config";
 import "./globals.css";
 
-/** Modern UI sans — Latin; pairs with Prompt for Thai */
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jakarta",
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-/** Primary UI font with full Thai coverage */
+/** Headings / titles — geometric Thai+Latin (SemiBold + Bold) */
 const prompt = Prompt({
   subsets: ["latin", "thai"],
   variable: "--font-prompt",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["600", "700"],
   display: "swap",
 });
 
-/** Brand wordmark — geometric sans (light for architectural tracking) */
-const montserrat = Montserrat({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-montserrat",
-  weight: ["200", "300", "400", "800", "900"],
+/** Body / UI — open Thai readability (Regular + Medium) */
+const ibmPlexSansThai = IBM_Plex_Sans_Thai({
+  subsets: ["latin", "thai"],
+  variable: "--font-body",
+  weight: ["400", "500"],
+  display: "swap",
+});
+
+/** Body fallback when IBM Plex is unavailable */
+const sarabun = Sarabun({
+  subsets: ["latin", "thai"],
+  variable: "--font-sarabun",
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -130,7 +130,7 @@ export default async function RootLayout({
         <MultilingualSeoHead />
       </head>
       <body
-        className={`${prompt.variable} ${plusJakarta.variable} ${montserrat.variable} min-h-screen font-sans font-medium antialiased`}
+        className={`${prompt.variable} ${ibmPlexSansThai.variable} ${sarabun.variable} min-h-screen font-sans font-normal antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <JsonLd data={buildOrganizationJsonLd()} />

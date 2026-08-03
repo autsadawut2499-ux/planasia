@@ -9,9 +9,10 @@ import {
   computeCheckoutTotal,
   type CartLineItem,
   type UpsellAddonId,
-  BOQ_BUNDLE_PRICE,
   HARDCOPY_3SETS_PRICE,
   isUpsellAddonId,
+  resolveAddonBoqPrice,
+  resolveAddonCalcPrice,
 } from "@/lib/store/cart-pricing";
 import {
   createCartOrderId,
@@ -27,7 +28,7 @@ import { defaultPaymentMethod, type PaymentMethodId } from "@/lib/payments/metho
 import { convertFromThb, formatMoney, isCurrency, type Currency } from "@/lib/currency";
 import { isUiLocale, type UiLocale } from "@/lib/geo/countries";
 import { resolvePlanDocumentId } from "@/lib/store/plan-identity";
-import { getListingBlueprintUrls } from "@/lib/store/listing-blueprints";
+import { getListingBlueprintUrls } from "@/lib/store/listing-assets";
 import {
   documentLanguageToStampLocale,
   localizationSurchargeThb,
@@ -38,6 +39,12 @@ import {
   isShippingAddressComplete,
   normalizeShippingAddress,
 } from "@/lib/store/shipping-address";
+import {
+  googleLoginRequiredResponse,
+  requireBuyerSession,
+  resolveBuyerCheckoutIdentity,
+  validateBuyerCheckoutIdentity,
+} from "@/lib/auth/buyer-session";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -46,9 +53,15 @@ export async function POST(request: NextRequest) {
   const countryCode = THAI_DOMESTIC_MARKET
     ? "TH"
     : String(body.countryCode ?? "TH").toUpperCase();
-  const buyerUserId = body.userId as string | undefined;
-  const buyerName = String(body.buyerName ?? "").trim();
-  const buyerEmail = String(body.buyerEmail ?? "").trim().toLowerCase();
+  const buyerSession = await requireBuyerSession();
+  if (!buyerSession) {
+    return NextResponse.json(googleLoginRequiredResponse(), { status: 401 });
+  }
+  const buyer = resolveBuyerCheckoutIdentity(buyerSession, body);
+  const buyerUserId = buyer.userId;
+  const buyerName = buyer.name;
+  const buyerEmail = buyer.email;
+  const buyerPhone = buyer.phone;
   const locale = typeof body.locale === "string" ? body.locale : body.uiLocale;
   const uiLocale: UiLocale = isUiLocale(locale) ? locale : "en";
   const targetCountry = THAI_DOMESTIC_MARKET
@@ -79,12 +92,8 @@ export async function POST(request: NextRequest) {
   if (!items.length) {
     return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
   }
-  if (buyerName.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
-    return NextResponse.json(
-      { error: "Valid buyer name and email are required" },
-      { status: 400 },
-    );
-  }
+  const buyerError = validateBuyerCheckoutIdentity(buyer);
+  if (buyerError) return buyerError;
   if (wantsHardcopy && !isShippingAddressComplete(shippingAddress)) {
     return NextResponse.json(
       { error: "Complete shipping address is required for hardcopy delivery" },
@@ -102,7 +111,12 @@ export async function POST(request: NextRequest) {
     planDocumentId?: string;
     name: string;
     price: number;
+    format?: "pdf" | "cad";
   }[] = [];
+  let addonBoqPrice: number | null = null;
+  let addonCalcPrice: number | null = null;
+  let cartHasBoq = false;
+  let cartHasCalc = false;
 
   for (const item of items) {
     if (!visibleIds.has(item.listingId)) {
@@ -127,10 +141,23 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
+    if (listing.hasBoqFiles) {
+      cartHasBoq = true;
+      if (addonBoqPrice == null && listing.boqPrice != null) {
+        addonBoqPrice = listing.boqPrice;
+      }
+    }
+    if (listing.hasCalcSheets) {
+      cartHasCalc = true;
+      if (addonCalcPrice == null && listing.calcPrice != null) {
+        addonCalcPrice = listing.calcPrice;
+      }
+    }
     const planCode = listing.planCode || listing.planId;
     const planDocumentId = resolvePlanDocumentId(listing);
     const blueprintUrls = await getListingBlueprintUrls(listing.id);
-    // Marketplace delivery is vendor-uploaded PDFs. Generative docs are legacy only.
+    const format = item.format === "cad" ? "cad" : "pdf";
+    // Marketplace delivery is vendor-uploaded PDFs (+ optional CAD package).
     if (blueprintUrls.length === 0) {
       if (!planDocumentId) {
         return NextResponse.json(
@@ -146,15 +173,43 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+    if (format === "cad" && !listing.hasCadFiles && !planDocumentId) {
+      return NextResponse.json(
+        { error: `CAD files are not available for ${listing.name}` },
+        { status: 422 },
+      );
+    }
+    const linePrice =
+      typeof item.price === "number" && Number.isFinite(item.price) && item.price > 0
+        ? Math.round(item.price)
+        : listing.price;
     orderItems.push({
       listingId: listing.id,
       planId: planCode,
       planDocumentId,
       name: listing.name,
-      price: listing.price,
+      price: linePrice,
+      format,
     });
   }
 
+  if (addons.includes("boq-bundle") && !cartHasBoq) {
+    return NextResponse.json(
+      { error: "BOQ documents are not available for items in this cart" },
+      { status: 422 },
+    );
+  }
+  if (addons.includes("calc-sheet") && !cartHasCalc) {
+    return NextResponse.json(
+      { error: "Calculation sheets are not available for items in this cart" },
+      { status: 422 },
+    );
+  }
+
+  const addonPrices = {
+    boqPrice: addonBoqPrice,
+    calcPrice: addonCalcPrice,
+  };
   const languageSurcharge = localizationSurchargeThb(targetCountry);
   const pricing = computeCheckoutTotal(
     orderItems.map((o) => ({
@@ -163,12 +218,14 @@ export async function POST(request: NextRequest) {
       planDocumentId: o.planDocumentId,
       name: o.name,
       price: o.price,
+      format: o.format,
       image: "",
       style: "",
       floors: 1 as const,
     })),
     addons,
     languageSurcharge,
+    addonPrices,
   );
 
   // Orders store base THB totals; `currency` is the charge/display currency.
@@ -186,7 +243,8 @@ export async function POST(request: NextRequest) {
     currency,
     buyerUserId,
     buyerName,
-    buyerEmail,
+    buyerEmail: buyerEmail || undefined,
+    buyerPhone,
     documentLanguage,
     targetCountry,
     translationStatus: "pending" as const,
@@ -241,8 +299,15 @@ export async function POST(request: NextRequest) {
 
     if (addons.includes("boq-bundle")) {
       lineItems.push({
-        name: "แพ็ค BOQ เสริม (รายการคำนวณราคาก่อสร้างและประมาณการวัสดุ)",
-        amount: BOQ_BUNDLE_PRICE,
+        name: "เอกสารปริมาณราคาและวัสดุ (ไฟล์ PDF)",
+        amount: resolveAddonBoqPrice(addonPrices),
+      });
+    }
+
+    if (addons.includes("calc-sheet")) {
+      lineItems.push({
+        name: "เอกสารรายการคำนวณโครงสร้าง (ไฟล์ PDF)",
+        amount: resolveAddonCalcPrice(addonPrices),
       });
     }
 
@@ -265,7 +330,8 @@ export async function POST(request: NextRequest) {
       uiLocale,
       documentLanguage,
       buyerName,
-      buyerEmail,
+      buyerEmail: buyerEmail || undefined,
+      buyerPhone,
       successUrl: `${baseUrl}/store?payment=success&cartOrderId=${orderId}&session_id={CHECKOUT_SESSION_ID}&locale=${stampLocale}&docLang=${documentLanguage}`,
       cancelUrl: `${baseUrl}/store?payment=cancelled`,
     });

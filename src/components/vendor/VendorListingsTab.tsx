@@ -8,8 +8,7 @@ import { AiImageToolCards } from "@/components/vendor/AiImageToolCards";
 import { AiRenderingGuide } from "@/components/vendor/AiRenderingGuide";
 import { FileUpload } from "@/components/vendor/FileUpload";
 import { MultiFileUpload } from "@/components/vendor/MultiFileUpload";
-import { Card, Field, PrimaryButton, Select, TextArea, TextInput } from "@/components/vendor/ui";
-import { AdminRichTextEditor } from "@/components/admin/AdminRichTextEditor";
+import { Card, Field, PrimaryButton, Select, TextInput } from "@/components/vendor/ui";
 import type { useVendorDashboard } from "@/hooks/useVendorDashboard";
 import { PLATFORM_SHARE, VENDOR_SHARE, vendorNetPreview } from "@/lib/commerce/commission";
 import { parseAreaSqm } from "@/lib/format";
@@ -18,7 +17,11 @@ import {
   listingPriceErrorTh,
 } from "@/lib/store/listing-price";
 import { PROVINCES_BY_REGION, provinceLabel } from "@/lib/geo/th-provinces";
-import { planPrefixForStyle } from "@/lib/store/plan-code";
+import {
+  buildAutoListingName,
+  planPrefixForStyle,
+  styleLabelForListingName,
+} from "@/lib/store/plan-code";
 import { COLLECTIONS, STYLES } from "@/lib/store/taxonomy";
 import type { VendorListing } from "@/lib/store/listing-types";
 
@@ -54,7 +57,12 @@ interface FormState {
   renderUrls: string[];
   floorPlanUrls: string[];
   blueprintPdfUrls: string[];
+  cadFileUrls: string[];
   boqFileUrls: string[];
+  /** Designer-set BOQ add-on price (THB). Empty = platform default. */
+  boqPrice: string;
+  calcPrice: string;
+  calcSheetUrls: string[];
   permitReady: boolean;
   boqComplete: boolean;
   contractConsent: boolean;
@@ -83,7 +91,11 @@ function emptyForm(): FormState {
     renderUrls: [],
     floorPlanUrls: [],
     blueprintPdfUrls: [],
+    cadFileUrls: [],
     boqFileUrls: [],
+    boqPrice: "",
+    calcPrice: "",
+    calcSheetUrls: [],
     permitReady: false,
     boqComplete: false,
     contractConsent: false,
@@ -114,8 +126,12 @@ function fromListing(l: VendorListing): FormState {
     image: l.image,
     renderUrls: l.renderUrls ?? [],
     floorPlanUrls: l.floorPlanUrls ?? [],
-    blueprintPdfUrls: l.blueprintPdfUrls ?? (l.blueprintPdfUrl ? [l.blueprintPdfUrl] : []),
-    boqFileUrls: l.boqFileUrls ?? (l.boqFileUrl ? [l.boqFileUrl] : []),
+    blueprintPdfUrls: (l.blueprintPdfUrls ?? (l.blueprintPdfUrl ? [l.blueprintPdfUrl] : [])).slice(0, 1),
+    cadFileUrls: (l.cadFileUrls ?? []).slice(0, 1),
+    boqFileUrls: (l.boqFileUrls ?? (l.boqFileUrl ? [l.boqFileUrl] : [])).slice(0, 1),
+    boqPrice: l.boqPrice != null ? String(l.boqPrice) : "",
+    calcPrice: l.calcPrice != null ? String(l.calcPrice) : "",
+    calcSheetUrls: (l.calcSheetUrls ?? []).slice(0, 1),
     permitReady: l.permitReady ?? false,
     boqComplete: l.boqComplete ?? false,
     contractConsent: l.contractConsent ?? false,
@@ -212,7 +228,6 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
   const { data, uploadFile, saveListing, deleteListing, setListingPublished } = dash;
   const toast = useToast();
   const [form, setForm] = useState<FormState | null>(null);
-  const [highlightDraft, setHighlightDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -223,17 +238,8 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => (f ? { ...f, [k]: v } : f));
 
-  function addHighlight() {
-    const v = highlightDraft.trim();
-    if (!v || !form) return;
-    if (form.highlights.length >= 12) return;
-    set("highlights", [...form.highlights, v]);
-    setHighlightDraft("");
-  }
-
   async function handleSave() {
     if (!form) return;
-    if (!form.name.trim()) return toast.error("กรุณากรอกชื่อแบบบ้าน");
     if (!form.image) return toast.error("กรุณาอัปโหลดรูปเรนเดอร์ 3D (รูปปก)");
     const totalRenders = (form.image ? 1 : 0) + form.renderUrls.length;
     if (totalRenders < 2) return toast.error("ต้องมีภาพเรนเดอร์ 3D อย่างน้อย 2 รูป");
@@ -243,8 +249,8 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
       return toast.error("กรุณากรอกพื้นที่ใช้สอย (ตร.ม.) — ระบบใช้ค่านี้ในตัวกรองค้นหา");
     if (!form.province) return toast.error("กรุณาเลือกจังหวัดที่ให้บริการ");
     if (form.floorPlanUrls.length < 1) return toast.error("กรุณาอัปโหลดแปลนพื้นอย่างน้อย 1 รูป");
-    if (form.blueprintPdfUrls.length < 1)
-      return toast.error("กรุณาอัปโหลดไฟล์แบบแปลน PDF อย่างน้อย 1 ไฟล์");
+    if (form.blueprintPdfUrls.length !== 1)
+      return toast.error("กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF (1 ไฟล์)");
     if (!form.contractConsent)
       return toast.error(
         "กรุณายืนยันว่าผลงานเป็นลิขสิทธิ์แท้ของผู้ขาย และยินยอมตามเงื่อนไขของแพลตฟอร์ม",
@@ -253,11 +259,17 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
     setSaving(true);
     setRejectReasons([]);
     try {
+      // Name is assigned on the server as "{PlanCode} {Style}" (e.g. MOD-001 Modern).
+      // Client sends a preview placeholder; server overwrites with the real code.
+      const namePreview = buildAutoListingName(
+        form.style,
+        form.planId || `${planPrefixForStyle(form.style)}-###`,
+      );
       const result = await saveListing({
         id: form.id,
-        name: form.name,
+        name: namePreview,
         tagline: form.tagline || undefined,
-        description: form.description,
+        description: form.description || namePreview,
         pitch: form.pitch || undefined,
         highlights: form.highlights,
         style: form.style,
@@ -277,7 +289,11 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
         renderUrls: form.renderUrls,
         floorPlanUrls: form.floorPlanUrls,
         blueprintPdfUrls: form.blueprintPdfUrls,
+        cadFileUrls: form.cadFileUrls,
         boqFileUrls: form.boqFileUrls,
+        boqPrice: form.boqPrice !== "" ? form.boqPrice : undefined,
+        calcPrice: form.calcPrice !== "" ? form.calcPrice : undefined,
+        calcSheetUrls: form.calcSheetUrls,
         permitReady: form.permitReady,
         boqComplete: form.boqComplete,
         contractConsent: form.contractConsent,
@@ -357,130 +373,90 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
           title="ส่งผลงานเพื่อลงขายบนแพลตฟอร์ม"
           desc={form.id ? "แก้ไขรายละเอียดแบบบ้าน" : "กรอกข้อมูลต่อเนื่องจากบนลงล่าง แล้วกดส่งที่ด้านล่างสุด"}
         >
-          {/* ── 1. Basic info & presentation ── */}
+          {/* ── 1. Search filters + core listing data ── */}
           <section>
             <SectionTitle
               step={1}
-              title="ข้อมูลการนำเสนอ"
-              desc="รหัสแบบบ้าน ชื่อ คำนิยาม สไตล์ และรายละเอียดสำหรับลูกค้า"
+              title="ข้อมูลหลักและตัวกรองค้นหา"
+              desc="รหัสแบบบ้าน ราคา และข้อมูลสเปกสำหรับระบบค้นหา — ไม่ต้องกรอกข้อความนำเสนอ"
             />
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="space-y-4">
+
+            <div className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Field
-                  label="รหัสแบบบ้าน"
-                  hint={
-                    form.id
-                      ? "ระบบออกให้อัตโนมัติตอนบันทึกครั้งแรก — แก้ไขชื่อหรือสไตล์แล้วรหัสนี้ไม่เปลี่ยน"
-                      : "ระบบจะออกรหัสให้อัตโนมัติตามสไตล์เมื่อกดบันทึก เช่น MOD-001, MIN-002"
-                  }
+                  label="ชื่อแบบบ้าน / รหัส (สร้างอัตโนมัติ)"
+                  hint="ระบบตั้งชื่อภาษาอังกฤษแบบ House Code + Style เช่น MOD-001 Modern — ไม่ต้องกรอกเอง"
                 >
                   {form.id && form.planId ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-[#1e40af]/25 bg-blue-50 px-3 py-2.5">
-                      <span className="font-mono text-base font-bold tracking-wide text-[#1e40af]">
-                        {form.planId}
-                      </span>
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-text-muted">
-                        ออกรหัสแล้ว
-                      </span>
+                    <div className="rounded-lg border border-[#1e40af]/25 bg-blue-50 px-3 py-2.5">
+                      <p className="text-base font-bold tracking-tight text-[#1e40af]">
+                        {buildAutoListingName(form.style, form.planId)}
+                      </p>
+                      <p className="mt-1 text-[11px] text-text-muted">
+                        รหัส{" "}
+                        <span className="font-mono font-semibold">{form.planId}</span>
+                        {" · "}
+                        สไตล์ {styleLabelForListingName(form.style)}
+                        {" — เปลี่ยนสไตล์แล้วชื่อจะอัปเดตเมื่อบันทึก (รหัสคงเดิม)"}
+                      </p>
                     </div>
                   ) : (
                     <div className="rounded-lg border border-dashed border-border bg-surface-raised px-3 py-2.5 text-sm text-text-muted">
-                      จะได้รหัสอัตโนมัติหลังบันทึก · คาดการณ์ตามสไตล์ที่เลือก:{" "}
-                      <span className="font-mono font-semibold text-text-secondary">
-                        {planPrefixForStyle(form.style)}-###
+                      หลังบันทึกจะได้ชื่อประมาณ:{" "}
+                      <span className="font-semibold text-text-secondary">
+                        {styleLabelForListingName(form.style)}{" "}
+                        <span className="font-mono">
+                          {planPrefixForStyle(form.style)}-###
+                        </span>
                       </span>
                     </div>
                   )}
                 </Field>
-                <Field label="ชื่อแบบบ้าน *">
-                  <TextInput
-                    value={form.name}
-                    onChange={(e) => set("name", e.target.value)}
-                    placeholder="เช่น มินิมอลอบอุ่น M-01"
-                  />
-                </Field>
-                <Field label="คำนิยามสั้นๆ" hint="ประโยคเดียวที่ดึงดูดลูกค้า">
-                  <TextInput
-                    value={form.tagline}
-                    onChange={(e) => set("tagline", e.target.value)}
-                    placeholder='เช่น "บ้านชั้นเดียวสำหรับเริ่มต้นครอบครัว เน้นพื้นที่ใช้สอยคุ้มค่า"'
-                  />
-                </Field>
-                <Field
-                  label="รายละเอียดเพิ่มเติม"
-                  hint="จัดรูปแบบได้: ตัวหนา · ตัวเอียง · หัวข้อ · รายการ · ลิงก์"
-                >
-                  <AdminRichTextEditor
-                    key={form.id ?? "new-vendor-description"}
-                    value={form.description}
-                    onChange={(html) => set("description", html)}
-                    placeholder="อธิบายฟังก์ชันการใช้งาน วัสดุที่แนะนำ ฯลฯ"
-                    minHeightClass="min-h-[140px]"
-                  />
-                </Field>
-                <Field
-                  label="เล่าเรื่องแบบบ้านนี้ (Pitch จากช่างเขียนแบบ)"
-                  hint={`แสดงบนหน้าขายเป็นข้อความจากคุณพร้อมรูปโปรไฟล์ (${form.pitch.length}/800)`}
-                >
-                  <TextArea
-                    value={form.pitch}
-                    maxLength={800}
-                    onChange={(e) => set("pitch", e.target.value)}
-                    className="min-h-[130px]"
-                    placeholder="เช่น ผมออกแบบบ้านหลังนี้ให้ครอบครัวเริ่มต้นที่มีที่ดินหน้าแคบ 10 เมตร…"
-                  />
-                </Field>
-                <Field label="จุดเด่นของแบบ" hint="เช่น มีเฉลียงกว้าง, ห้องนอนใหญ่มีห้องน้ำในตัว">
-                  <div className="flex gap-2">
+                <div className="space-y-2">
+                  <Field
+                    label="ราคาขายไฟล์แบบ (บาท) *"
+                    hint={`แจกฟรีได้ (ใส่ 0) — ถ้าคิดเงินต้องอย่างน้อย ฿${MIN_PAID_LISTING_PRICE_THB.toLocaleString("th-TH")} · แพลตฟอร์มหัก ${Math.round(PLATFORM_SHARE * 100)}% / คุณได้ ${Math.round(VENDOR_SHARE * 100)}%`}
+                  >
                     <TextInput
-                      value={highlightDraft}
-                      onChange={(e) => setHighlightDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addHighlight();
-                        }
-                      }}
-                      placeholder="พิมพ์จุดเด่นแล้วกด Enter"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={form.price}
+                      onChange={(e) => set("price", e.target.value)}
+                      placeholder={`0 = ฟรี, หรือ ≥ ${MIN_PAID_LISTING_PRICE_THB}`}
                     />
-                    <button
-                      type="button"
-                      onClick={addHighlight}
-                      className="shrink-0 rounded-lg border border-border px-3 text-sm font-semibold text-text-secondary hover:bg-surface-raised"
-                    >
-                      เพิ่ม
-                    </button>
-                  </div>
-                  {form.highlights.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {form.highlights.map((h, i) => (
-                        <span
-                          key={`${h}-${i}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-[#1e40af]"
-                        >
-                          {h}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              set(
-                                "highlights",
-                                form.highlights.filter((_, idx) => idx !== i),
-                              )
-                            }
-                            className="text-[#1e40af]/60 hover:text-red-500"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
+                  </Field>
+                  {form.price !== "" && Number(form.price) === 0 && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900">
+                      แบบบ้านนี้จะแสดงเป็น <span className="font-bold">ฟรี</span>
                     </div>
                   )}
-                </Field>
+                  {Number(form.price) > 0 && Number(form.price) < MIN_PAID_LISTING_PRICE_THB && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      ราคาต่ำกว่าขั้นต่ำ — ต้องอย่างน้อย ฿
+                      {MIN_PAID_LISTING_PRICE_THB.toLocaleString("th-TH")} หรือใส่ 0 หากแจกฟรี
+                    </div>
+                  )}
+                  {Number(form.price) >= MIN_PAID_LISTING_PRICE_THB && (
+                    <div className="rounded-lg border border-[#1e40af]/20 bg-blue-50/60 px-3 py-2 text-xs text-[#1e3a5f]">
+                      <p>
+                        ราคาขายลูกค้า:{" "}
+                        <span className="font-bold">฿{Number(form.price).toLocaleString()}</span>
+                      </p>
+                      <p className="mt-0.5">
+                        คุณจะได้รับ ({Math.round(VENDOR_SHARE * 100)}%):{" "}
+                        <span className="font-bold text-[#1e40af]">
+                          ฿{vendorNetPreview(Number(form.price)).toLocaleString()}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="rounded-lg border border-border bg-surface-raised px-3 py-2">
-                  <p className="text-[11px] font-semibold text-text-secondary">
+              <div className="rounded-xl border border-border bg-surface-raised/60 p-4 sm:p-5">
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-text-secondary">
                     ข้อมูลสำหรับระบบค้นหาและตัวกรอง
                   </p>
                   <p className="mt-0.5 text-[11px] leading-snug text-text-muted">
@@ -488,7 +464,7 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <Field label="สไตล์ *">
                     <Select value={form.style} onChange={(e) => set("style", e.target.value)}>
                       {STYLE_OPTIONS.map((s) => (
@@ -600,45 +576,9 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
                   </Field>
                 </div>
 
-                <FilterMatchSummary form={form} />
-                <Field
-                  label="ราคาขายไฟล์แบบ (บาท) *"
-                  hint={`แจกฟรีได้ (ใส่ 0) — ถ้าคิดเงินต้องอย่างน้อย ฿${MIN_PAID_LISTING_PRICE_THB.toLocaleString("th-TH")} · แพลตฟอร์มหัก ${Math.round(PLATFORM_SHARE * 100)}% / คุณได้ ${Math.round(VENDOR_SHARE * 100)}%`}
-                >
-                  <TextInput
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={form.price}
-                    onChange={(e) => set("price", e.target.value)}
-                    placeholder={`0 = ฟรี, หรือ ≥ ${MIN_PAID_LISTING_PRICE_THB}`}
-                  />
-                </Field>
-                {form.price !== "" && Number(form.price) === 0 && (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900">
-                    แบบบ้านนี้จะแสดงเป็น <span className="font-bold">ฟรี</span>
-                  </div>
-                )}
-                {Number(form.price) > 0 && Number(form.price) < MIN_PAID_LISTING_PRICE_THB && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                    ราคาต่ำกว่าขั้นต่ำ — ต้องอย่างน้อย ฿
-                    {MIN_PAID_LISTING_PRICE_THB.toLocaleString("th-TH")} หรือใส่ 0 หากแจกฟรี
-                  </div>
-                )}
-                {Number(form.price) >= MIN_PAID_LISTING_PRICE_THB && (
-                  <div className="rounded-lg border border-[#1e40af]/20 bg-blue-50/60 px-3 py-2 text-xs text-[#1e3a5f]">
-                    <p>
-                      ราคาขายลูกค้า:{" "}
-                      <span className="font-bold">฿{Number(form.price).toLocaleString()}</span>
-                    </p>
-                    <p className="mt-0.5">
-                      คุณจะได้รับ ({Math.round(VENDOR_SHARE * 100)}%):{" "}
-                      <span className="font-bold text-[#1e40af]">
-                        ฿{vendorNetPreview(Number(form.price)).toLocaleString()}
-                      </span>
-                    </p>
-                  </div>
-                )}
+                <div className="mt-4">
+                  <FilterMatchSummary form={form} />
+                </div>
               </div>
             </div>
           </section>
@@ -648,7 +588,7 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
             <SectionTitle
               step={2}
               title="อัปโหลดภาพเรนเดอร์ / ภาพ 3D"
-              desc="รูปปกและภาพเรนเดอร์อย่างน้อย 2 รูป — วางต่อจากข้อมูลการนำเสนอทันที"
+              desc="รูปปกและภาพเรนเดอร์อย่างน้อย 2 รูป"
             />
             <div className="space-y-5">
               <div>
@@ -754,21 +694,31 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
             </div>
           </section>
 
-          {/* ── 3. Blueprint PDF uploads ── */}
+          {/* ── 3. Delivery files: PDF / CAD / BOQ / calc ── */}
           <section className="mt-8 border-t border-border pt-8">
             <SectionTitle
               step={3}
-              title="อัปโหลดชุดแบบแปลน"
-              desc="ไฟล์ PDF สำหรับส่งมอบให้ผู้ซื้อหลังชำระเงิน"
+              title="อัปโหลดไฟล์ส่งมอบ"
+              desc="ไฟล์หลักและไฟล์เสริมสำหรับผู้ซื้อหลังชำระเงิน"
             />
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2">
               <MultiFileUpload
                 kind="pdf"
                 variant="pdf"
                 values={form.blueprintPdfUrls}
-                onChange={(urls) => set("blueprintPdfUrls", urls)}
-                label="ชุดแบบแปลน (PDF) *"
-                hint="อัปโหลด PDF ได้หลายไฟล์ (สูงสุด 100MB/ไฟล์) — สถาปัตย์ / โครงสร้าง / ไฟฟ้า / ประปา"
+                onChange={(urls) => set("blueprintPdfUrls", urls.slice(0, 1))}
+                label="แบบแปลนหลัก (PDF) *"
+                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .pdf (สูงสุด 100MB)"
+                onUpload={uploadFile}
+                onError={(m) => toast.error(m)}
+              />
+              <MultiFileUpload
+                kind="cad"
+                variant="cad"
+                values={form.cadFileUrls}
+                onChange={(urls) => set("cadFileUrls", urls.slice(0, 1))}
+                label="ไฟล์ AutoCAD (DWG)"
+                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .dwg"
                 onUpload={uploadFile}
                 onError={(m) => toast.error(m)}
               />
@@ -776,12 +726,64 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
                 kind="boq"
                 variant="doc"
                 values={form.boqFileUrls}
-                onChange={(urls) => set("boqFileUrls", urls)}
+                onChange={(urls) => set("boqFileUrls", urls.slice(0, 1))}
                 label="ไฟล์ BOQ (PDF)"
-                hint="อัปโหลดเฉพาะ PDF สูงสุด 100MB/ไฟล์ — รายการประมาณราคาที่สอดคล้องกับแบบนี้"
+                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .pdf — รายการประมาณราคา"
                 onUpload={uploadFile}
                 onError={(m) => toast.error(m)}
               />
+              <MultiFileUpload
+                kind="calc"
+                variant="calc"
+                values={form.calcSheetUrls}
+                onChange={(urls) => set("calcSheetUrls", urls.slice(0, 1))}
+                label="รายการคำนวณ (PDF)"
+                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .pdf (ไม่บังคับ)"
+                onUpload={uploadFile}
+                onError={(m) => toast.error(m)}
+              />
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Field
+                    label="กำหนดราคา BOQ (บาท)"
+                    hint="ตั้งราคาเสริม BOQ ได้เอง — ว่างไว้ใช้ราคาเริ่มต้นของแพลตฟอร์ม · ใส่ 0 ได้หากแจกฟรีพร้อมแบบ"
+                  >
+                    <TextInput
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={form.boqPrice}
+                      onChange={(e) => set("boqPrice", e.target.value)}
+                      placeholder="เช่น 490"
+                    />
+                  </Field>
+                  {form.boqFileUrls.length > 0 && form.boqPrice === "" && (
+                    <p className="text-[11px] text-amber-800">
+                      มีไฟล์ BOQ แล้วแต่ยังไม่ได้ตั้งราคา — ลูกค้าจะเห็นราคาเริ่มต้นของระบบ
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Field
+                    label="กำหนดราคารายการคำนวณ (บาท)"
+                    hint="ตั้งราคาเสริมรายการคำนวณได้เอง — ว่างไว้ใช้ราคาเริ่มต้นของแพลตฟอร์ม · ใส่ 0 ได้หากแจกฟรีพร้อมแบบ"
+                  >
+                    <TextInput
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={form.calcPrice}
+                      onChange={(e) => set("calcPrice", e.target.value)}
+                      placeholder="เช่น 390"
+                    />
+                  </Field>
+                  {form.calcSheetUrls.length > 0 && form.calcPrice === "" && (
+                    <p className="text-[11px] text-amber-800">
+                      มีไฟล์รายการคำนวณแล้วแต่ยังไม่ได้ตั้งราคา — ลูกค้าจะเห็นราคาเริ่มต้นของระบบ
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </section>
 

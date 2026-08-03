@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/privacy`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     { url: `${base}/terms`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     { url: `${base}/refund`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${base}/construction`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     { url: `${base}/shipping`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     // Programmatic keyword landing pages.
     ...getAllPlanPresets().map((preset) => ({

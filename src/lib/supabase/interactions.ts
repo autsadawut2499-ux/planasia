@@ -92,7 +92,7 @@ export async function getInteractionsForViewer(
  * Recent interactions across all viewers, used to build the item-item
  * co-occurrence matrix for collaborative filtering.
  */
-export async function getRecentInteractions(limit = 5000): Promise<StoreInteraction[]> {
+export async function getRecentInteractions(limit = 800): Promise<StoreInteraction[]> {
   if (!isSupabaseConfigured()) return [];
   const { data, error } = await getSupabaseAdmin()
     .from("store_interactions")

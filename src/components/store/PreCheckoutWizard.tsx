@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import { Minus, Plus } from "lucide-react";
 import {
   documentLanguageFromTargetCountry,
   localizationSurchargeThb,
   type DocumentLanguage,
 } from "@/lib/store/document-languages";
-import { BOQ_BUNDLE_PRICE, HARDCOPY_3SETS_PRICE } from "@/lib/store/cart-pricing";
 import {
   EMPTY_SHIPPING_ADDRESS,
   isShippingAddressComplete,
@@ -29,15 +27,26 @@ export interface PreCheckoutSelections {
    */
   targetCountry: GeminiMarketCountryCode;
   documentLanguage: DocumentLanguage;
+  /** @deprecated Optional BOQ package removed from pre-checkout UI. Always false. */
   boqAddon: boolean;
-  /** Physical hard-copy documents — 3 sets (+฿500). */
+  /** @deprecated Hardcopy package removed from pre-checkout UI. Always false. */
   hardcopyAddon: boolean;
   buyerName: string;
+  /** Optional — used for email receipt / download links when provided. */
   buyerEmail: string;
-  /** Required when hardcopyAddon is true. */
+  /** Optional — used for SMS receipt / download links when provided. */
+  buyerPhone: string;
   shippingAddress: ShippingAddress;
   /** Required: buyer acknowledges digital-goods ToS + refund policy. */
   acceptedDigitalTerms: boolean;
+}
+
+export interface PreCheckoutValidOptions {
+  /**
+   * True when the order includes a physical delivery add-on
+   * (e.g. hardcopy / printed sets). Shipping address becomes required.
+   */
+  requiresShipping?: boolean;
 }
 
 interface PreCheckoutWizardProps {
@@ -46,7 +55,7 @@ interface PreCheckoutWizardProps {
   formatMoney: (amountThb: number) => string;
   selections: PreCheckoutSelections;
   onChange: (next: PreCheckoutSelections) => void;
-  /** Hide optional add-on toggles when parent manages them elsewhere. */
+  /** @deprecated Optional packages UI removed — ignored. */
   showBoqAddon?: boolean;
   basePlanLabel?: string;
   basePlanPrice: number;
@@ -54,24 +63,47 @@ interface PreCheckoutWizardProps {
   extraLines?: { label: string; amount: number; tone?: "muted" | "green" }[];
   /** Visitor geo country — used with target country to resolve THB vs USD. */
   visitorCountryCode?: string;
+  /**
+   * When true, reveal shipping address fields and require them for payment.
+   * Hidden by default for digital-only checkouts.
+   */
+  requiresShipping?: boolean;
+  /** Prefill from Google Login session (name + email). */
+  sessionPrefill?: { name?: string | null; email?: string | null } | null;
 }
 
 function validEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-export function isPreCheckoutValid(s: PreCheckoutSelections): boolean {
+/** Loose phone check — digits only, 8–15 length (E.164-ish). */
+function validPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 15;
+}
+
+export function isPreCheckoutValid(
+  s: PreCheckoutSelections,
+  opts?: PreCheckoutValidOptions,
+): boolean {
   if (!s.targetCountry) return false;
-  if (s.buyerName.trim().length < 2 || !validEmail(s.buyerEmail)) return false;
-  if (s.hardcopyAddon && !isShippingAddressComplete(s.shippingAddress)) return false;
+  if (s.buyerName.trim().length < 2) return false;
+  const email = s.buyerEmail.trim();
+  const phone = s.buyerPhone.trim();
+  // Email and phone are optional; if filled, format must be valid.
+  if (email && !validEmail(email)) return false;
+  if (phone && !validPhone(phone)) return false;
+  if (opts?.requiresShipping && !isShippingAddressComplete(s.shippingAddress)) {
+    return false;
+  }
   if (!s.acceptedDigitalTerms) return false;
   return true;
 }
 
 export function defaultPreCheckoutSelections(
   documentLanguage: DocumentLanguage,
-  hardcopyAddon = false,
-  boqAddon = false,
+  _hardcopyAddon = false,
+  _boqAddon = false,
   /** Visitor / geo country — international visitors default to their market. */
   initialTargetCountry?: string,
 ): PreCheckoutSelections {
@@ -83,10 +115,11 @@ export function defaultPreCheckoutSelections(
     documentLanguage: THAI_DOMESTIC_MARKET
       ? "th"
       : documentLanguageFromTargetCountry(targetCountry),
-    boqAddon,
-    hardcopyAddon,
+    boqAddon: false,
+    hardcopyAddon: false,
     buyerName: "",
     buyerEmail: "",
+    buyerPhone: "",
     shippingAddress: { ...EMPTY_SHIPPING_ADDRESS },
     acceptedDigitalTerms: false,
   };
@@ -94,21 +127,24 @@ export function defaultPreCheckoutSelections(
 
 /**
  * Shared pre-payment steps:
- * target country (localized units + flat foreign fee) → add-ons → buyer + shipping → total.
+ * (international) target country → buyer details →
+ * (physical only) shipping address → terms → total.
  */
 export function PreCheckoutWizard({
   thai,
   formatMoney,
   selections,
   onChange,
-  showBoqAddon = true,
   basePlanLabel,
   basePlanPrice,
   extraLines = [],
   visitorCountryCode = "TH",
+  requiresShipping = false,
+  sessionPrefill = null,
 }: PreCheckoutWizardProps) {
   const shippingRef = useRef<HTMLElement>(null);
-  const prevHardcopy = useRef(selections.hardcopyAddon);
+  const prevRequiresShipping = useRef(requiresShipping);
+  const prefilledFromSession = useRef(false);
   const countryOptions = useMemo(() => listGeminiMarketCountryOptions(), []);
   const selectedCountry =
     countryOptions.find((c) => c.code === selections.targetCountry) ?? countryOptions[0];
@@ -116,6 +152,30 @@ export function PreCheckoutWizard({
     selections.targetCountry,
     visitorCountryCode,
   );
+
+  // Ensure legacy wizard BOQ toggle stays off (packages are chosen on the listing).
+  useEffect(() => {
+    if (selections.boqAddon) {
+      onChange({ ...selections, boqAddon: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot clear
+  }, [selections.boqAddon]);
+
+  // Apply Google Login name/email once (low friction — no retyping).
+  useEffect(() => {
+    if (!sessionPrefill?.email && !sessionPrefill?.name) return;
+    if (prefilledFromSession.current) return;
+    const name = sessionPrefill.name?.trim() || "";
+    const email = sessionPrefill.email?.trim().toLowerCase() || "";
+    if (!name && !email) return;
+    prefilledFromSession.current = true;
+    onChange({
+      ...selections,
+      buyerName: selections.buyerName.trim() || name,
+      buyerEmail: selections.buyerEmail.trim() || email,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply session identity once
+  }, [sessionPrefill?.email, sessionPrefill?.name]);
 
   // Thai-only: lock target market + document language.
   useEffect(() => {
@@ -136,29 +196,44 @@ export function PreCheckoutWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync language from country only
   }, [selections.targetCountry]);
 
-  // When hardcopy is turned on, reveal + scroll to shipping fields.
+  // When physical shipping becomes required, reveal + scroll + prefills.
   useEffect(() => {
-    if (selections.hardcopyAddon && !prevHardcopy.current) {
+    if (requiresShipping && !prevRequiresShipping.current) {
+      const ship = selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS;
+      const patch: Partial<PreCheckoutSelections> = {};
+      if (!ship.fullName.trim() && selections.buyerName.trim()) {
+        patch.shippingAddress = {
+          ...ship,
+          fullName: selections.buyerName.trim(),
+          phone: ship.phone || selections.buyerPhone.trim(),
+        };
+      } else if (!ship.phone.trim() && selections.buyerPhone.trim()) {
+        patch.shippingAddress = { ...ship, phone: selections.buyerPhone.trim() };
+      }
+      if (Object.keys(patch).length) onChange({ ...selections, ...patch });
+
       const el = shippingRef.current;
       if (el) {
         requestAnimationFrame(() => {
           el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          const first = el.querySelector<HTMLInputElement>("input");
-          first?.focus({ preventScroll: true });
+          el.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
         });
       }
     }
-    prevHardcopy.current = selections.hardcopyAddon;
-  }, [selections.hardcopyAddon]);
+    prevRequiresShipping.current = requiresShipping;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reveal when shipping requirement flips on
+  }, [requiresShipping]);
 
   const localizationFee = localizationSurchargeThb(selections.targetCountry);
-  const boqFee = selections.boqAddon ? BOQ_BUNDLE_PRICE : 0;
-  const hardcopyFee = selections.hardcopyAddon ? HARDCOPY_3SETS_PRICE : 0;
   const extras = extraLines.reduce((sum, l) => sum + l.amount, 0);
-  const total = Math.max(0, basePlanPrice + localizationFee + boqFee + hardcopyFee + extras);
+  const total = Math.max(0, basePlanPrice + localizationFee + extras);
 
   const set = (patch: Partial<PreCheckoutSelections>) =>
-    onChange({ ...selections, ...patch });
+    onChange({
+      ...selections,
+      ...patch,
+      boqAddon: false,
+    });
 
   const setShip = (patch: Partial<ShippingAddress>) =>
     set({
@@ -168,26 +243,9 @@ export function PreCheckoutWizard({
       },
     });
 
-  const stepAddons = THAI_DOMESTIC_MARKET ? "1" : "2";
-  const stepBuyer = THAI_DOMESTIC_MARKET
-    ? showBoqAddon
-      ? "2"
-      : "1"
-    : showBoqAddon
-      ? "3"
-      : "2";
-
-  const toggleHardcopy = () => {
-    const next = !selections.hardcopyAddon;
-    const ship = selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS;
-    set({
-      hardcopyAddon: next,
-      shippingAddress: {
-        ...ship,
-        fullName: ship.fullName || selections.buyerName,
-      },
-    });
-  };
+  const stepBuyer = THAI_DOMESTIC_MARKET ? "1" : "2";
+  const stepShip = THAI_DOMESTIC_MARKET ? "2" : "3";
+  const ship = selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS;
 
   return (
     <div className="space-y-5">
@@ -261,91 +319,14 @@ export function PreCheckoutWizard({
       </section>
       )}
 
-      {showBoqAddon && (
-        <section>
-          <h3 className="text-sm font-bold text-text-primary">
-            {thai ? `${stepAddons}. แพ็กเกจเสริม (ไม่บังคับ)` : `${stepAddons}. Optional add-ons`}
-          </h3>
-          <div className="mt-2 space-y-2">
-            <button
-              type="button"
-              onClick={() => set({ boqAddon: !selections.boqAddon })}
-              className="flex w-full items-start gap-3 rounded-lg border border-dashed border-[#1e40af]/30 bg-blue-50/50 p-3 text-left"
-            >
-              <span
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-                  selections.boqAddon
-                    ? "border-[#1e40af] bg-[#1e40af] text-white"
-                    : "border-border bg-white"
-                }`}
-                aria-checked={selections.boqAddon}
-                role="checkbox"
-              >
-                {selections.boqAddon ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-text-primary">
-                  {thai
-                    ? "แพ็ค BOQ เสริม (รายการคำนวณราคาก่อสร้างและประมาณการวัสดุ)"
-                    : "BOQ add-on (bill of quantities / material estimate)"}
-                </p>
-                <p className="mt-0.5 text-xs text-text-secondary">
-                  {thai
-                    ? "รายการคำนวณราคาบ้านและวัสดุก่อสร้าง"
-                    : "Construction cost & material quantities"}
-                </p>
-                <p className="mt-1 text-sm font-bold text-[#1e40af]">+{formatMoney(BOQ_BUNDLE_PRICE)}</p>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={toggleHardcopy}
-              className="flex w-full items-start gap-3 rounded-lg border border-dashed border-[#1e40af]/30 bg-blue-50/50 p-3 text-left"
-            >
-              <span
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-                  selections.hardcopyAddon
-                    ? "border-[#1e40af] bg-[#1e40af] text-white"
-                    : "border-border bg-white"
-                }`}
-                aria-checked={selections.hardcopyAddon}
-                role="checkbox"
-              >
-                {selections.hardcopyAddon ? (
-                  <Minus className="h-3 w-3" />
-                ) : (
-                  <Plus className="h-3 w-3" />
-                )}
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-text-primary">
-                  {thai
-                    ? "รับเอกสารรูปเล่ม 3 ชุด (Physical Hard Copy Documents)"
-                    : "Physical Hard Copy Documents — 3 Sets"}
-                </p>
-                <p className="mt-0.5 text-xs text-text-secondary">
-                  {thai
-                    ? "พิมพ์จัดส่งถึงที่อยู่ของคุณ — กรอกที่อยู่จัดส่งด้านล่างเมื่อเลือกแพ็กนี้"
-                    : "Printed sets shipped to your address — enter shipping details below when selected"}
-                </p>
-                <p className="mt-1 text-sm font-bold text-[#1e40af]">
-                  +{formatMoney(HARDCOPY_3SETS_PRICE)}
-                </p>
-              </div>
-            </button>
-          </div>
-        </section>
-      )}
-
       <section>
         <h3 className="text-sm font-bold text-text-primary">
           {thai ? `${stepBuyer}. ข้อมูลผู้ซื้อ` : `${stepBuyer}. Buyer details`}
         </h3>
-        <p className="mt-0.5 text-xs text-text-secondary">
+        <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">
           {thai
-            ? "ใช้ส่งลิงก์ดาวน์โหลดและใบเสร็จ"
-            : "Used for download links and receipts"}
+            ? "หากต้องการให้ระบบส่งใบเสร็จและลิงก์ดาวน์โหลดทางอีเมล กรุณากรอกอีเมล หรือหากต้องการรับทาง SMS กรุณากรอกเบอร์โทรศัพท์ — ทั้งสองช่องเป็นข้อมูลทางเลือก"
+            : "If you want the system to send your receipt and download link via email, please enter your email. Or if you prefer receiving it via SMS, please enter your phone number — both are optional."}
         </p>
         <div className="mt-2 space-y-2">
           <label className="block">
@@ -356,72 +337,102 @@ export function PreCheckoutWizard({
               type="text"
               autoComplete="name"
               value={selections.buyerName}
-              onChange={(e) => {
-                const buyerName = e.target.value;
-                const ship = selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS;
-                set({
-                  buyerName,
-                  shippingAddress:
-                    selections.hardcopyAddon && !ship.fullName.trim()
-                      ? { ...ship, fullName: buyerName }
-                      : ship,
-                });
-              }}
+              onChange={(e) => set({ buyerName: e.target.value })}
               className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
               placeholder={thai ? "ชื่อที่ใช้ในใบเสร็จ" : "Name on receipt"}
             />
           </label>
-          <label className="block">
-            <span className="text-xs font-medium text-text-secondary">
-              {thai ? "อีเมล" : "Email"}
-            </span>
-            <input
-              type="email"
-              autoComplete="email"
-              value={selections.buyerEmail}
-              onChange={(e) => set({ buyerEmail: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
-              placeholder={thai ? "name@email.com" : "you@example.com"}
-            />
-          </label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-xs font-medium text-text-secondary">
+                {sessionPrefill?.email
+                  ? thai
+                    ? "อีเมล (จาก Google)"
+                    : "Email (from Google)"
+                  : thai
+                    ? "อีเมล (ไม่บังคับ)"
+                    : "Email (optional)"}
+              </span>
+              <input
+                type="email"
+                autoComplete="email"
+                value={selections.buyerEmail}
+                onChange={(e) => set({ buyerEmail: e.target.value })}
+                readOnly={Boolean(sessionPrefill?.email)}
+                className={`mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af] ${
+                  sessionPrefill?.email ? "bg-slate-50 text-text-secondary" : "bg-white"
+                }`}
+                placeholder={thai ? "name@email.com" : "you@example.com"}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-text-secondary">
+                {thai ? "เบอร์โทรศัพท์ (ไม่บังคับ)" : "Phone number (optional)"}
+              </span>
+              <input
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                value={selections.buyerPhone}
+                onChange={(e) => set({ buyerPhone: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+                placeholder={thai ? "08x-xxx-xxxx" : "+66 8x xxx xxxx"}
+              />
+            </label>
+          </div>
+          {(selections.buyerEmail.trim() &&
+            !validEmail(selections.buyerEmail)) ||
+          (selections.buyerPhone.trim() &&
+            !validPhone(selections.buyerPhone)) ? (
+            <p className="text-[11px] font-medium text-amber-800">
+              {thai
+                ? "หากกรอกอีเมลหรือเบอร์โทร กรุณาใช้รูปแบบที่ถูกต้อง"
+                : "If you enter an email or phone number, please use a valid format"}
+            </p>
+          ) : null}
         </div>
       </section>
 
-      {selections.hardcopyAddon && (
+      {requiresShipping && (
         <section
           ref={shippingRef}
-          className="rounded-xl border border-[#1e40af]/25 bg-[#1e40af]/[0.04] p-3.5 scroll-mt-4"
+          className="scroll-mt-4 rounded-xl border border-[#1e40af]/25 bg-[#1e40af]/[0.04] p-3.5"
           aria-labelledby="shipping-address-heading"
         >
-          <h3 id="shipping-address-heading" className="text-sm font-bold text-text-primary">
-            {thai ? "ที่อยู่จัดส่งเอกสารรูปเล่ม" : "Shipping address for hard copies"}
+          <h3
+            id="shipping-address-heading"
+            className="text-sm font-bold text-text-primary"
+          >
+            {thai
+              ? `${stepShip}. ที่อยู่จัดส่งเอกสารรูปเล่ม`
+              : `${stepShip}. Shipping address`}
           </h3>
           <p className="mt-0.5 text-xs text-text-secondary">
             {thai
-              ? "จำเป็นเมื่อเลือกแพ็กเอกสารรูปเล่ม 3 ชุด — เราจะจัดส่งตามที่อยู่นี้"
-              : "Required for the 3-set hardcopy package — we ship to this address"}
+              ? "จำเป็นเมื่อสั่งถ่ายเอกสาร / เอกสารรูปเล่ม — เราจะจัดส่งตามที่อยู่นี้"
+              : "Required for printed / physical document delivery — we ship to this address"}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <label className="block sm:col-span-2">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "ชื่อผู้รับ" : "Recipient name"}
+                {thai ? "ชื่อผู้รับ *" : "Recipient name *"}
               </span>
               <input
                 type="text"
                 autoComplete="shipping name"
-                value={selections.shippingAddress?.fullName ?? ""}
+                value={ship.fullName}
                 onChange={(e) => setShip({ fullName: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
               />
             </label>
             <label className="block sm:col-span-2">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "เบอร์โทรผู้รับ" : "Recipient phone"}
+                {thai ? "เบอร์โทรผู้รับ *" : "Recipient phone *"}
               </span>
               <input
                 type="tel"
                 autoComplete="shipping tel"
-                value={selections.shippingAddress?.phone ?? ""}
+                value={ship.phone}
                 onChange={(e) => setShip({ phone: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
                 placeholder="08x-xxx-xxxx"
@@ -429,12 +440,12 @@ export function PreCheckoutWizard({
             </label>
             <label className="block sm:col-span-2">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "ที่อยู่บรรทัดที่ 1" : "Address line 1"}
+                {thai ? "ที่อยู่บรรทัดที่ 1 *" : "Address line 1 *"}
               </span>
               <input
                 type="text"
                 autoComplete="shipping address-line1"
-                value={selections.shippingAddress?.line1 ?? ""}
+                value={ship.line1}
                 onChange={(e) => setShip({ line1: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
                 placeholder={thai ? "บ้านเลขที่ ถนน หมู่บ้าน" : "House no., street, village"}
@@ -447,69 +458,67 @@ export function PreCheckoutWizard({
               <input
                 type="text"
                 autoComplete="shipping address-line2"
-                value={selections.shippingAddress?.line2 ?? ""}
+                value={ship.line2 ?? ""}
                 onChange={(e) => setShip({ line2: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
               />
             </label>
             <label className="block">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "อำเภอ / เขต" : "District"}
+                {thai ? "แขวง/ตำบล *" : "District / Subdistrict *"}
               </span>
               <input
                 type="text"
-                autoComplete="shipping address-level2"
-                value={selections.shippingAddress?.district ?? ""}
+                autoComplete="address-level3"
+                value={ship.district}
                 onChange={(e) => setShip({ district: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
               />
             </label>
             <label className="block">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "จังหวัด" : "Province"}
+                {thai ? "จังหวัด *" : "Province *"}
               </span>
               <input
                 type="text"
-                autoComplete="shipping address-level1"
-                value={selections.shippingAddress?.province ?? ""}
+                autoComplete="address-level1"
+                value={ship.province}
                 onChange={(e) => setShip({ province: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
               />
             </label>
             <label className="block">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "รหัสไปรษณีย์" : "Postal code"}
+                {thai ? "รหัสไปรษณีย์ *" : "Postal code *"}
               </span>
               <input
                 type="text"
                 inputMode="numeric"
-                autoComplete="shipping postal-code"
-                maxLength={5}
-                value={selections.shippingAddress?.postalCode ?? ""}
-                onChange={(e) =>
-                  setShip({ postalCode: e.target.value.replace(/\D/g, "").slice(0, 5) })
-                }
+                autoComplete="postal-code"
+                value={ship.postalCode}
+                onChange={(e) => setShip({ postalCode: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
-                placeholder="10110"
+                placeholder="10xxx"
+                maxLength={5}
               />
             </label>
             <label className="block sm:col-span-2">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "หมายเหตุถึงผู้จัดส่ง (ถ้ามี)" : "Delivery notes (optional)"}
+                {thai ? "หมายเหตุการจัดส่ง (ถ้ามี)" : "Delivery notes (optional)"}
               </span>
               <input
                 type="text"
-                value={selections.shippingAddress?.notes ?? ""}
+                value={ship.notes ?? ""}
                 onChange={(e) => setShip({ notes: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
               />
             </label>
           </div>
-          {!isShippingAddressComplete(selections.shippingAddress) && (
-            <p className="mt-2 text-xs font-medium text-amber-700">
+          {!isShippingAddressComplete(ship) && (
+            <p className="mt-2 text-[11px] font-medium text-amber-800">
               {thai
-                ? "กรุณากรอกที่อยู่ให้ครบ (รวมรหัสไปรษณีย์ 5 หลัก) ก่อนชำระเงิน"
-                : "Please complete the shipping address (including 5-digit postal code) before paying"}
+                ? "กรุณากรอกที่อยู่จัดส่งให้ครบก่อนชำระเงิน"
+                : "Please complete the shipping address before paying"}
             </p>
           )}
         </section>
@@ -589,18 +598,6 @@ export function PreCheckoutWizard({
                 : "Localization & unit conversion"}
             </span>
             <span>+{formatMoney(localizationFee)}</span>
-          </div>
-        )}
-        {boqFee > 0 && (
-          <div className="mt-1 flex justify-between text-text-secondary">
-            <span>BOQ</span>
-            <span>+{formatMoney(boqFee)}</span>
-          </div>
-        )}
-        {hardcopyFee > 0 && (
-          <div className="mt-1 flex justify-between text-text-secondary">
-            <span>{thai ? "เอกสารรูปเล่ม 3 ชุด" : "Hard copy — 3 sets"}</span>
-            <span>+{formatMoney(hardcopyFee)}</span>
           </div>
         )}
         <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-bold text-text-primary">

@@ -12,17 +12,19 @@ import { getViewerFromRequest } from "@/lib/user/identity";
 import { loadPlanDocument } from "@/lib/plans/store";
 import { DEFAULT_PROJECT } from "@/lib/ai/types";
 import { resolvePlanDocumentId } from "@/lib/store/plan-identity";
-import { getListingBlueprintUrls } from "@/lib/store/listing-blueprints";
+import { getListingBlueprintUrls } from "@/lib/store/listing-assets";
 import {
   documentLanguageToStampLocale,
   localizationSurchargeThb,
   resolveCheckoutDocumentLanguage,
 } from "@/lib/store/document-languages";
 import {
-  BOQ_BUNDLE_PRICE,
+  CAD_DWG_SURCHARGE,
   HARDCOPY_3SETS_PRICE,
   computeAddonTotal,
   isUpsellAddonId,
+  resolveAddonBoqPrice,
+  resolveAddonCalcPrice,
   type UpsellAddonId,
 } from "@/lib/store/cart-pricing";
 import { createCartOrderId, saveCartOrder } from "@/lib/store/cart-orders";
@@ -34,6 +36,12 @@ import {
   isShippingAddressComplete,
   normalizeShippingAddress,
 } from "@/lib/store/shipping-address";
+import {
+  googleLoginRequiredResponse,
+  requireBuyerSession,
+  resolveBuyerCheckoutIdentity,
+  validateBuyerCheckoutIdentity,
+} from "@/lib/auth/buyer-session";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -42,9 +50,15 @@ export async function POST(request: NextRequest) {
   const countryCode = THAI_DOMESTIC_MARKET
     ? "TH"
     : String(body.countryCode ?? "TH").toUpperCase();
-  const buyerUserId = body.userId as string | undefined;
-  const buyerName = String(body.buyerName ?? "").trim();
-  const buyerEmail = String(body.buyerEmail ?? "").trim().toLowerCase();
+  const buyerSession = await requireBuyerSession();
+  if (!buyerSession) {
+    return NextResponse.json(googleLoginRequiredResponse(), { status: 401 });
+  }
+  const buyer = resolveBuyerCheckoutIdentity(buyerSession, body);
+  const buyerUserId = buyer.userId;
+  const buyerName = buyer.name;
+  const buyerEmail = buyer.email;
+  const buyerPhone = buyer.phone;
   const targetCountry = THAI_DOMESTIC_MARKET
     ? "TH"
     : String(body.target_country ?? body.targetCountry ?? countryCode)
@@ -79,12 +93,8 @@ export async function POST(request: NextRequest) {
   if (!listingId) {
     return NextResponse.json({ error: "listingId required" }, { status: 400 });
   }
-  if (buyerName.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
-    return NextResponse.json(
-      { error: "Valid buyer name and email are required" },
-      { status: 400 },
-    );
-  }
+  const buyerError = validateBuyerCheckoutIdentity(buyer);
+  if (buyerError) return buyerError;
   if (wantsHardcopy && !isShippingAddressComplete(shippingAddress)) {
     return NextResponse.json(
       { error: "Complete shipping address is required for hardcopy delivery" },
@@ -126,10 +136,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Plan files not ready" }, { status: 422 });
     }
   }
+  if (format === "cad" && !listing.hasCadFiles && !planDocumentId) {
+    return NextResponse.json(
+      { error: "CAD files are not available for this listing" },
+      { status: 422 },
+    );
+  }
+  if (addons.includes("calc-sheet") && !listing.hasCalcSheets) {
+    return NextResponse.json(
+      { error: "Calculation sheets are not available for this listing" },
+      { status: 422 },
+    );
+  }
 
   const languageSurcharge = localizationSurchargeThb(targetCountry);
-  const addonTotal = computeAddonTotal(addons);
-  const amountThb = Math.max(0, Math.round(listing.price + languageSurcharge + addonTotal));
+  const addonTotal = computeAddonTotal(addons, {
+    boqPrice: listing.boqPrice,
+    calcPrice: listing.calcPrice,
+  });
+  const cadSurcharge = format === "cad" ? CAD_DWG_SURCHARGE : 0;
+  const amountThb = Math.max(
+    0,
+    Math.round(listing.price + cadSurcharge + languageSurcharge + addonTotal),
+  );
   const stampLocale = documentLanguageToStampLocale(documentLanguage);
 
   // Persist as a one-item cart order so language/buyer survive webhooks.
@@ -142,11 +171,12 @@ export async function POST(request: NextRequest) {
         planId: planCode,
         planDocumentId,
         name: listing.name,
-        price: listing.price,
+        price: Math.max(0, Math.round(listing.price + cadSurcharge)),
+        format,
       },
     ],
     addons,
-    subtotal: listing.price,
+    subtotal: Math.max(0, Math.round(listing.price + cadSurcharge)),
     discount: 0,
     addonTotal,
     languageSurcharge,
@@ -154,7 +184,8 @@ export async function POST(request: NextRequest) {
     currency,
     buyerUserId,
     buyerName,
-    buyerEmail,
+    buyerEmail: buyerEmail || undefined,
+    buyerPhone,
     documentLanguage,
     targetCountry,
     translationStatus: "pending" as const,
@@ -204,7 +235,8 @@ export async function POST(request: NextRequest) {
       currency,
       userId: buyerUserId,
       buyerName,
-      buyerEmail,
+      buyerEmail: buyerEmail || undefined,
+      buyerPhone,
       documentLanguage,
       cartOrderId: orderId,
       lineItemExtras: [
@@ -219,8 +251,8 @@ export async function POST(request: NextRequest) {
         ...(addons.includes("boq-bundle")
           ? [
               {
-                name: "แพ็ค BOQ เสริม (รายการคำนวณราคาก่อสร้างและประมาณการวัสดุ)",
-                amount: BOQ_BUNDLE_PRICE,
+                name: "เอกสารปริมาณราคาและวัสดุ (ไฟล์ PDF)",
+                amount: resolveAddonBoqPrice({ boqPrice: listing.boqPrice }),
               },
             ]
           : []),
@@ -229,6 +261,22 @@ export async function POST(request: NextRequest) {
               {
                 name: "รับเอกสารรูปเล่ม 3 ชุด (Physical Hard Copy Documents)",
                 amount: HARDCOPY_3SETS_PRICE,
+              },
+            ]
+          : []),
+        ...(addons.includes("calc-sheet")
+          ? [
+              {
+                name: "เอกสารรายการคำนวณโครงสร้าง (ไฟล์ PDF)",
+                amount: resolveAddonCalcPrice({ calcPrice: listing.calcPrice }),
+              },
+            ]
+          : []),
+        ...(cadSurcharge > 0
+          ? [
+              {
+                name: "ไฟล์ AutoCAD (DWG)",
+                amount: cadSurcharge,
               },
             ]
           : []),

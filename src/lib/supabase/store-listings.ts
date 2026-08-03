@@ -1,3 +1,4 @@
+import { STORE_LISTING_CATALOGUE_SELECT } from "@/lib/store/catalogue-columns";
 import type { StoreListing, VendorListing } from "@/lib/store/listing-types";
 import { resolvePlanIdentity } from "@/lib/store/plan-identity";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
@@ -35,6 +36,12 @@ interface StoreListingRow {
   render_urls: string[] | null;
   floor_plan_urls: string[];
   price: number;
+  boq_price?: number | null;
+  calc_price?: number | null;
+  boq_file_url?: string | null;
+  boq_file_urls?: string[] | null;
+  cad_file_urls?: string[] | null;
+  calc_sheet_urls?: string[] | null;
   price_breakdown: StoreListing["priceBreakdown"] | null;
   project_snapshot: StoreListing["projectSnapshot"] | null;
   source: StoreListing["source"];
@@ -91,6 +98,19 @@ function rowToListing(row: StoreListingRow): StoreListing {
     renderUrls: row.render_urls ?? [],
     floorPlanUrls: row.floor_plan_urls ?? [],
     price: Number(row.price),
+    boqPrice:
+      row.boq_price != null && Number.isFinite(Number(row.boq_price))
+        ? Number(row.boq_price)
+        : undefined,
+    calcPrice:
+      row.calc_price != null && Number.isFinite(Number(row.calc_price))
+        ? Number(row.calc_price)
+        : undefined,
+    hasCadFiles: (row.cad_file_urls ?? []).filter(Boolean).length > 0,
+    hasCalcSheets: (row.calc_sheet_urls ?? []).filter(Boolean).length > 0,
+    hasBoqFiles:
+      (row.boq_file_urls ?? []).filter(Boolean).length > 0 ||
+      Boolean(row.boq_file_url?.trim()),
     priceBreakdown: row.price_breakdown ?? undefined,
     compareAtPrice:
       row.price_breakdown && typeof row.price_breakdown.compareAt === "number"
@@ -155,6 +175,8 @@ function listingToRow(listing: StoreListing): StoreListingRow {
     render_urls: listing.renderUrls ?? [],
     floor_plan_urls: listing.floorPlanUrls,
     price: listing.price,
+    boq_price: listing.boqPrice ?? null,
+    calc_price: listing.calcPrice ?? null,
     price_breakdown: listing.priceBreakdown ?? null,
     project_snapshot: listing.projectSnapshot ?? null,
     source: listing.source,
@@ -225,6 +247,8 @@ interface VendorListingRow extends StoreListingRow {
   boq_file_url: string | null;
   blueprint_pdf_urls: string[] | null;
   boq_file_urls: string[] | null;
+  cad_file_urls: string[] | null;
+  calc_sheet_urls: string[] | null;
   permit_ready: boolean | null;
   boq_complete: boolean | null;
   contract_consent: boolean | null;
@@ -242,12 +266,19 @@ function attachmentList(list: string[] | null, legacy: string | null): string[] 
 function rowToVendorListing(row: VendorListingRow): VendorListing {
   const blueprintPdfUrls = attachmentList(row.blueprint_pdf_urls, row.blueprint_pdf_url);
   const boqFileUrls = attachmentList(row.boq_file_urls, row.boq_file_url);
+  const cadFileUrls = (row.cad_file_urls ?? []).filter(Boolean);
+  const calcSheetUrls = (row.calc_sheet_urls ?? []).filter(Boolean);
   return {
     ...rowToListing(row),
     blueprintPdfUrl: blueprintPdfUrls[0],
     boqFileUrl: boqFileUrls[0],
     blueprintPdfUrls,
     boqFileUrls,
+    cadFileUrls,
+    calcSheetUrls,
+    hasCadFiles: cadFileUrls.length > 0,
+    hasCalcSheets: calcSheetUrls.length > 0,
+    hasBoqFiles: boqFileUrls.length > 0,
     permitReady: row.permit_ready ?? false,
     boqComplete: row.boq_complete ?? false,
     contractConsent: row.contract_consent ?? false,
@@ -269,8 +300,17 @@ export async function supabaseGetListingsByOwner(ownerKey: string): Promise<Vend
 
 /** Upsert including the private blueprint PDF url (vendor create/edit). */
 export async function supabaseUpsertVendorListing(listing: VendorListing): Promise<VendorListing> {
-  const blueprintPdfUrls = attachmentList(listing.blueprintPdfUrls ?? null, listing.blueprintPdfUrl ?? null);
-  const boqFileUrls = attachmentList(listing.boqFileUrls ?? null, listing.boqFileUrl ?? null);
+  // Delivery docs: exactly one URL slot per field (arrays kept for schema compat).
+  const blueprintPdfUrls = attachmentList(
+    listing.blueprintPdfUrls ?? null,
+    listing.blueprintPdfUrl ?? null,
+  ).slice(0, 1);
+  const boqFileUrls = attachmentList(
+    listing.boqFileUrls ?? null,
+    listing.boqFileUrl ?? null,
+  ).slice(0, 1);
+  const cadFileUrls = (listing.cadFileUrls ?? []).filter(Boolean).slice(0, 1);
+  const calcSheetUrls = (listing.calcSheetUrls ?? []).filter(Boolean).slice(0, 1);
   const base = listingToRow(listing);
   const row = {
     ...base,
@@ -279,6 +319,10 @@ export async function supabaseUpsertVendorListing(listing: VendorListing): Promi
     boq_file_url: boqFileUrls[0] ?? null,
     blueprint_pdf_urls: blueprintPdfUrls,
     boq_file_urls: boqFileUrls,
+    cad_file_urls: cadFileUrls,
+    calc_sheet_urls: calcSheetUrls,
+    boq_price: listing.boqPrice ?? null,
+    calc_price: listing.calcPrice ?? null,
     permit_ready: listing.permitReady ?? false,
     boq_complete: listing.boqComplete ?? false,
     contract_consent: listing.contractConsent ?? false,
@@ -312,6 +356,10 @@ export async function supabaseUpsertVendorListing(listing: VendorListing): Promi
     boq_file_url: boqFileUrls[0] ?? null,
     blueprint_pdf_urls: blueprintPdfUrls,
     boq_file_urls: boqFileUrls,
+    cad_file_urls: cadFileUrls,
+    calc_sheet_urls: calcSheetUrls,
+    boq_price: listing.boqPrice ?? null,
+    calc_price: listing.calcPrice ?? null,
     permit_ready: listing.permitReady ?? false,
     boq_complete: listing.boqComplete ?? false,
     contract_consent: listing.contractConsent ?? false,
@@ -409,15 +457,16 @@ export async function supabaseDeleteDummyListings(): Promise<number> {
 export async function supabaseGetAllListings(): Promise<StoreListing[]> {
   // Public surface: show approved + pending immediately (Buy locked until admin
   // approves). Hide rejected and seller-unpublished. Legacy null rows stay visible.
+  // Lean column projection — skips project_snapshot / seo_json_ld / galleries.
   const { data, error } = await getSupabaseAdmin()
     .from("store_listings")
-    .select("*")
+    .select(STORE_LISTING_CATALOGUE_SELECT)
     .or("moderation_status.eq.approved,moderation_status.eq.pending,moderation_status.is.null")
     .or("is_published.eq.true,is_published.is.null")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data as StoreListingRow[]).map(rowToListing);
+  return (data as unknown as StoreListingRow[]).map(rowToListing);
 }
 
 // ---------------------------------------------------------------------------
@@ -457,7 +506,7 @@ export async function supabaseRecomputeRanking(params: {
 export async function supabaseGetPopularListings(limit = 60): Promise<StoreListing[]> {
   const { data, error } = await getSupabaseAdmin()
     .from("store_listings")
-    .select("*")
+    .select(STORE_LISTING_CATALOGUE_SELECT)
     .or("moderation_status.eq.approved,moderation_status.eq.pending,moderation_status.is.null")
     .or("is_published.eq.true,is_published.is.null")
     .order("pinned", { ascending: false })
@@ -465,7 +514,7 @@ export async function supabaseGetPopularListings(limit = 60): Promise<StoreListi
     .order("ranking_score", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data as StoreListingRow[]).map(rowToListing);
+  return (data as unknown as StoreListingRow[]).map(rowToListing);
 }
 
 /** All listings (any status) for the admin ranking console. */

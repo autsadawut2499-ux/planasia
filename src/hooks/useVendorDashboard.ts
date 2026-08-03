@@ -46,6 +46,8 @@ export type UploadKind =
   | "pdf"
   | "document"
   | "boq"
+  | "cad"
+  | "calc"
   /** KYC identity photos (front / back / selfie) — images only, not PDF. */
   | "kyc";
 
@@ -118,11 +120,27 @@ export function useVendorDashboard() {
 
   const uploadFile = useCallback(
     async (file: File, kind: UploadKind): Promise<string> => {
-      const isDoc = kind === "pdf" || kind === "document" || kind === "boq";
+      const isDoc =
+        kind === "pdf" ||
+        kind === "document" ||
+        kind === "boq" ||
+        kind === "cad" ||
+        kind === "calc";
+
+      // Compress images in the browser before upload (smaller payload + faster storefront).
+      let payload = file;
+      if (!isDoc) {
+        const { compressImageFile, isImageUploadKind } = await import(
+          "@/lib/uploads/compress-image-client"
+        );
+        if (isImageUploadKind(kind)) {
+          payload = await compressImageFile(file);
+        }
+      }
+
       // PDF plan docs (and any file > 8MB) use a signed direct upload to Supabase
       // so Next.js middleware body limits cannot truncate large files.
-      // KYC identity photos use the image path (proxy or signed if large).
-      const useSigned = isDoc || file.size > 8 * 1024 * 1024;
+      const useSigned = isDoc || payload.size > 8 * 1024 * 1024;
 
       if (useSigned) {
         const signRes = await fetch("/api/vendor/upload", {
@@ -134,9 +152,9 @@ export function useVendorDashboard() {
           body: JSON.stringify({
             mode: "sign",
             kind,
-            fileName: file.name,
-            sizeBytes: file.size,
-            contentType: file.type || (isDoc ? "application/pdf" : undefined),
+            fileName: payload.name,
+            sizeBytes: payload.size,
+            contentType: payload.type || (isDoc ? "application/pdf" : undefined),
           }),
         });
         const signJson = await signRes.json().catch(() => null);
@@ -146,7 +164,7 @@ export function useVendorDashboard() {
 
         const contentType =
           (signJson?.contentType as string | undefined) ||
-          file.type ||
+          payload.type ||
           (isDoc ? "application/pdf" : "application/octet-stream");
         const signedUrl = signJson?.signedUrl as string | undefined;
         const publicUrl = signJson?.publicUrl as string | undefined;
@@ -160,7 +178,7 @@ export function useVendorDashboard() {
             "Content-Type": contentType,
             "x-upsert": "true",
           },
-          body: file,
+          body: payload,
         });
         if (!putRes.ok) {
           const detail = await putRes.text().catch(() => "");
@@ -174,7 +192,7 @@ export function useVendorDashboard() {
       }
 
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", payload);
       fd.append("kind", kind);
       const res = await fetch("/api/vendor/upload", {
         method: "POST",

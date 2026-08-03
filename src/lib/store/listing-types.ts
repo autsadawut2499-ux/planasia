@@ -81,6 +81,22 @@ export interface StoreListing {
   renderUrls?: string[];
   floorPlanUrls: string[];
   price: number;
+  /**
+   * Designer-set BOQ add-on price (THB). When null/undefined, the storefront
+   * falls back to the platform default (`BOQ_BUNDLE_PRICE`).
+   */
+  boqPrice?: number;
+  /**
+   * Designer-set structural calculation add-on price (THB). When null/undefined,
+   * the storefront falls back to the platform default (`CALC_SHEET_PRICE`).
+   */
+  calcPrice?: number;
+  /** True when the seller uploaded optional structural calculation sheets. */
+  hasCalcSheets?: boolean;
+  /** True when the seller uploaded AutoCAD / DWG delivery files. */
+  hasCadFiles?: boolean;
+  /** True when the seller uploaded BOQ files (public-safe flag; URLs stay private). */
+  hasBoqFiles?: boolean;
   priceBreakdown?: StorePriceBreakdown;
   projectSnapshot?: ProjectInput;
   source: StoreListingSource;
@@ -134,6 +150,10 @@ export interface VendorListing extends StoreListing {
   blueprintPdfUrls?: string[];
   /** Full BOQ set (per trade, per phase …) — unlimited. */
   boqFileUrls?: string[];
+  /** AutoCAD / DWG delivery files (private storage refs). */
+  cadFileUrls?: string[];
+  /** Optional structural calculation sheets (PDF / spreadsheet). */
+  calcSheetUrls?: string[];
   /** Vendor confirmed plans are complete and ready for building-permit submission. */
   permitReady?: boolean;
   /** Vendor confirmed BOQ covers structural and architectural scope. */

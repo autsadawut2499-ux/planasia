@@ -9,6 +9,7 @@ import {
   Heart,
   LogOut,
   Menu,
+  Package,
   Phone,
   Search,
   ShoppingCart,
@@ -212,6 +213,7 @@ export function LandingHeader() {
                 image={session?.user?.image}
                 name={session?.user?.name}
                 email={session?.user?.email}
+                purchasesLabel={L("My purchases", "การซื้อของฉัน")}
                 draftsmanLabel={L("Seller dashboard", "แดชบอร์ดผู้เขียนแบบ")}
                 signOutLabel={L("Sign out", "ออกจากระบบ")}
               />
@@ -313,6 +315,14 @@ export function LandingHeader() {
             {status === "authenticated" ? (
               <div className="space-y-2 sm:hidden">
                 <Link
+                  href="/purchases"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
+                >
+                  <Package className="h-4 w-4" />
+                  {L("My purchases", "การซื้อของฉัน")}
+                </Link>
+                <Link
                   href="/dashboard/draftsman"
                   onClick={() => setMenuOpen(false)}
                   className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
@@ -350,12 +360,14 @@ function AccountMenu({
   image,
   name,
   email,
+  purchasesLabel,
   draftsmanLabel,
   signOutLabel,
 }: {
   image?: string | null;
   name?: string | null;
   email?: string | null;
+  purchasesLabel: string;
   draftsmanLabel: string;
   signOutLabel: string;
 }) {
@@ -418,6 +430,15 @@ function AccountMenu({
               {email && <p className="truncate text-[11px] text-slate-500">{email}</p>}
             </div>
           )}
+          <Link
+            href="/purchases"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 text-[12px] font-semibold text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+          >
+            <Package className="h-3.5 w-3.5" strokeWidth={2} />
+            {purchasesLabel}
+          </Link>
           <Link
             href="/dashboard/draftsman"
             role="menuitem"

@@ -6,11 +6,11 @@ import {
   Car,
   Download,
   FlipHorizontal2,
-  Heart,
   Home,
   Layers,
   Printer,
   Ruler,
+  Square,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,8 +24,11 @@ import {
   buildListingGalleryUrls,
 } from "@/components/store/ListingImageCarousel";
 import { ListingCreatorByline } from "@/components/store/ListingCreatorByline";
+import {
+  ListingPurchasePanel,
+  type ListingPurchaseSelection,
+} from "@/components/store/ListingPurchasePanel";
 import { ListingSocialShare } from "@/components/store/ListingSocialShare";
-import { RichText } from "@/components/content/RichText";
 import { useApp } from "@/context/AppContext";
 import { useStoreBrowseOptional } from "@/context/StoreBrowseContext";
 import { useStoreCart } from "@/context/StoreCartContext";
@@ -39,6 +42,7 @@ import {
   buildPlanCardSpecs,
   parseListingAreaNumber,
   resolveListingSale,
+  type PlanCardSpec,
 } from "@/lib/store/plan-card-specs";
 import { isListingPurchasable } from "@/lib/store/listing-purchase";
 import type { PlanReview, RatingAggregate } from "@/lib/supabase/reviews";
@@ -155,6 +159,8 @@ export default function StoreListingPageClient({
   const [floorIndex, setFloorIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [purchaseSelection, setPurchaseSelection] =
+    useState<ListingPurchaseSelection | null>(null);
   const [hidden, setHidden] = useState(false);
 
   const floorUrls = listing.floorPlanUrls?.length ? listing.floorPlanUrls : [];
@@ -245,7 +251,7 @@ export default function StoreListingPageClient({
   const inCart = isInCart(listing.id);
   const canPurchase = isListingPurchasable(listing);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (selection: ListingPurchaseSelection) => {
     if (!canPurchase) {
       toastError(
         L(
@@ -255,16 +261,35 @@ export default function StoreListingPageClient({
       );
       return;
     }
-    addItem(listing);
+    addItem(listing, {
+      price: selection.linePrice,
+      format: selection.format,
+      addons: selection.addons,
+    });
     track(listing.id, "cart", { source: "detail" });
     toastSuccess(translate("store.cartAdded"));
+  };
+
+  const openCheckout = (selection: ListingPurchaseSelection) => {
+    if (!canPurchase) {
+      toastError(
+        L(
+          "This plan is awaiting admin approval before purchase.",
+          "แบบบ้านนี้ยังไม่เปิดให้ซื้อ — รอแอดมินอนุมัติ",
+        ),
+      );
+      return;
+    }
+    setPurchaseSelection(selection);
+    setCheckoutOpen(true);
   };
 
   const handlePurchaseSuccess = (downloadToken: string) => {
     track(listing.id, "purchase", { source: "detail" });
     setCheckoutOpen(false);
     toastSuccess(translate("store.purchaseSuccess"));
-    window.open(`/api/download?token=${downloadToken}&format=pdf`, "_blank");
+    const fmt = purchaseSelection?.format ?? "pdf";
+    window.open(`/api/download?token=${downloadToken}&format=${fmt}`, "_blank");
   };
 
   const activeFloorUrl = floorUrls[floorIndex] || "";
@@ -309,22 +334,6 @@ export default function StoreListingPageClient({
     );
   }
 
-  const iconBtn =
-    "inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-[#1e40af]/30 hover:text-[#1e40af] sm:h-10 sm:w-10";
-
-  const openCheckout = () => {
-    if (!canPurchase) {
-      toastError(
-        L(
-          "This plan is awaiting admin approval before purchase.",
-          "แบบบ้านนี้ยังไม่เปิดให้ซื้อ — รอแอดมินอนุมัติ",
-        ),
-      );
-      return;
-    }
-    setCheckoutOpen(true);
-  };
-
   return (
     <>
       <LandingHeader />
@@ -338,186 +347,101 @@ export default function StoreListingPageClient({
             ← {translate("nav.store")}
           </button>
 
-          {/* Title above hero — wide architectural store pattern */}
-          <header className="mb-4 max-w-4xl sm:mb-6 lg:mb-8">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[#1e40af]">
-              {translate("store.communityBadge")}
-            </p>
-            <h1 className="mt-1 text-[1.35rem] font-bold leading-snug tracking-tight text-[#1e3a5f] sm:mt-1.5 sm:text-3xl lg:text-[2rem]">
-              {copy.name}
-            </h1>
-            {listing.tagline && (
-              <p className="mt-1.5 text-sm leading-relaxed text-gray-600 sm:mt-2 sm:text-base">
-                {listing.tagline}
+          {/* Title (left) + social share (right) on one visual plane above hero / config */}
+          <header className="mb-4 grid items-end gap-3 sm:mb-6 sm:gap-4 lg:mb-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.9fr)] lg:gap-8">
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[#1e40af]">
+                {translate("store.communityBadge")}
               </p>
-            )}
+              <h1 className="mt-1 text-[1.35rem] font-bold leading-snug tracking-tight text-[#1e3a5f] sm:mt-1.5 sm:text-3xl lg:text-[2rem]">
+                {copy.name}
+              </h1>
+            </div>
+
+            <div className="flex min-w-0 flex-col items-start justify-end lg:items-start">
+              <div className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
+                <ListingSocialShare
+                  listing={listing}
+                  title={copy.name}
+                  description={shareDescription}
+                  hideLabel={false}
+                  favorite={
+                    browse
+                      ? {
+                          active: favorited,
+                          onToggle: handleFavorite,
+                          labelSave: translate("store.aria.save"),
+                          labelRemove: translate("store.aria.removeFavorite"),
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+            </div>
           </header>
 
-          {/* Hero: large image + pricing sidebar */}
-          <section className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)] lg:gap-8">
-            <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm sm:rounded-2xl">
-              <ListingImageCarousel images={galleryUrls} alt={copy.name} />
+          {/* Hero: large media + package purchase panel */}
+          <section className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.9fr)] lg:gap-8">
+            <div className="min-w-0">
+              <div className="relative overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm sm:rounded-2xl">
+                <ListingImageCarousel
+                  images={galleryUrls}
+                  alt={copy.name}
+                  frameClassName="relative aspect-[4/3] touch-pan-y bg-slate-50 p-2 sm:aspect-[16/10] sm:p-4 lg:aspect-[4/3]"
+                />
+              </div>
+
+              {/* Specs bar — icon + value row under the hero image */}
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:mt-4">
+                <div className="grid grid-cols-4 gap-px bg-slate-100 sm:grid-cols-7">
+                  {quickSpecs.map((spec) => {
+                    const Icon = specIconFor(spec);
+                    return (
+                      <div
+                        key={spec.labelEn}
+                        className="flex min-h-[4.25rem] flex-col items-center justify-center gap-1 bg-white px-1 py-2.5 text-center sm:min-h-[4.5rem] sm:py-3"
+                      >
+                        <Icon className="h-4 w-4 text-[#1e40af]" strokeWidth={1.75} aria-hidden />
+                        <p className="text-[13px] font-bold tabular-nums leading-none text-[#1e3a5f] sm:text-sm">
+                          {spec.value}
+                        </p>
+                        <p className="line-clamp-2 text-[9px] font-medium leading-tight text-gray-500 sm:text-[10px]">
+                          {L(spec.labelEn, spec.labelTh)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
               {listing.creator && (
-                <div className="border-t border-slate-100 px-3 py-3 sm:px-5 sm:py-4">
+                <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm sm:mt-4 sm:px-5 sm:py-4">
                   <ListingCreatorByline creator={listing.creator} size="minimal" />
                 </div>
               )}
-
-              {/* Quick stats — 2×4 on phones, single row from sm */}
-              <div className="grid grid-cols-4 gap-px border-t border-slate-100 bg-slate-100 sm:grid-cols-8">
-                {quickSpecs.map((spec) => (
-                  <div
-                    key={spec.labelEn}
-                    className="flex min-h-[3.25rem] flex-col items-center justify-center bg-white px-1 py-2.5 text-center sm:min-h-0 sm:py-3"
-                  >
-                    <p className="text-[13px] font-semibold tabular-nums text-[#1e3a5f] sm:text-base">
-                      {spec.value}
-                    </p>
-                    <p className="mt-0.5 line-clamp-2 text-[9px] font-medium leading-tight text-gray-500 sm:text-[10px] sm:uppercase sm:tracking-wide">
-                      {L(spec.labelEn, spec.labelTh)}
-                    </p>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            {/* Pricing / actions card */}
             <aside className="lg:sticky lg:top-24">
-              <div className="rounded-xl border border-[#1e40af]/15 bg-white p-4 shadow-sm sm:rounded-2xl sm:p-6">
-                <div className="mb-4 flex items-start justify-between gap-3 sm:mb-5">
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500">{translate("store.startingAt")}</p>
-                    <div className="mt-1 flex flex-wrap items-baseline gap-2">
-                      <p
-                        className={`text-[1.75rem] font-bold tracking-tight sm:text-3xl ${
-                          sale.price <= 0 ? "text-emerald-700" : "text-[#1e40af]"
-                        }`}
-                      >
-                        {sale.price <= 0 ? L("Free", "ฟรี") : formatMoney(sale.price)}
-                      </p>
-                      {sale.price > 0 && sale.compareAt != null && (
-                        <p className="text-sm text-gray-400 line-through">
-                          {formatMoney(sale.compareAt)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                    {browse && (
-                      <button
-                        type="button"
-                        onClick={handleFavorite}
-                        className={iconBtn}
-                        aria-label={
-                          favorited
-                            ? translate("store.aria.removeFavorite")
-                            : translate("store.aria.save")
-                        }
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${favorited ? "fill-red-500 text-red-500" : "text-red-500"}`}
-                          strokeWidth={1.75}
-                        />
-                      </button>
-                    )}
-                    <ListingSocialShare
-                      listing={listing}
-                      title={copy.name}
-                      description={shareDescription}
-                      hideLabel
-                      compact
-                    />
-                  </div>
-                </div>
+              <ListingPurchasePanel
+                listing={listing}
+                canPurchase={canPurchase}
+                inCart={inCart}
+                onAddToCart={handleAddToCart}
+                onBuyNow={openCheckout}
+              />
 
-                <div className="mb-4 grid grid-cols-4 gap-1.5 sm:mb-5 sm:grid-cols-4 sm:gap-2">
-                  {[
-                    { icon: BedDouble, label: translate("store.specBeds"), value: listing.beds },
-                    { icon: Bath, label: translate("store.specBaths"), value: listing.baths },
-                    { icon: Layers, label: translate("store.specStories"), value: listing.floors },
-                    {
-                      icon: Car,
-                      label: L("Cars", "ที่จอด"),
-                      value: listing.parking ?? "—",
-                    },
-                  ].map((s) => (
-                    <div
-                      key={s.label}
-                      className="rounded-xl border border-slate-100 bg-slate-50/80 px-1 py-2 text-center sm:px-2 sm:py-2.5"
+              {listing.highlights && listing.highlights.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                  {listing.highlights.map((h) => (
+                    <span
+                      key={h}
+                      className="rounded-full bg-blue-50 px-2.5 py-1.5 text-[11px] font-medium leading-snug text-[#1e40af]"
                     >
-                      <s.icon className="mx-auto h-3.5 w-3.5 text-[#1e40af]" strokeWidth={1.75} />
-                      <p className="mt-1 text-sm font-bold tabular-nums text-[#1e3a5f]">{s.value}</p>
-                      <p className="truncate text-[9px] leading-tight text-gray-500 sm:uppercase sm:tracking-wide">
-                        {s.label}
-                      </p>
-                    </div>
+                      {h}
+                    </span>
                   ))}
                 </div>
-
-                {!canPurchase && (
-                  <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800 lg:hidden">
-                    {L(
-                      "Browsing is open. Buy / Checkout unlock after admin approval.",
-                      "ดูรายละเอียดได้แล้ว แต่ปุ่มซื้อยังล็อกอยู่ — รอแอดมินกดอนุมัติ",
-                    )}
-                  </p>
-                )}
-
-                {/* Desktop CTAs — phones/tablets use sticky buy bar */}
-                <div className="hidden space-y-2.5 lg:block">
-                  {!canPurchase && (
-                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800">
-                      {L(
-                        "Browsing is open. Buy / Checkout unlock after admin approval.",
-                        "ดูรายละเอียดได้แล้ว แต่ปุ่มซื้อยังล็อกอยู่ — รอแอดมินกดอนุมัติ",
-                      )}
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    disabled={inCart || !canPurchase}
-                    className="flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-[#1e3a5f] transition hover:border-[#1e40af]/40 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {!canPurchase
-                      ? L("Purchase locked", "ยังไม่เปิดขาย")
-                      : inCart
-                        ? translate("store.cartInCart")
-                        : translate("store.addToCart")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={openCheckout}
-                    disabled={!canPurchase}
-                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1e40af] text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-                  >
-                    <Download className="h-4 w-4" />
-                    {!canPurchase
-                      ? L("Pending approval", "รออนุมัติ")
-                      : translate("store.buyNow")}
-                  </button>
-                </div>
-
-                <div className="mt-4 border-t border-slate-100 pt-4 sm:mt-5">
-                  <div className="prose-sm max-h-48 overflow-y-auto text-sm leading-relaxed text-gray-600 sm:max-h-40 overscroll-contain">
-                    <RichText html={copy.description} />
-                  </div>
-                </div>
-
-                {listing.highlights && listing.highlights.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {listing.highlights.map((h) => (
-                      <span
-                        key={h}
-                        className="rounded-full bg-blue-50 px-2.5 py-1.5 text-[11px] font-medium leading-snug text-[#1e40af]"
-                      >
-                        {h}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              )}
             </aside>
           </section>
 
@@ -649,7 +573,7 @@ export default function StoreListingPageClient({
           />
         </div>
 
-        {/* Sticky buy bar — mobile & tablet */}
+        {/* Sticky buy bar — scrolls user back to the package panel on small screens */}
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-3 pt-2.5 shadow-[0_-8px_24px_rgba(15,23,42,0.12)] backdrop-blur-md lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto flex max-w-7xl items-stretch gap-2 sm:gap-3">
             <div className="min-w-0 flex-[0.95] self-center pl-0.5 sm:flex-1">
@@ -666,25 +590,16 @@ export default function StoreListingPageClient({
             </div>
             <button
               type="button"
-              onClick={handleAddToCart}
-              disabled={inCart || !canPurchase}
-              className="min-h-12 min-w-0 flex-1 rounded-xl border border-slate-200 px-2 text-[11px] font-semibold leading-tight text-[#1e3a5f] active:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
-            >
-              {!canPurchase
-                ? L("Locked", "ยังไม่เปิดขาย")
-                : inCart
-                  ? translate("store.cartInCart")
-                  : translate("store.addToCart")}
-            </button>
-            <button
-              type="button"
-              onClick={openCheckout}
-              disabled={!canPurchase}
-              className="flex min-h-12 min-w-0 flex-[1.2] items-center justify-center gap-1.5 rounded-xl bg-[#1e40af] px-2 text-[11px] font-semibold leading-tight text-white active:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 sm:flex-[1.1] sm:px-5 sm:text-sm"
+              onClick={() => {
+                document
+                  .getElementById("listing-purchase-panel")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="flex min-h-12 min-w-0 flex-[1.35] items-center justify-center gap-1.5 rounded-xl bg-[#1e40af] px-3 text-[11px] font-semibold leading-tight text-white active:bg-[#1d4ed8] sm:px-5 sm:text-sm"
             >
               <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
               <span className="truncate">
-                {!canPurchase ? L("Pending", "รออนุมัติ") : translate("store.buyNow")}
+                {!canPurchase ? L("Pending", "รออนุมัติ") : L("Choose package", "เลือกแพ็กเกจ")}
               </span>
             </button>
           </div>
@@ -698,9 +613,26 @@ export default function StoreListingPageClient({
         onSuccess={handlePurchaseSuccess}
         viewerHeaders={viewer.headers}
         buyerId={viewer.primaryId}
+        initialFormat={purchaseSelection?.format ?? "pdf"}
+        initialHardcopy={purchaseSelection?.addons.includes("hardcopy-3sets") ?? false}
+        initialBoq={purchaseSelection?.addons.includes("boq-bundle") ?? false}
+        initialCalcSheet={purchaseSelection?.addons.includes("calc-sheet") ?? false}
+        basePlanPrice={purchaseSelection?.linePrice ?? listing.price}
       />
     </>
   );
+}
+
+function specIconFor(spec: PlanCardSpec) {
+  const key = `${spec.labelEn} ${spec.labelTh}`.toLowerCase();
+  if (/sq|ตร|area|ม\./.test(key) && !/กว้าง|ลึก|width|depth/.test(key)) return Square;
+  if (/bed|นอน/.test(key)) return BedDouble;
+  if (/bath|น้ำ/.test(key)) return Bath;
+  if (/park|จอด|car/.test(key)) return Car;
+  if (/flr|floor|ชั้น|stor/.test(key)) return Layers;
+  if (/w\b|กว้าง|width/.test(key)) return Ruler;
+  if (/d\b|ลึก|depth/.test(key)) return Ruler;
+  return Home;
 }
 
 function SpecColumn({

@@ -94,7 +94,27 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (!user.email) return false;
-      if (account?.provider === "google") return true;
+      if (account?.provider === "google") {
+        // Persist buyer account for checkout identity + re-downloads.
+        try {
+          const { upsertCustomerFromGoogle } = await import(
+            "@/lib/supabase/customers"
+          );
+          const googleSub =
+            account.providerAccountId?.trim() ||
+            user.id?.trim() ||
+            user.email;
+          await upsertCustomerFromGoogle({
+            id: googleSub,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          });
+        } catch (err) {
+          console.error("[auth] customer upsert failed", err);
+        }
+        return true;
+      }
       if (account?.provider === "admin-pin") return true;
       // Dev provider is only registered when isDevAdminLoginEnabled().
       if (account?.provider === "dev-admin" && isDevAdminLoginEnabled()) return true;
@@ -117,7 +137,9 @@ export const authOptions: NextAuthOptions = {
           // Regular Google users are never admins — use the PIN gate at /admin/login.
           token.isAdmin = false;
           token.adminRole = null;
-          if (user?.id) token.sub = user.id;
+          const googleSub =
+            account.providerAccountId?.trim() || user?.id?.trim();
+          if (googleSub) token.sub = googleSub;
         } else if (token.isAdmin == null) {
           token.isAdmin = false;
           token.adminRole = null;

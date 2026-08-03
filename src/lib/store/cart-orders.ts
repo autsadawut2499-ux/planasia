@@ -28,6 +28,8 @@ export interface CartOrder {
   buyerUserId?: string;
   buyerName?: string;
   buyerEmail?: string;
+  /** Optional mobile for SMS receipt / download delivery. */
+  buyerPhone?: string;
   documentLanguage?: DocumentLanguage;
   /**
    * Buyer-selected Gemini market country (TH, PH, …).

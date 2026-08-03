@@ -1,6 +1,7 @@
 "use client";
 
 import { Heart } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useApp } from "@/context/AppContext";
@@ -15,6 +16,21 @@ import {
   type PlanCardSpec,
 } from "@/lib/store/plan-card-specs";
 import type { StoreListing } from "@/lib/store/db";
+
+function canOptimizeImage(src: string): boolean {
+  if (!src || src.startsWith("data:") || src.startsWith("blob:")) return false;
+  try {
+    const host = new URL(src, "https://planasia.local").hostname;
+    return (
+      host === "images.unsplash.com" ||
+      host.endsWith(".supabase.co") ||
+      host === "localhost" ||
+      src.startsWith("/")
+    );
+  } catch {
+    return false;
+  }
+}
 
 export interface HousePlanCardProps {
   item: StoreListing;
@@ -69,14 +85,25 @@ export function HousePlanCard({
       />
 
       <div className="store-card__media">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={item.image}
-          alt={localized.name}
-          loading={index < 3 ? "eager" : "lazy"}
-          decoding="async"
-          className="transition-transform duration-500 group-hover:scale-105"
-        />
+        {canOptimizeImage(item.image) ? (
+          <Image
+            src={item.image}
+            alt={localized.name}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            priority={index < 3}
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.image}
+            alt={localized.name}
+            loading={index < 3 ? "eager" : "lazy"}
+            decoding="async"
+            className="transition-transform duration-500 group-hover:scale-105"
+          />
+        )}
         {imageBadge && <div className="pointer-events-none absolute inset-0 z-[2]">{imageBadge}</div>}
         {canFavorite && (
           <button
@@ -101,10 +128,10 @@ export function HousePlanCard({
         <div className="store-card-title-row relative z-0">
           <div className="min-w-0 flex-1">
             <p className="store-card-kicker truncate text-[11px] font-semibold leading-none text-[#64748b]">
-              {L("Plan number", "แผนงานหมายเลข")}
+              {L("House model", "แบบบ้าน")}
             </p>
             <p className="store-card-plan-id mt-1.5 truncate text-sm font-bold leading-tight text-[#1e3a5f] md:text-base">
-              #{item.planId}
+              {localized.name}
             </p>
           </div>
           <div className="max-w-[46%] shrink-0 text-right">

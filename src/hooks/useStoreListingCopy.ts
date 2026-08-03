@@ -5,7 +5,8 @@ import { useApp, UI_LOCALE_META } from "@/context/AppContext";
 import { getLocalizedListing } from "@/lib/store/listing-display";
 import type { StoreListing } from "@/lib/store/db";
 
-const SESSION_PREFIX = "planasia-tr-";
+/** Bump when name/copy rules change so stale session translations are ignored. */
+const SESSION_PREFIX = "planasia-tr-v2-";
 
 export interface StoreListingCopy {
   name: string;
@@ -74,11 +75,12 @@ export function useStoreListingCopy(listing: StoreListing): StoreListingCopy {
 
     const controller = new AbortController();
 
+    // Keep house model names English (Code + Style). Translate description/area only.
     void fetch("/api/translate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        texts: [base.name, base.description, base.area],
+        texts: [base.description, base.area],
         targetLocale: uiLocale,
       }),
       signal: controller.signal,
@@ -86,11 +88,11 @@ export function useStoreListingCopy(listing: StoreListing): StoreListingCopy {
       .then((r) => r.json())
       .then((data: { translations?: string[]; provider?: string }) => {
         const translated =
-          data.translations?.length === 3
+          data.translations?.length === 2
             ? {
-                name: data.translations[0],
-                description: data.translations[1],
-                area: data.translations[2],
+                name: base.name,
+                description: data.translations[0],
+                area: data.translations[1],
               }
             : base;
 

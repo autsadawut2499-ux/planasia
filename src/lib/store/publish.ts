@@ -10,8 +10,8 @@ import {
   getListingByPlanId,
   type StoreListing,
 } from "@/lib/store/db";
-import { buildListingDescription, buildListingName, estimateBuiltArea } from "@/lib/store/listing-builder";
-import { allocatePlanCode } from "@/lib/store/plan-code";
+import { buildListingDescription, estimateBuiltArea } from "@/lib/store/listing-builder";
+import { allocatePlanCode, buildAutoListingName } from "@/lib/store/plan-code";
 import { createRandomId } from "@/lib/random-id";
 import { attachListingSeo } from "@/lib/seo/listing-seo-generate";
 import { buildListingSlug, ensureUniqueSlug } from "@/lib/seo/slug";
@@ -72,7 +72,7 @@ export async function publishListingToStore(input: PublishListingInput): Promise
     creatorSessionUserId,
     creatorIp,
     creatorWorkspaceSessionId: input.workspaceSessionId,
-    name: buildListingName(input.project, publishLocale),
+    name: buildAutoListingName(input.project.style, planCode),
     description: buildListingDescription(input.project, input.planOptions, publishLocale),
     beds: input.project.bedrooms,
     baths: input.project.bathrooms,

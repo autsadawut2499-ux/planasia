@@ -21,6 +21,7 @@ interface CartOrderRow {
   buyer_user_id: string | null;
   buyer_name?: string | null;
   buyer_email?: string | null;
+  buyer_phone?: string | null;
   document_language?: string | null;
   target_country?: string | null;
   translation_status?: string | null;
@@ -51,6 +52,7 @@ function rowToOrder(row: CartOrderRow): CartOrder {
     buyerUserId: row.buyer_user_id ?? undefined,
     buyerName: row.buyer_name ?? undefined,
     buyerEmail: row.buyer_email ?? undefined,
+    buyerPhone: row.buyer_phone ?? undefined,
     documentLanguage: isDocumentLanguage(lang) ? lang : undefined,
     targetCountry: row.target_country ?? undefined,
     translationStatus: (row.translation_status as CartOrder["translationStatus"]) ?? undefined,
@@ -77,6 +79,7 @@ function orderToRow(order: CartOrder): CartOrderRow {
     buyer_user_id: order.buyerUserId ?? null,
     buyer_name: order.buyerName ?? null,
     buyer_email: order.buyerEmail ?? null,
+    buyer_phone: order.buyerPhone ?? null,
     document_language: order.documentLanguage ?? null,
     target_country: order.targetCountry ?? null,
     translation_status: order.translationStatus ?? (order.targetCountry ? "pending" : null),
@@ -96,17 +99,6 @@ function orderToRow(order: CartOrder): CartOrderRow {
 
 function orderToCompatRow(order: CartOrder): Record<string, unknown> {
   const full = orderToRow(order) as unknown as Record<string, unknown>;
-  const msgKeys = [
-    "buyer_name",
-    "buyer_email",
-    "document_language",
-    "language_surcharge",
-    "shipping_address",
-  ];
-  for (const key of msgKeys) {
-    // kept for strip-on-error path below
-    void key;
-  }
   return full;
 }
 
@@ -119,6 +111,7 @@ function stripMissingColumns(
   for (const col of [
     "buyer_name",
     "buyer_email",
+    "buyer_phone",
     "document_language",
     "language_surcharge",
     "shipping_address",

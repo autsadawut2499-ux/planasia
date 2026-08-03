@@ -209,8 +209,17 @@ export function VendorProfileTab({ dash }: { dash: Dashboard }) {
             <Field label="อีเมล">
               <TextInput type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="you@example.com" />
             </Field>
-            <Field label="เบอร์โทร">
-              <TextInput value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="08x-xxx-xxxx" />
+            <Field
+              label="เบอร์โทร (แจ้งเตือนเมื่อขายได้)"
+              hint="ผูกกับแบบบ้านของคุณ — ระบบส่ง SMS ทันทีเมื่อลูกค้าชำระเงินสำเร็จ"
+            >
+              <TextInput
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder="08x-xxx-xxxx"
+                inputMode="tel"
+                autoComplete="tel"
+              />
             </Field>
             <Field label="LINE ID">
               <TextInput value={lineId} onChange={(e) => setLineId(e.target.value)} placeholder="@yourline" />

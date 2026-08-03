@@ -15,7 +15,7 @@ import { getListingById } from "@/lib/store/db";
 import {
   filenameFromUrl,
   getListingBlueprintUrls,
-} from "@/lib/store/listing-blueprints";
+} from "@/lib/store/listing-assets";
 import {
   fetchAssetBytes,
   uploadPrivateBytes,

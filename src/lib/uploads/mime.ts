@@ -39,11 +39,43 @@ export function resolveImageContentType(file: {
   return IMAGE_EXT[extOf(file.name)] ?? null;
 }
 
+/** AutoCAD DWG only (.dxf is rejected for vendor CAD uploads). */
+export function looksLikeDwg(file: { name: string; type?: string }): boolean {
+  if (extOf(file.name) !== "dwg") return false;
+  const type = (file.type || "").toLowerCase().trim();
+  if (!type) return true;
+  return (
+    type === "application/acad" ||
+    type === "application/x-acad" ||
+    type === "application/autocad_dwg" ||
+    type === "application/dwg" ||
+    type === "application/x-dwg" ||
+    type === "image/vnd.dwg" ||
+    type === "application/octet-stream"
+  );
+}
+
+/** Structural calc sheets — PDF only (same rule as blueprint / BOQ). */
+export function looksLikeCalcDoc(file: { name: string; type?: string }): boolean {
+  return looksLikePdf(file);
+}
+
 export function resolveDocumentContentType(file: {
   name: string;
   type?: string;
 }): string | null {
-  return looksLikePdf(file) ? "application/pdf" : null;
+  if (looksLikePdf(file)) return "application/pdf";
+  if (looksLikeDwg(file)) {
+    const type = (file.type || "").toLowerCase().trim();
+    if (
+      type &&
+      type !== "application/octet-stream"
+    ) {
+      return type;
+    }
+    return "application/acad";
+  }
+  return null;
 }
 
 /** True when buffer starts with %PDF. */

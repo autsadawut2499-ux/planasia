@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     },
     {
       headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        // Short private cache — cuts repeat catalogue chatter without serving stale admin approvals for long.
+        "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
       },
     },
   );

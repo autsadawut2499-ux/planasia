@@ -1,0 +1,54 @@
+/**
+ * Lean column projection for store catalogue / popular lists.
+ * Omits heavy blobs (project_snapshot, seo_json_ld, full galleries) that
+ * product cards never render — detail pages still use select("*").
+ */
+export const STORE_LISTING_CATALOGUE_SELECT = [
+  "id",
+  "slug",
+  "plan_id",
+  "plan_code",
+  "plan_document_id",
+  "owner_id",
+  "name",
+  "description",
+  "tagline",
+  "pitch",
+  "highlights",
+  "beds",
+  "baths",
+  "parking",
+  "floors",
+  "area",
+  "style",
+  "collection",
+  "province",
+  "width_meters",
+  "length_meters",
+  "construction_cost_estimate",
+  "image",
+  "price",
+  "boq_price",
+  "calc_price",
+  "price_breakdown",
+  "source",
+  "created_at",
+  "likes_count",
+  "views_count",
+  "sales_count",
+  "ranking_score",
+  "pinned",
+  "pinned_at",
+  "moderation_status",
+  "is_published",
+  "seo_title",
+  "seo_description",
+  // Needed only to derive hasCadFiles / hasCalcSheets / hasBoqFiles flags.
+  "cad_file_urls",
+  "calc_sheet_urls",
+  "boq_file_urls",
+  "boq_file_url",
+].join(",");
+
+/** Initial store-grid page size (client lazy "load more"). */
+export const STORE_GRID_PAGE_SIZE = 24;

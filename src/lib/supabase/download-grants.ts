@@ -1,17 +1,32 @@
 import type { DownloadGrant } from "@/lib/payments/tokens";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
 
+type FileKind = NonNullable<DownloadGrant["fileKind"]>;
+
 interface DownloadGrantRow {
   token: string;
   plan_id: string;
   plan_document_id?: string | null;
   listing_id?: string | null;
   file_index?: number | null;
+  file_kind?: FileKind | null;
   format: DownloadGrant["format"];
   user_id: string | null;
   stripe_session_id: string | null;
   created_at: string;
   expires_at: string;
+}
+
+function resolveFileKind(row: DownloadGrantRow): FileKind {
+  if (
+    row.file_kind === "blueprint" ||
+    row.file_kind === "cad" ||
+    row.file_kind === "boq" ||
+    row.file_kind === "calc"
+  ) {
+    return row.file_kind;
+  }
+  return row.format === "cad" ? "cad" : "blueprint";
 }
 
 function rowToGrant(row: DownloadGrantRow): DownloadGrant {
@@ -21,6 +36,7 @@ function rowToGrant(row: DownloadGrantRow): DownloadGrant {
     planDocumentId: row.plan_document_id ?? undefined,
     listingId: row.listing_id ?? undefined,
     fileIndex: row.file_index ?? 0,
+    fileKind: resolveFileKind(row),
     format: row.format,
     userId: row.user_id ?? undefined,
     stripeSessionId: row.stripe_session_id ?? undefined,
@@ -30,12 +46,15 @@ function rowToGrant(row: DownloadGrantRow): DownloadGrant {
 }
 
 function grantToRow(grant: DownloadGrant): DownloadGrantRow {
+  const fileKind =
+    grant.fileKind ?? (grant.format === "cad" ? "cad" : "blueprint");
   return {
     token: grant.token,
     plan_id: grant.planId,
     plan_document_id: grant.planDocumentId ?? null,
     listing_id: grant.listingId ?? null,
     file_index: grant.fileIndex ?? 0,
+    file_kind: fileKind,
     format: grant.format,
     user_id: grant.userId ?? null,
     stripe_session_id: grant.stripeSessionId ?? null,
@@ -53,6 +72,7 @@ function stripMissingColumns(
   if (msg.includes("plan_document_id")) delete next.plan_document_id;
   if (msg.includes("listing_id")) delete next.listing_id;
   if (msg.includes("file_index")) delete next.file_index;
+  if (msg.includes("file_kind")) delete next.file_kind;
   return next as Partial<DownloadGrantRow>;
 }
 
@@ -117,6 +137,22 @@ export async function findGrantsByStripeSession(sessionId: string): Promise<Down
     .from("download_grants")
     .select("*")
     .eq("stripe_session_id", sessionId);
+  if (error) throw error;
+  return (data as DownloadGrantRow[]).map(rowToGrant);
+}
+
+/** Non-expired download grants for a signed-in buyer (My Purchases). */
+export async function listValidGrantsByUserId(
+  userId: string,
+): Promise<DownloadGrant[]> {
+  if (!userId.trim()) return [];
+  const { data, error } = await getSupabaseAdmin()
+    .from("download_grants")
+    .select("*")
+    .eq("user_id", userId)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(200);
   if (error) throw error;
   return (data as DownloadGrantRow[]).map(rowToGrant);
 }

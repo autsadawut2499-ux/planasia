@@ -48,8 +48,9 @@ async function deliverBuyerConfirmationEmail(
  *  1. Mark the order paid
  *  2. Split each vendor listing 70/30 into the earnings ledger
  *  3. Issue download grants (idempotent when stripeSessionId is present)
- *  4. (International only) OCR → translation — skipped in Thai domestic mode
- *  5. Email buyer confirmation with blueprint PDFs
+ *  4. Notify each listing's designer (SMS / Web Push / email) via contact_phone mapping
+ *  5. (International only) OCR → translation — skipped in Thai domestic mode
+ *  6. Email buyer confirmation with blueprint PDFs
  */
 export async function finalizePaidCartSale(opts: {
   cartOrderId: string;
@@ -74,10 +75,27 @@ export async function finalizePaidCartSale(opts: {
 
   let grants: DownloadGrant[];
 
+  const paidOrderId = order.id;
+  const saleNotifyItems = order.items.map((i) => ({
+    listingId: i.listingId,
+    planId: i.planId,
+    name: i.name,
+    priceThb: i.price,
+  }));
+
+  /** Fire-and-forget: SMS / Web Push / email to each listing's designer. Idempotent per order. */
+  function wakeDesigners() {
+    void notifyVendorsOfSale(saleNotifyItems, { cartOrderId: paidOrderId }).catch((err) =>
+      console.error("[finalize-sale] designer notify failed", err),
+    );
+  }
+
   if (opts.stripeSessionId) {
     const existing = await findGrantsByStripeSession(opts.stripeSessionId);
     if (existing.length > 0) {
       grants = existing;
+      // Retry path: still attempt designer notify (deduped by vendor_sale_notifications).
+      wakeDesigners();
       const translation = await runPostPayTranslationSafe(order);
       const enriched = applyTranslationToOrder(order, translation);
       let emailSent = false;
@@ -96,23 +114,21 @@ export async function finalizePaidCartSale(opts: {
     }
   }
 
-  // Cart plans unlock PDF downloads; BOQ add-on is priced separately (not CAD unlock).
+  // Unlock blueprints always; CAD / BOQ / calc follow line format + order addons.
   grants = await fulfillCartDownloads(
-    order.items,
-    false,
+    order.items.map((item) => ({
+      planId: item.planId,
+      planDocumentId: item.planDocumentId,
+      listingId: item.listingId,
+      format: item.format,
+    })),
+    order.items.some((item) => item.format === "cad"),
     opts.buyerUserId,
     opts.stripeSessionId,
+    order.addons,
   );
 
-  // Fire-and-forget: wake the draftsman's phone even at 2am.
-  void notifyVendorsOfSale(
-    order.items.map((i) => ({
-      listingId: i.listingId,
-      planId: i.planId,
-      name: i.name,
-      priceThb: i.price,
-    })),
-  ).catch((err) => console.error("[finalize-sale] push notify failed", err));
+  wakeDesigners();
 
   // Auto pipeline: text-layer check → Vision OCR if scanned → Translation → email.
   const translation = await runPostPayTranslationSafe(order);
@@ -197,13 +213,14 @@ export async function finalizePaidListingSale(opts: {
     console.error("[finalize-sale] single commission failed", err);
   }
 
-  // Prefer vendor blueprint grants (one token per uploaded PDF).
+  // Prefer vendor asset grants (blueprints + optional CAD package).
   const grants = await fulfillCartDownloads(
     [
       {
         planId: opts.planId,
         planDocumentId: opts.planDocumentId,
         listingId: opts.listingId,
+        format: opts.format,
       },
     ],
     opts.format === "cad",
@@ -211,14 +228,17 @@ export async function finalizePaidListingSale(opts: {
     opts.stripeSessionId,
   );
 
-  void notifyVendorsOfSale([
-    {
-      listingId: opts.listingId,
-      planId: opts.planId,
-      name: opts.planId,
-      priceThb: opts.amountThb,
-    },
-  ]).catch((err) => console.error("[finalize-sale] push notify failed", err));
+  void notifyVendorsOfSale(
+    [
+      {
+        listingId: opts.listingId,
+        planId: opts.planId,
+        name: opts.planId,
+        priceThb: opts.amountThb,
+      },
+    ],
+    { cartOrderId },
+  ).catch((err) => console.error("[finalize-sale] designer notify failed", err));
 
   return { grants, planIds: [opts.planId] };
 }

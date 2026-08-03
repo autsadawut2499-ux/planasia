@@ -161,27 +161,27 @@ export const TERMS_CONTENT: LegalContentMap = {
     sections: [
       {
         heading: "3.1 Acceptance of terms",
-        body: "Welcome to Planasia. By accessing this website, purchasing products, or downloading house-plan PDF files from this platform, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service in full. If you do not agree, you must not use the website or complete a purchase. These Terms operate together with our Privacy Policy and Refund and Cancellation Policy. At checkout you must actively confirm (checkbox) that you understand our digital-goods license and refund rules before payment is processed.",
+        body: "Welcome to Planasia. By accessing this website, purchasing products, or downloading house-plan PDF files from this platform, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service in full. If you do not agree, you must not use the website or complete a purchase. These Terms operate together with our Privacy Policy, Return Policy, Construction Requirements, and Delivery Policy. At checkout you must actively confirm (checkbox) that you understand our Construction License and return rules before payment is processed.",
       },
       {
         heading: "3.2 Platform role",
         body: "Planasia operates a digital marketplace that facilitates the sale and delivery of house-plan PDF files and related digital add-ons between independent designers (or rights holders) and buyers. Except where we expressly state otherwise, we act as an intermediary and technology platform; we are not the builder, contractor, or licensed engineer for your project, and we do not supervise on-site construction.",
       },
       {
-        heading: "3.3 Intellectual property and copyright",
-        body: "All house plans, floor plans, drawings, diagrams, and PDF documents offered on this website are copyrighted works and intellectual property of the architect, designer, or rights holder who created them (and/or Planasia where we own or are licensed to distribute specific materials). Purchase of a product grants you a personal, non-exclusive, non-transferable Single-Use License to use the purchased plan for the construction of one (1) house in accordance with the plan you bought, unless a listing expressly states a different license. Strictly prohibited without prior written permission from the platform or the copyright owner: reproducing, modifying for redistribution, copying, forwarding, publishing, reselling, commercially exploiting, or otherwise distributing the PDF files or house plans to any third party. Unauthorized use may result in termination of access and legal action under applicable intellectual-property law.",
+        heading: "3.3 Copyright information",
+        body: "When you purchase a house plan from Plan Asia, you are purchasing a Construction License. This license grants you the right to build one (1) house from these plans. Building more than one house, modifying, or copying without prior written permission is a violation of this copyright.",
       },
       {
-        heading: "3.4 User responsibilities and engineering review",
-        body: "Information and drawings in the PDF files are provided as a baseline design guide for construction planning. The buyer or homeowner is solely responsible for having the plans reviewed, verified, and adapted by a structural engineer, local architect, and/or competent authority for accuracy, safety, and compliance with site conditions, local regulations, and the building-control laws of the applicable jurisdiction (including Thailand) before any actual construction. Planasia and the designer are not liable for legal liability, property damage, personal injury, or other loss arising from construction based on the plans without independent professional review and certification by qualified local experts. You must not treat marketplace PDFs as a substitute for stamped or permit-ready drawings where local law requires them.",
+        heading: "3.4 Construction requirements and building codes",
+        body: "Purchased plans are intended to follow general design principles and commonly accepted international practice, but may not cover every planning law, zoning rule, or local requirement where you build. It is the buyer’s and/or contractor’s responsibility to ensure the structure is built to comply with building-control laws and local requirements. The customer agrees to indemnify and hold harmless Plan Asia, its officers, employees, and agents from any claim, loss, or liability arising from a plan’s failure to meet local laws or regulations, or from any breach of agreement by the customer or the customer’s contractors in whole or in part. Because local rules and construction methods vary, certain systems (such as air-conditioning and actual plumbing layouts) may need to be adapted to your site and may not be included in our standard plans. You should meet a local contractor or engineer to select and plan systems appropriate for your area. Some municipalities may require review by a licensed local architect or structural engineer. After purchase, the customer is responsible for any additional costs incurred to meet local or other construction requirements. See also our Construction Requirements page.",
       },
       {
         heading: "3.5 Purchases, pricing, and digital delivery",
-        body: "Prices are displayed at checkout in Thai Baht (THB) for our domestic marketplace phase. Payment is processed through our payment gateway partners (including Stripe). Upon successful payment confirmation, download rights for the applicable PDF files are unlocked as described in our Delivery Policy. Completed purchases are charged at the price shown at the time of payment. You agree to provide accurate buyer name and email so we can deliver download links and receipts. Because digital files are delivered electronically, ordinary “change of mind” refunds after a successful download are not available — see our Refund and Cancellation Policy.",
+        body: "Prices are displayed at checkout in Thai Baht (THB) for our domestic marketplace phase. Payment is processed through our payment gateway partners (including Stripe). Upon successful payment confirmation, download rights for the applicable PDF files are unlocked as described in our Delivery Policy. Completed purchases are charged at the price shown at the time of payment. You agree to provide accurate buyer name and email so we can deliver download links and receipts. Because of copyright law and the risk of unauthorized copying, plans cannot be returned for credit or refund after an order is processed — see our Return Policy.",
       },
       {
         heading: "3.6 Digital goods acknowledgment (Stripe / chargeback clarity)",
-        body: "You acknowledge that: (a) you are purchasing digital blueprint / house-plan files (and optional digital or hard-copy add-ons selected at checkout); (b) access is typically granted immediately after payment confirmation; (c) once a blueprint file has been successfully downloaded, refunds are not provided for change of mind, wrong plan selection, or preference changes; and (d) refunds are considered only when a file is genuinely corrupted or defective and cannot reasonably be repaired or redelivered, as set out in the Refund and Cancellation Policy. Unfounded chargebacks that contradict this acknowledgment may be contested with our payment processor using order, download, and consent records.",
+        body: "You acknowledge that: (a) you are purchasing digital blueprint / house-plan files (and optional digital or hard-copy add-ons selected at checkout) under a Construction License for one house; (b) access is typically granted immediately after payment confirmation; and (c) after an order is processed, plans cannot be returned for credit or refund under any circumstances, as set out in the Return Policy. Unfounded chargebacks that contradict this acknowledgment may be contested with our payment processor using order, download, and consent records.",
       },
       {
         heading: "3.7 Customer support and building-permit guidance",
@@ -189,11 +189,11 @@ export const TERMS_CONTENT: LegalContentMap = {
       },
       {
         heading: "3.8 Limitation of liability",
-        body: "The platform facilitates digital-file transactions between buyers and designers. Products and services on the website are provided on an “As Is” and “As Available” basis. To the maximum extent permitted by law, Planasia does not warrant that content, drawings, or PDF files are entirely free from error, complete for every site, or fit for a particular purpose. We will coordinate and investigate technical delivery issues in accordance with our Refund and Cancellation Policy. Except where liability cannot be limited under mandatory Thai consumer law, Planasia’s aggregate liability arising out of any order is limited to the fees actually paid to Planasia for that affected order. We are not liable for indirect, incidental, special, consequential, or punitive damages, including lost profits or construction delay costs, even if advised of the possibility.",
+        body: "The platform facilitates digital-file transactions between buyers and designers. Products and services on the website are provided on an “As Is” and “As Available” basis. To the maximum extent permitted by law, Planasia does not warrant that content, drawings, or PDF files are entirely free from error, complete for every site, or fit for a particular purpose. We will coordinate and investigate technical delivery issues in accordance with our Return Policy (redelivery support where appropriate). Except where liability cannot be limited under mandatory Thai consumer law, Planasia’s aggregate liability arising out of any order is limited to the fees actually paid to Planasia for that affected order. We are not liable for indirect, incidental, special, consequential, or punitive damages, including lost profits or construction delay costs, even if advised of the possibility.",
       },
       {
         heading: "3.9 Acceptable use and accounts",
-        body: "You are responsible for activity under your account and for keeping login credentials secure. You must not abuse the website or APIs, circumvent security or rate limits, upload unlawful content, infringe intellectual property, or use purchased files beyond the Single-Use License. We may suspend or terminate access for violations of these Terms or applicable law.",
+        body: "You are responsible for activity under your account and for keeping login credentials secure. You must not abuse the website or APIs, circumvent security or rate limits, upload unlawful content, infringe intellectual property, or use purchased files beyond the Construction License. We may suspend or terminate access for violations of these Terms or applicable law.",
       },
       {
         heading: "3.10 Changes to terms",
@@ -210,27 +210,27 @@ export const TERMS_CONTENT: LegalContentMap = {
     sections: [
       {
         heading: "3.1 การยอมรับข้อกำหนด",
-        body: "ยินดีต้อนรับสู่แพลตฟอร์ม Planasia การเข้าใช้งานเว็บไซต์ การซื้อสินค้า หรือการดาวน์โหลดไฟล์ PDF แบบบ้านจากเว็บไซต์นี้ ถือว่าท่านได้อ่าน ทำความเข้าใจ และตกลงที่จะปฏิบัติตามข้อกำหนดและเงื่อนไขการให้บริการฉบับนี้โดยสมบูรณ์ หากท่านไม่ยอมรับ กรุณาหยุดใช้บริการและอย่าทำการสั่งซื้อ ข้อกำหนดนี้อ่านประกอบกับนโยบายความเป็นส่วนตัว และนโยบายการคืนเงินและการยกเลิกของเรา ในขั้นตอนชำระเงิน ท่านต้องยืนยันผ่านช่องทำเครื่องหมาย (checkbox) ว่าเข้าใจเงื่อนไขสินค้าดิจิทัลและนโยบายคืนเงินก่อนชำระเงิน",
+        body: "ยินดีต้อนรับสู่แพลตฟอร์ม Planasia การเข้าใช้งานเว็บไซต์ การซื้อสินค้า หรือการดาวน์โหลดไฟล์ PDF แบบบ้านจากเว็บไซต์นี้ ถือว่าท่านได้อ่าน ทำความเข้าใจ และตกลงที่จะปฏิบัติตามข้อกำหนดและเงื่อนไขการให้บริการฉบับนี้โดยสมบูรณ์ หากท่านไม่ยอมรับ กรุณาหยุดใช้บริการและอย่าทำการสั่งซื้อ ข้อกำหนดนี้อ่านประกอบกับนโยบายความเป็นส่วนตัว นโยบายการคืนสินค้า ข้อกำหนดด้านการก่อสร้าง และนโยบายการจัดส่งของเรา ในขั้นตอนชำระเงิน ท่านต้องยืนยันผ่านช่องทำเครื่องหมาย (checkbox) ว่าเข้าใจใบอนุญาตในการก่อสร้าง (Construction License) และนโยบายการคืนสินค้าก่อนชำระเงิน",
       },
       {
         heading: "3.2 บทบาทของแพลตฟอร์ม",
         body: "Planasia เป็นตลาดกลางดิจิทัลที่อำนวยความสะดวกด้านการซื้อขายและจัดส่งไฟล์แบบบ้าน PDF รวมถึงแพ็กเกจดิจิทัลที่เกี่ยวข้อง ระหว่างนักออกแบบอิสระ (หรือเจ้าของสิทธิ์) กับผู้ซื้อ เว้นแต่เราจะระบุเป็นอย่างอื่นโดยชัดเจน เราทำหน้าที่เป็นตัวกลางและแพลตฟอร์มเทคโนโลยี ไม่ใช่ผู้รับเหมาก่อสร้าง หรือวิศวกรที่มีใบอนุญาตสำหรับโครงการของท่าน และไม่ได้ควบคุมงานก่อสร้างหน้างาน",
       },
       {
-        heading: "3.3 ลิขสิทธิ์และทรัพย์สินทางปัญญา (Intellectual Property & Copyright)",
-        body: "แบบบ้าน แบบแปลน แผนผัง และไฟล์เอกสารรูปแบบ PDF ทั้งหมดที่วางจำหน่ายบนเว็บไซต์นี้ ถือเป็นงานอันมีลิขสิทธิ์และเป็นทรัพย์สินทางปัญญาของสถาปนิกหรือนักออกแบบผู้ออกแบบผลงานนั้นๆ (และ/หรือของ Planasia ในกรณีที่เราเป็นเจ้าของหรือได้รับอนุญาตให้เผยแพร่) การซื้อสินค้าถือเป็นการให้ “สิทธิ์ในการใช้งานเฉพาะตัว (Single-Use License)” สำหรับการก่อสร้างบ้าน 1 หลัง ตามแบบที่ท่านซื้อเท่านั้น เว้นแต่รายการสินค้าระบุสิทธิ์อื่นไว้ชัดเจน ข้อห้ามเด็ดขาด: ห้ามมิให้ทำซ้ำ ดัดแปลงเพื่อแจกจ่าย คัดลอก ส่งต่อ เผยแพร่ ขายต่อ หรือนำไฟล์ PDF หรือแบบบ้านดังกล่าวไปใช้ในเชิงพาณิชย์หรือแจกจ่ายให้ผู้อื่นโดยไม่ได้รับอนุญาตเป็นลายลักษณ์อักษรจากทางแพลตฟอร์มหรือเจ้าของลิขสิทธิ์ การใช้งานโดยไม่ได้รับอนุญาตอาจทำให้สิทธิ์การเข้าถึงถูกระงับ และอาจถูกดำเนินคดีตามกฎหมายทรัพย์สินทางปัญญา",
+        heading: "3.3 ข้อมูลลิขสิทธิ์",
+        body: "เมื่อคุณซื้อแบบแปลนบ้านจาก Plan Asia คุณกำลังซื้อใบอนุญาตในการก่อสร้าง (Construction License) ใบอนุญาตนี้ให้สิทธิ์คุณในการสร้างบ้านหนึ่งหลังจากแบบแปลนเหล่านี้ การสร้างบ้านมากกว่าหนึ่งครั้ง ดัดแปลง หรือคัดลอกโดยไม่ได้รับอนุญาตเป็นลายลักษณ์อักษร ถือเป็นการละเมิดลิขสิทธิ์นี้",
       },
       {
-        heading: "3.4 ความรับผิดชอบของผู้ซื้อและการตรวจสอบทางวิศวกรรม",
-        body: "ข้อมูลและแบบแปลนในไฟล์ PDF จัดทำขึ้นเพื่อให้เป็นแนวทางในการก่อสร้างพื้นฐาน ผู้ซื้อหรือเจ้าของบ้านมีหน้าที่ต้องนำแบบแปลนดังกล่าวไปให้วิศวกรโครงสร้าง สถาปนิกท้องถิ่น หรือหน่วยงานที่เกี่ยวข้องตรวจสอบความถูกต้อง ความปลอดภัย และปรับแก้ให้สอดคล้องกับสภาพพื้นที่ ข้อบังคับกฎหมายท้องถิ่น หรือกฎหมายควบคุมอาคารของประเทศท่าน (รวมถึงประเทศไทย) ก่อนดำเนินการก่อสร้างจริง ทางแพลตฟอร์มและผู้ออกแบบจะไม่รับผิดชอบต่อความเสียหาย ทางกฎหมาย อุบัติเหตุ หรือความสูญเสียใดๆ ที่เกิดขึ้นจากการนำแบบแปลนไปใช้ก่อสร้างโดยปราศจากการตรวจสอบและรับรองจากผู้เชี่ยวชาญประจำท้องถิ่น ท่านต้องไม่ถือว่าไฟล์ PDF จากตลาดกลางทดแทนแบบที่มีตราประทับหรือแบบพร้อมยื่นอนุญาต ในกรณีที่กฎหมายท้องถิ่นกำหนดให้ต้องมี",
+        heading: "3.4 ข้อกำหนดด้านการก่อสร้างและรหัสอาคาร",
+        body: "แบบแปลนที่ซื้อจะต้องเป็นไปตามหลักการออกแบบและมาตรฐานสากลทั่วไป แต่อาจไม่ครอบคลุมกฎหมายและข้อบังคับผังเมืองหรือข้อกำหนดท้องถิ่นในแต่ละพื้นที่ที่ลูกค้าจะทำการก่อสร้าง เป็นความรับผิดชอบของผู้ซื้อและ/หรือผู้รับเหมาที่จะต้องตรวจสอบให้แน่ใจว่าโครงสร้างนั้นสร้างขึ้นเพื่อให้เป็นไปตามกฎหมายควบคุมอาคารและข้อกำหนดของท้องถิ่นคุณ ลูกค้าตกลงที่จะชดใช้และปกป้องบริษัท Plan Asia, ผู้บริหาร, พนักงาน และตัวแทนของบริษัท จากการเรียกร้อง ความสูญเสีย หรือความรับผิดใด ๆ ที่เกิดจากความล้มเหลวของแบบแปลนในการปฏิบัติตามกฎหมายหรือข้อบังคับท้องถิ่น หรือจากการละเมิดข้อตกลงใด ๆ ที่มาจากลูกค้าหรือผู้รับเหมาของลูกค้าทั้งหมดหรือบางส่วน เนื่องจากข้อกำหนดและระเบียบข้อบังคับในท้องถิ่น รวมถึงวิธีการก่อสร้างที่แตกต่างกันไปในแต่ละพื้นที่ การวางแผนงานระบบบางอย่าง (เช่น ระบบปรับอากาศและระบบประปาจริง) อาจจำเป็นต้องปรับแผนให้เข้ากับพื้นที่ของคุณ ด้วยเหตุนี้ ระบบงานระบบดังกล่าวอาจไม่รวมอยู่ในแบบแปลนมาตรฐานของเรา คุณควรนัดพบกับผู้รับเหมาหรือวิศวกรท้องถิ่นเพื่อเลือกและวางแผนระบบที่เหมาะสมที่สุดสำหรับพื้นที่ของคุณ เทศบาลหรือหน่วยงานท้องถิ่นบางแห่งอาจกำหนดให้มีการตรวจสอบแผนโดยสถาปนิกหรือวิศวกรโครงสร้างที่ได้รับใบอนุญาตในพื้นที่ของคุณ หลังจากซื้อแบบแปลนจาก Plan Asia แล้ว ลูกค้าต้องรับผิดชอบค่าใช้จ่ายเพิ่มเติมที่เกิดขึ้นจากการปฏิบัติตามข้อกำหนดของท้องถิ่นหรือข้อกำหนดอื่น ๆ สำหรับการก่อสร้าง ดูรายละเอียดเพิ่มเติมได้ที่หน้าข้อกำหนดด้านการก่อสร้าง",
       },
       {
         heading: "3.5 การซื้อ ราคา และการจัดส่งดิจิทัล",
-        body: "ราคาแสดงที่หน้าชำระเงินเป็นเงินบาทไทย (THB) ในช่วงที่มุ่งตลาดในประเทศ การชำระเงินดำเนินการผ่านพันธมิตร Payment Gateway (รวมถึง Stripe) เมื่อยืนยันการชำระเงินสำเร็จ สิทธิ์ดาวน์โหลดไฟล์ PDF ที่เกี่ยวข้องจะถูกเปิดตามนโยบายการจัดส่งของเรา การซื้อที่เสร็จสิ้นแล้วคิดตามราคาที่แสดง ณ เวลาชำระเงิน ท่านตกลงให้ชื่อและอีเมลผู้ซื้อที่ถูกต้องเพื่อให้เราจัดส่งลิงก์ดาวน์โหลดและใบเสร็จได้ เนื่องจากเป็นสินค้าดิจิทัลที่จัดส่งทางอิเล็กทรอนิกส์ การคืนเงินเพราะเปลี่ยนใจหลังดาวน์โหลดสำเร็จจะไม่สามารถทำได้ — ดูรายละเอียดในนโยบายการคืนเงินและการยกเลิก",
+        body: "ราคาแสดงที่หน้าชำระเงินเป็นเงินบาทไทย (THB) ในช่วงที่มุ่งตลาดในประเทศ การชำระเงินดำเนินการผ่านพันธมิตร Payment Gateway (รวมถึง Stripe) เมื่อยืนยันการชำระเงินสำเร็จ สิทธิ์ดาวน์โหลดไฟล์ PDF ที่เกี่ยวข้องจะถูกเปิดตามนโยบายการจัดส่งของเรา การซื้อที่เสร็จสิ้นแล้วคิดตามราคาที่แสดง ณ เวลาชำระเงิน ท่านตกลงให้ชื่อและอีเมลผู้ซื้อที่ถูกต้องเพื่อให้เราจัดส่งลิงก์ดาวน์โหลดและใบเสร็จได้ เนื่องจากกฎหมายลิขสิทธิ์และความเป็นไปได้ของการทำสำเนาโดยไม่ได้รับอนุญาต แบบแปลนไม่สามารถส่งคืนเพื่อขอเครดิตหรือคืนเงินได้หลังจากคำสั่งซื้อได้รับการดำเนินการแล้ว — ดูรายละเอียดในนโยบายการคืนสินค้า",
       },
       {
         heading: "3.6 การรับทราบสินค้าดิจิทัล (ความชัดเจนต่อ Stripe / การโต้แย้งการชำระเงิน)",
-        body: "ท่านรับทราบว่า: (ก) ท่านกำลังซื้อไฟล์แบบแปลน/แบบบ้านดิจิทัล (และแพ็กเกจเสริมที่เลือกตอนชำระเงิน หากมี) (ข) โดยทั่วไปสิทธิ์เข้าถึงจะเปิดทันทีหลังยืนยันการชำระเงิน (ค) เมื่อดาวน์โหลดไฟล์แบบแปลนสำเร็จแล้ว จะไม่มีการคืนเงินเพราะเปลี่ยนใจ เลือกแบบผิด หรือเปลี่ยนความชอบ และ (ง) จะพิจารณาคืนเงินเฉพาะเมื่อไฟล์เสีย/ชำรุดจริงและไม่สามารถซ่อมหรือจัดส่งใหม่ได้อย่างสมเหตุสมผล ตามนโยบายการคืนเงินและการยกเลิก การโต้แย้งการชำระเงิน (chargeback) ที่ไม่สอดคล้องกับการรับทราบนี้ อาจถูกคัดค้านกับผู้ให้บริการชำระเงินโดยใช้หลักฐานคำสั่งซื้อ การดาวน์โหลด และการยินยอมของท่าน",
+        body: "ท่านรับทราบว่า: (ก) ท่านกำลังซื้อไฟล์แบบแปลน/แบบบ้านดิจิทัล (และแพ็กเกจเสริมที่เลือกตอนชำระเงิน หากมี) ภายใต้ใบอนุญาตในการก่อสร้าง (Construction License) สำหรับบ้านหนึ่งหลัง (ข) โดยทั่วไปสิทธิ์เข้าถึงจะเปิดทันทีหลังยืนยันการชำระเงิน และ (ค) หลังจากคำสั่งซื้อได้รับการดำเนินการแล้ว แบบแปลนไม่สามารถส่งคืนเพื่อขอเครดิตหรือคืนเงินได้ไม่ว่าในกรณีใด ๆ ตามนโยบายการคืนสินค้า การโต้แย้งการชำระเงิน (chargeback) ที่ไม่สอดคล้องกับการรับทราบนี้ อาจถูกคัดค้านกับผู้ให้บริการชำระเงินโดยใช้หลักฐานคำสั่งซื้อ การดาวน์โหลด และการยินยอมของท่าน",
       },
       {
         heading: "3.7 การสนับสนุนลูกค้าและคำแนะนำด้านใบอนุญาตก่อสร้าง",
@@ -238,11 +238,11 @@ export const TERMS_CONTENT: LegalContentMap = {
       },
       {
         heading: "3.8 การจำกัดความรับผิด (Limitation of Liability)",
-        body: "แพลตฟอร์มของเราทำหน้าที่เป็นตัวกลางในการอำนวยความสะดวกด้านการซื้อขายไฟล์ดิจิทัลระหว่างผู้ซื้อและผู้ออกแบบ สินค้าและบริการบนเว็บไซต์จัดเตรียมไว้ให้ตามสภาพที่เป็นอยู่ (“As Is” และ “As Available”) ในขอบเขตสูงสุดที่กฎหมายอนุญาต ทางแพลตฟอร์มไม่รับประกันว่าเนื้อหา แบบแปลน หรือไฟล์ PDF จะปราศจากข้อผิดพลาดทั้งหมด 100% ครบถ้วนสำหรับทุกแปลงที่ดิน หรือเหมาะสมกับวัตถุประสงค์เฉพาะ แต่เรายินดีประสานงานและตรวจสอบปัญหาทางเทคนิคด้านการจัดส่งตามเงื่อนไขในนโยบายการคืนเงินและการยกเลิก เว้นแต่ความรับผิดที่ไม่สามารถจำกัดได้ตามกฎหมายคุ้มครองผู้บริโภคไทย ความรับผิดรวมของ Planasia จากคำสั่งซื้อใดๆ จำกัดไม่เกินค่าธรรมเนียมที่ท่านชำระจริงให้ Planasia สำหรับคำสั่งซื้อที่เกี่ยวข้องนั้น เราไม่รับผิดต่อความเสียหายทางอ้อม พิเศษ ผลสืบเนื่อง หรือเชิงลงโทษ รวมถึงกำไรที่สูญเสียหรือค่าใช้จ่ายจากการล่าช้าของงานก่อสร้าง แม้จะได้แจ้งความเป็นไปได้แล้วก็ตาม",
+        body: "แพลตฟอร์มของเราทำหน้าที่เป็นตัวกลางในการอำนวยความสะดวกด้านการซื้อขายไฟล์ดิจิทัลระหว่างผู้ซื้อและผู้ออกแบบ สินค้าและบริการบนเว็บไซต์จัดเตรียมไว้ให้ตามสภาพที่เป็นอยู่ (“As Is” และ “As Available”) ในขอบเขตสูงสุดที่กฎหมายอนุญาต ทางแพลตฟอร์มไม่รับประกันว่าเนื้อหา แบบแปลน หรือไฟล์ PDF จะปราศจากข้อผิดพลาดทั้งหมด 100% ครบถ้วนสำหรับทุกแปลงที่ดิน หรือเหมาะสมกับวัตถุประสงค์เฉพาะ แต่เรายินดีประสานงานและตรวจสอบปัญหาทางเทคนิคด้านการจัดส่งตามเงื่อนไขในนโยบายการคืนสินค้า (การจัดส่งใหม่ตามความเหมาะสม) เว้นแต่ความรับผิดที่ไม่สามารถจำกัดได้ตามกฎหมายคุ้มครองผู้บริโภคไทย ความรับผิดรวมของ Planasia จากคำสั่งซื้อใดๆ จำกัดไม่เกินค่าธรรมเนียมที่ท่านชำระจริงให้ Planasia สำหรับคำสั่งซื้อที่เกี่ยวข้องนั้น เราไม่รับผิดต่อความเสียหายทางอ้อม พิเศษ ผลสืบเนื่อง หรือเชิงลงโทษ รวมถึงกำไรที่สูญเสียหรือค่าใช้จ่ายจากการล่าช้าของงานก่อสร้าง แม้จะได้แจ้งความเป็นไปได้แล้วก็ตาม",
       },
       {
         heading: "3.9 การใช้งานที่ยอมรับได้และบัญชีผู้ใช้",
-        body: "ท่านรับผิดชอบกิจกรรมภายใต้บัญชีของท่านและต้องรักษาข้อมูลเข้าสู่ระบบให้ปลอดภัย ห้ามใช้เว็บไซต์หรือ API ในทางที่ผิด หลีกเลี่ยงมาตรการความปลอดภัยหรือการจำกัดอัตรา อัปโหลดเนื้อหาผิดกฎหมาย ละเมิดทรัพย์สินทางปัญญา หรือใช้ไฟล์ที่ซื้อเกินขอบเขต Single-Use License เราอาจระงับหรือยุติการเข้าถึงหากมีการละเมิดข้อกำหนดนี้หรือกฎหมายที่ใช้บังคับ",
+        body: "ท่านรับผิดชอบกิจกรรมภายใต้บัญชีของท่านและต้องรักษาข้อมูลเข้าสู่ระบบให้ปลอดภัย ห้ามใช้เว็บไซต์หรือ API ในทางที่ผิด หลีกเลี่ยงมาตรการความปลอดภัยหรือการจำกัดอัตรา อัปโหลดเนื้อหาผิดกฎหมาย ละเมิดทรัพย์สินทางปัญญา หรือใช้ไฟล์ที่ซื้อเกินขอบเขตใบอนุญาตในการก่อสร้าง (Construction License) เราอาจระงับหรือยุติการเข้าถึงหากมีการละเมิดข้อกำหนดนี้หรือกฎหมายที่ใช้บังคับ",
       },
       {
         heading: "3.10 การเปลี่ยนแปลงข้อกำหนด (Changes to Terms)",
@@ -259,7 +259,7 @@ export const TERMS_CONTENT: LegalContentMap = {
     sections: [
       {
         heading: "Summary",
-        body: "Using Planasia means you accept these Terms. Purchased PDFs are Single-Use Licenses for one house. After a successful download, refunds are not given for change of mind—only for verified corrupted/defective files that cannot be fixed. We offer support and permit guidance (not a permit guarantee). Contact hello@planasia.com.",
+        body: "Using Planasia means you accept these Terms. Purchase grants a Construction License for one house. After an order is processed, plans cannot be returned for credit or refund. Buyers must ensure local building-code compliance. Contact hello@planasia.com.",
       },
     ],
   },
@@ -268,98 +268,73 @@ export const TERMS_CONTENT: LegalContentMap = {
     sections: [
       {
         heading: "Tóm tắt",
-        body: "Sử dụng Planasia đồng nghĩa chấp nhận Điều khoản. PDF mua được cấp Single-Use License cho một ngôi nhà. Sau khi tải thành công, không hoàn tiền vì đổi ý—chỉ khi tệp hỏng/lỗi đã xác minh và không sửa được. Chúng tôi hỗ trợ hướng dẫn xin phép xây (không bảo đảm được duyệt). Liên hệ hello@planasia.com.",
+        body: "Sử dụng Planasia đồng nghĩa chấp nhận Điều khoản. Mua bản vẽ được cấp Construction License cho một ngôi nhà. Sau khi đơn được xử lý, không hoàn trả để nhận tín dụng hoặc hoàn tiền. Người mua phải tuân thủ quy chuẩn xây dựng địa phương. Liên hệ hello@planasia.com.",
       },
     ],
   },
 };
 
 /**
- * Policy 1 — Refund and Cancellation Policy
- * International structure for digital PDF house-plan downloads (Thai domestic market).
+ * Policy 1 — Return / Refund Policy (Plan Asia)
  */
 export const REFUND_CONTENT: LegalContentMap = {
   en: {
-    title: "1. Refund and Cancellation Policy",
+    title: "1. Return Policy",
     sections: [
       {
-        heading: "1.1 Scope and nature of goods",
-        body: "All primary products sold on the Planasia platform are digital goods — house-plan / blueprint files in PDF format (and related digital add-ons). Upon successful payment confirmation, download access is typically granted immediately. Because of the nature of digital delivery, this Refund and Cancellation Policy applies to every purchase of house-plan files on Planasia. Optional physical hard-copy add-ons, if selected, follow the same refund principles once production or dispatch has begun, except where a separate defect applies to the physical set.",
+        heading: "1.1 No returns after an order is processed",
+        body: "Because of copyright law and the possibility that plans you receive may be copied without authorization, our house plans cannot be returned for credit or refund under any circumstances after an order has been processed. Please review your options carefully before placing an order.",
       },
       {
-        heading: "1.2 Strict policy after successful download",
-        body: "Once a blueprint file has been successfully downloaded, no refunds will be given for change of mind, selecting the wrong plan, design preference changes, project cancellation, or similar reasons. Digital files cannot be “returned,” and access after a completed download cannot be reliably undone. Please review previews, specifications, pricing, and license terms carefully before paying. At checkout you must confirm that you understand this digital-goods refund rule.",
+        heading: "1.2 Nature of digital goods",
+        body: "Planasia’s primary products are digital house-plan files (such as PDF and related add-ons). Access is typically unlocked immediately after successful payment. Digital files cannot be “returned” in the same way as physical goods, and access after fulfilment cannot be reliably reversed.",
       },
       {
-        heading: "1.3 When a refund may be considered",
-        body: "Refunds are allowed only if the file is genuinely corrupted or defective and cannot be fixed. Eligible situations are limited to defects attributable to our platform or source files, for example: (a) a verified technical failure prevented you from receiving a download link or accessing the PDF after successful payment; or (b) the PDF is damaged, corrupted, incomplete, or otherwise unusable, and our review confirms a defect in the original file. Our first remedy is always to repair or redeliver a corrected file at no extra charge. A refund may be issued only if redelivery or repair is not reasonably possible. Ordinary design disagreement or “I no longer want this plan” after a successful download is not a defect.",
+        heading: "1.3 Technical support (not a return)",
+        body: "If you cannot access a file due to a verified technical issue on our side, contact hello@planasia.com with your order reference and proof of payment. We may redeliver a working download link or corrected file where appropriate. Redelivery is a support remedy — it is not a return for credit or a refund under this policy.",
       },
       {
-        heading: "1.4 How to report a defective file",
-        body: "Contact support within seven (7) days of the transaction date at hello@planasia.com (or the channel published on our website). Include proof of payment, your order or listing reference, and a short description of the problem (screenshots or error messages help). We will investigate promptly and either redeliver a corrected file or, if the file cannot be fixed, consider a refund on a case-by-case basis. Late or incomplete requests may be declined.",
-      },
-      {
-        heading: "1.5 Support and building-permit assistance",
-        body: "Separately from refunds, Planasia provides customer support and guidance to help buyers prepare for building-permit applications and use purchased plans with local professionals. Permit guidance is educational and operational support only — it does not guarantee that any authority will approve a permit, and it does not replace licensed local architects or engineers.",
-      },
-      {
-        heading: "1.6 Chargebacks and payment disputes",
-        body: "If you open a payment dispute or chargeback for a completed digital download without a verified file defect under this policy, we may submit evidence to our payment processor (including Stripe), such as order records, download/grant logs, and your checkout acknowledgment of these Terms and Refund Policy. We encourage you to contact support first so we can redeliver a working file where a genuine defect exists.",
-      },
-      {
-        heading: "1.7 Contact and governing framework",
-        body: "Support: hello@planasia.com (or the contact channel published on our website). This policy is administered for buyers in Thailand and is intended to operate consistently with applicable Thai consumer-protection rules for digital goods and with clear disclosure practices expected by payment partners, without limiting any non-waivable rights you may have under law.",
+        heading: "1.4 Contact",
+        body: "Support: hello@planasia.com (or the contact channel published on our website).",
       },
     ],
   },
   th: {
-    title: "1. นโยบายการคืนเงินและการยกเลิก (Refund and Cancellation Policy)",
+    title: "1. นโยบายการคืนสินค้า",
     sections: [
       {
-        heading: "1.1 ขอบเขตและลักษณะสินค้า",
-        body: "สินค้าหลักบนแพลตฟอร์ม Planasia เป็นสินค้าดิจิทัล — ไฟล์แบบบ้าน/แบบแปลนในรูปแบบ PDF (และแพ็กเกจดิจิทัลที่เกี่ยวข้อง) ซึ่งโดยทั่วไปสามารถดาวน์โหลดได้ทันทีหลังจากยืนยันการชำระเงินสำเร็จ นโยบายฉบับนี้ใช้กับการสั่งซื้อแบบบ้านบน Planasia ทั้งหมด แพ็กเกจเอกสารรูปเล่ม (หากเลือก) ใช้หลักการคืนเงินในทำนองเดียวกันเมื่อเริ่มผลิตหรือจัดส่งแล้ว เว้นแต่มีความบกพร่องเฉพาะของชุดเอกสารนั้น",
+        heading: "1.1 ไม่รับคืนหลังดำเนินการคำสั่งซื้อแล้ว",
+        body: "เนื่องจากกฎหมายลิขสิทธิ์และความเป็นไปได้ที่จะมีการทำสำเนาแบบแปลนที่คุณได้รับโดยไม่ได้รับอนุญาต แบบแปลนของเราจึงไม่สามารถส่งคืนเพื่อขอเครดิตหรือคืนเงินได้ไม่ว่าในกรณีใด ๆ หลังจากที่คำสั่งซื้อได้รับการดำเนินการแล้ว โปรดตรวจสอบตัวเลือกของคุณอีกครั้งก่อนสั่งซื้อ",
       },
       {
-        heading: "1.2 นโยบายเข้มงวดหลังดาวน์โหลดสำเร็จ",
-        body: "เมื่อท่านดาวน์โหลดไฟล์แบบแปลนสำเร็จแล้ว จะไม่มีการคืนเงินเพราะเปลี่ยนใจ เลือกแบบผิด เปลี่ยนความชอบในแบบ ยกเลิกโครงการ หรือเหตุผลในลักษณะเดียวกัน ไฟล์ดิจิทัลไม่สามารถ “ส่งคืน” ได้ และการเข้าถึงหลังดาวน์โหลดเสร็จไม่อาจเพิกถอนได้อย่างสมบูรณ์ กรุณาตรวจสอบภาพตัวอย่าง สเปก ราคา และเงื่อนไขสิทธิ์ใช้งานก่อนชำระเงิน ในขั้นตอนชำระเงิน ท่านต้องยืนยันว่าเข้าใจกฎการคืนเงินสำหรับสินค้าดิจิทัลนี้",
+        heading: "1.2 ลักษณะสินค้าดิจิทัล",
+        body: "สินค้าหลักบนแพลตฟอร์ม Plan Asia เป็นไฟล์แบบแปลนดิจิทัล (เช่น PDF และแพ็กเกจเสริมที่เกี่ยวข้อง) ซึ่งโดยทั่วไปจะปลดล็อกสิทธิ์เข้าถึงทันทีหลังชำระเงินสำเร็จ ไฟล์ดิจิทัลไม่สามารถ “ส่งคืน” ได้ในลักษณะเดียวกับสินค้าทางกายภาพ และการเข้าถึงหลังจัดส่งแล้วไม่อาจเพิกถอนได้อย่างสมบูรณ์",
       },
       {
-        heading: "1.3 กรณีที่อาจพิจารณาคืนเงินได้",
-        body: "จะคืนเงินได้เฉพาะเมื่อไฟล์เสียหรือชำรุดจริงและไม่สามารถแก้ไขได้ สถานการณ์ที่มีสิทธิ์จำกัดเฉพาะข้อบกพร่องจากระบบหรือไฟล์ต้นฉบับของเรา เช่น: (ก) ข้อผิดพลาดทางเทคนิคทำให้ท่านไม่ได้รับลิงก์ดาวน์โหลดหรือเข้าถึง PDF ไม่ได้หลังชำระเงินสำเร็จ หรือ (ข) ไฟล์ PDF เสีย ชำรุด ไม่ครบ หรือใช้งานไม่ได้ และตรวจสอบแล้วพบว่าเป็นความบกพร่องจากไฟล์ต้นฉบับ แนวทางแรกคือซ่อมหรือจัดส่งไฟล์ที่ถูกต้องให้ใหม่โดยไม่มีค่าใช้จ่ายเพิ่ม การคืนเงินจะพิจารณาเฉพาะเมื่อไม่สามารถซ่อมหรือจัดส่งใหม่ได้อย่างสมเหตุสมผล ความไม่พอใจในดีไซน์หรือ “ไม่ต้องการแบบนี้แล้ว” หลังดาวน์โหลดสำเร็จ ไม่ถือเป็นไฟล์ชำรุด",
+        heading: "1.3 การสนับสนุนทางเทคนิค (ไม่ใช่การคืนสินค้า)",
+        body: "หากท่านเข้าถึงไฟล์ไม่ได้เนื่องจากปัญหาทางเทคนิคที่ยืนยันได้ว่าเกิดจากระบบของเรา กรุณาติดต่อ hello@planasia.com พร้อมเลขอ้างอิงคำสั่งซื้อและหลักฐานการชำระเงิน เราอาจจัดส่งลิงก์ดาวน์โหลดหรือไฟล์ที่ถูกต้องให้ใหม่ตามความเหมาะสม การจัดส่งใหม่เป็นการแก้ไขปัญหาด้านการใช้งาน — ไม่ใช่การคืนสินค้าเพื่อขอเครดิตหรือคืนเงินตามนโยบายนี้",
       },
       {
-        heading: "1.4 การแจ้งปัญหาไฟล์ชำรุด",
-        body: "ติดต่อฝ่ายสนับสนุนภายใน 7 วัน นับจากวันที่ทำรายการ ที่ hello@planasia.com (หรือช่องทางบนเว็บไซต์) พร้อมหลักฐานการชำระเงิน เลขอ้างอิงคำสั่งซื้อ/รายการสินค้า และคำอธิบายปัญหาโดยย่อ (ภาพหน้าจอหรือข้อความ error จะช่วยได้) เราจะตรวจสอบโดยเร็ว และจัดส่งไฟล์ที่ถูกต้องให้ใหม่ หรือหากไฟล์แก้ไม่ได้ จะพิจารณาคืนเงินเป็นรายกรณี คำขอที่ล่าช้าหรือข้อมูลไม่ครบอาจไม่ได้รับการพิจารณา",
-      },
-      {
-        heading: "1.5 การสนับสนุนและคำแนะนำด้านใบอนุญาตก่อสร้าง",
-        body: "นอกเหนือจากเรื่องคืนเงิน Planasia ให้บริการลูกค้าและคำแนะนำเพื่อช่วยผู้ซื้อเตรียมความพร้อมยื่นขออนุญาตก่อสร้าง และใช้แบบที่ซื้อร่วมกับผู้ประกอบวิชาชีพท้องถิ่น คำแนะนำด้านใบอนุญาตเป็นการสนับสนุนเชิงข้อมูลและการใช้งานเท่านั้น — ไม่การันตีว่าหน่วยงานจะอนุมัติ และไม่ทดแทนสถาปนิกหรือวิศวกรท้องถิ่นที่มีใบอนุญาต",
-      },
-      {
-        heading: "1.6 การโต้แย้งการชำระเงิน (Chargeback)",
-        body: "หากท่านเปิดข้อพิพาทหรือ chargeback สำหรับการดาวน์โหลดดิจิทัลที่เสร็จสมบูรณ์โดยไม่มีไฟล์ชำรุดที่ยืนยันตามนโยบายนี้ เราอาจส่งหลักฐานไปยังผู้ให้บริการชำระเงิน (รวมถึง Stripe) เช่น บันทึกคำสั่งซื้อ บันทึกการดาวน์โหลด/สิทธิ์ และคำยืนยันของท่านตอนชำระเงิน เราขอให้ติดต่อฝ่ายสนับสนุนก่อนเสมอ เพื่อให้เราจัดส่งไฟล์ที่ใช้งานได้ในกรณีที่มีความบกพร่องจริง",
-      },
-      {
-        heading: "1.7 ช่องทางติดต่อและกรอบกฎหมาย",
-        body: "ฝ่ายสนับสนุน: hello@planasia.com (หรือช่องทางที่ประกาศบนเว็บไซต์) นโยบายนี้จัดทำสำหรับผู้ซื้อในประเทศไทย มุ่งให้สอดคล้องกับกฎหมายคุ้มครองผู้บริโภคไทยเกี่ยวกับสินค้าดิจิทัล และการเปิดเผยข้อมูลที่ชัดเจนตามแนวทางของพันธมิตรการชำระเงิน โดยไม่ตัดสิทธิ์ใด ๆ ที่กฎหมายห้ามสละ",
+        heading: "1.4 ช่องทางติดต่อ",
+        body: "ฝ่ายสนับสนุน: hello@planasia.com (หรือช่องทางที่ประกาศบนเว็บไซต์)",
       },
     ],
   },
   hi: {
-    title: "1. Refund and Cancellation Policy",
+    title: "1. Return Policy",
     sections: [
       {
-        heading: "Digital PDF products",
-        body: "After a successful blueprint download, Planasia does not refund for change of mind. Refunds apply only if the file is genuinely corrupted/defective and cannot be fixed. Contact support within 7 days with payment proof. We also offer permit-application guidance (not a guarantee).",
+        heading: "No returns after processing",
+        body: "Because of copyright law and the risk of unauthorized copying, Planasia house plans cannot be returned for credit or refund in any case after an order is processed. Please review options carefully before ordering.",
       },
     ],
   },
   vi: {
-    title: "1. Chính sách hoàn tiền và hủy đơn",
+    title: "1. Chính sách đổi trả",
     sections: [
       {
-        heading: "Sản phẩm PDF số",
-        body: "Sau khi tải bản vẽ thành công, Planasia không hoàn tiền vì đổi ý. Chỉ hoàn khi tệp thực sự hỏng/lỗi và không sửa được. Liên hệ hỗ trợ trong 7 ngày kèm chứng từ. Chúng tôi cũng hướng dẫn xin phép xây (không bảo đảm duyệt).",
+        heading: "Không hoàn trả sau khi xử lý đơn",
+        body: "Do luật bản quyền và rủi ro sao chép trái phép, bản vẽ Planasia không thể trả lại để nhận tín dụng hoặc hoàn tiền trong mọi trường hợp sau khi đơn hàng được xử lý. Vui lòng kiểm tra lựa chọn trước khi đặt hàng.",
       },
     ],
   },
@@ -391,7 +366,7 @@ export const SHIPPING_CONTENT: LegalContentMap = {
       },
       {
         heading: "4.5 Delivery or access issues",
-        body: "If you do not receive a digital download link, cannot access your files after payment, or have questions about the delivery of a supplementary three-set document order, contact our support team through the contact channels published on the website at any time. Please include your order reference and proof of payment so we can investigate and assist promptly. Technical delivery failures attributable to our systems are also addressed under our Refund and Cancellation Policy.",
+        body: "If you do not receive a digital download link, cannot access your files after payment, or have questions about the delivery of a supplementary three-set document order, contact our support team through the contact channels published on the website at any time. Please include your order reference and proof of payment so we can investigate and assist promptly. Technical delivery failures attributable to our systems may be addressed under our Return Policy (redelivery support — not a return for credit).",
       },
       {
         heading: "4.6 Contact",
@@ -420,7 +395,7 @@ export const SHIPPING_CONTENT: LegalContentMap = {
       },
       {
         heading: "4.5 ปัญหาการจัดส่งหรือการรับสินค้า",
-        body: "หากท่านไม่ได้รับลิงก์ดาวน์โหลดไฟล์ดิจิทัล ไม่สามารถเข้าถึงไฟล์หลังชำระเงิน หรือมีข้อสงสัยเกี่ยวกับการจัดส่งเอกสารชุดเสริม 3 ชุด กรุณาติดต่อทีมสนับสนุนของเราได้ตลอดเวลาผ่านช่องทางติดต่อบนเว็บไซต์ พร้อมระบุเลขอ้างอิงคำสั่งซื้อและหลักฐานการชำระเงิน เพื่อให้เราตรวจสอบและช่วยเหลือท่านอย่างรวดเร็ว กรณีปัญหาทางเทคนิคด้านการจัดส่งที่เกิดจากระบบของเรา อาจอยู่ในขอบเขตนโยบายการคืนเงินและการยกเลิกด้วย",
+        body: "หากท่านไม่ได้รับลิงก์ดาวน์โหลดไฟล์ดิจิทัล ไม่สามารถเข้าถึงไฟล์หลังชำระเงิน หรือมีข้อสงสัยเกี่ยวกับการจัดส่งเอกสารชุดเสริม 3 ชุด กรุณาติดต่อทีมสนับสนุนของเราได้ตลอดเวลาผ่านช่องทางติดต่อบนเว็บไซต์ พร้อมระบุเลขอ้างอิงคำสั่งซื้อและหลักฐานการชำระเงิน เพื่อให้เราตรวจสอบและช่วยเหลือท่านอย่างรวดเร็ว กรณีปัญหาทางเทคนิคด้านการจัดส่งที่เกิดจากระบบของเรา อาจได้รับการช่วยเหลือภายใต้นโยบายการคืนสินค้า (การจัดส่งใหม่ — ไม่ใช่การคืนเพื่อขอเครดิต)",
       },
       {
         heading: "4.6 ช่องทางติดต่อ",
@@ -443,6 +418,80 @@ export const SHIPPING_CONTENT: LegalContentMap = {
       {
         heading: "Tóm tắt",
         body: "Bản vẽ PDF chính được mở trên trang thành công và gửi email sau thanh toán. Bộ tài liệu bổ sung 3 bộ (nếu chọn) giao theo kênh bưu điện hoặc số đã thỏa thuận. Liên hệ hello@planasia.com nếu không nhận được quyền truy cập.",
+      },
+    ],
+  },
+};
+
+/**
+ * Policy 5 — Construction requirements and building codes (Plan Asia)
+ */
+export const CONSTRUCTION_CONTENT: LegalContentMap = {
+  en: {
+    title: "5. Construction Requirements and Building Codes",
+    sections: [
+      {
+        heading: "5.1 General design standards vs local law",
+        body: "Purchased plans are intended to follow general design principles and commonly accepted international practice, but may not cover every planning law, zoning rule, or local requirement in the area where the customer will build.",
+      },
+      {
+        heading: "5.2 Buyer and contractor responsibility",
+        body: "It is the buyer’s and/or contractor’s responsibility to ensure that the structure is built to comply with building-control laws and the local requirements of your area. The customer agrees to indemnify and hold harmless Plan Asia, its officers, employees, and agents from any claim, loss, or liability arising from a plan’s failure to meet local laws or regulations, or from any breach of agreement by the customer or the customer’s contractors in whole or in part.",
+      },
+      {
+        heading: "5.3 Building systems and local adaptation",
+        body: "Because local rules and construction methods vary by area, planning for certain systems (such as air-conditioning and actual plumbing) may require adapting the plans to your site. For that reason, such systems may not be included in our standard plans. You should meet a local contractor or engineer to select and plan the systems best suited to your area.",
+      },
+      {
+        heading: "5.4 Local professional review and extra costs",
+        body: "Some municipalities or local authorities may require plan review by a licensed architect or structural engineer in your area. After purchasing plans from Plan Asia, the customer is responsible for any additional costs incurred to comply with local or other requirements for construction.",
+      },
+      {
+        heading: "5.5 Related policies",
+        body: "Copyright and the Construction License are described in our Terms of Service. Our Return Policy explains that plans cannot be returned for credit or refund after an order is processed.",
+      },
+    ],
+  },
+  th: {
+    title: "5. ข้อกำหนดด้านการก่อสร้างและรหัสอาคาร",
+    sections: [
+      {
+        heading: "5.1 มาตรฐานการออกแบบทั่วไปกับกฎหมายท้องถิ่น",
+        body: "แบบแปลนที่ซื้อจะต้องเป็นไปตามหลักการออกแบบและมาตรฐานสากลทั่วไป แต่อาจไม่ครอบคลุมกฎหมายและข้อบังคับผังเมืองหรือข้อกำหนดท้องถิ่นในแต่ละพื้นที่ที่ลูกค้าจะทำการก่อสร้าง",
+      },
+      {
+        heading: "5.2 ความรับผิดชอบของผู้ซื้อและผู้รับเหมา",
+        body: "เป็นความรับผิดชอบของผู้ซื้อและ/หรือผู้รับเหมาที่จะต้องตรวจสอบให้แน่ใจว่าโครงสร้างนั้นสร้างขึ้นเพื่อให้เป็นไปตามกฎหมายควบคุมอาคารและข้อกำหนดของท้องถิ่นคุณ ลูกค้าตกลงที่จะชดใช้และปกป้องบริษัท Plan Asia, ผู้บริหาร, พนักงาน และตัวแทนของบริษัท จากการเรียกร้อง ความสูญเสีย หรือความรับผิดใด ๆ ที่เกิดจากความล้มเหลวของแบบแปลนในการปฏิบัติตามกฎหมายหรือข้อบังคับท้องถิ่น หรือจากการละเมิดข้อตกลงใด ๆ ที่มาจากลูกค้าหรือผู้รับเหมาของลูกค้าทั้งหมดหรือบางส่วน",
+      },
+      {
+        heading: "5.3 งานระบบและการปรับให้เข้ากับพื้นที่",
+        body: "เนื่องจากข้อกำหนดและระเบียบข้อบังคับในท้องถิ่น รวมถึงวิธีการก่อสร้างที่แตกต่างกันไปในแต่ละพื้นที่ การวางแผนงานระบบบางอย่าง (เช่น ระบบปรับอากาศและระบบประปาจริง) อาจจำเป็นต้องปรับแผนให้เข้ากับพื้นที่ของคุณ ด้วยเหตุนี้ ระบบงานระบบดังกล่าวอาจไม่รวมอยู่ในแบบแปลนมาตรฐานของเรา คุณควรนัดพบกับผู้รับเหมาหรือวิศวกรท้องถิ่นเพื่อเลือกและวางแผนระบบที่เหมาะสมที่สุดสำหรับพื้นที่ของคุณ",
+      },
+      {
+        heading: "5.4 การตรวจสอบโดยผู้ประกอบวิชาชีพท้องถิ่นและค่าใช้จ่ายเพิ่มเติม",
+        body: "เทศบาลหรือหน่วยงานท้องถิ่นบางแห่งอาจกำหนดให้มีการตรวจสอบแผนโดยสถาปนิกหรือวิศวกรโครงสร้างที่ได้รับใบอนุญาตในพื้นที่ของคุณ หลังจากซื้อแบบแปลนจาก Plan Asia แล้ว ลูกค้าต้องรับผิดชอบค่าใช้จ่ายเพิ่มเติมที่เกิดขึ้นจากการปฏิบัติตามข้อกำหนดของท้องถิ่นหรือข้อกำหนดอื่น ๆ สำหรับการก่อสร้าง",
+      },
+      {
+        heading: "5.5 นโยบายที่เกี่ยวข้อง",
+        body: "ข้อมูลลิขสิทธิ์และใบอนุญาตในการก่อสร้าง (Construction License) อยู่ในเงื่อนไขและข้อตกลงการใช้บริการ นโยบายการคืนสินค้าอธิบายว่าแบบแปลนไม่สามารถส่งคืนเพื่อขอเครดิตหรือคืนเงินได้หลังจากคำสั่งซื้อได้รับการดำเนินการแล้ว",
+      },
+    ],
+  },
+  hi: {
+    title: "5. Construction Requirements and Building Codes",
+    sections: [
+      {
+        heading: "Summary",
+        body: "Plans follow general design standards but may not meet every local code. Buyers/contractors must ensure local compliance and indemnify Plan Asia. MEP systems may need local adaptation. Local stamped review and related costs are the customer’s responsibility after purchase.",
+      },
+    ],
+  },
+  vi: {
+    title: "5. Yêu cầu xây dựng và quy chuẩn xây dựng",
+    sections: [
+      {
+        heading: "Tóm tắt",
+        body: "Bản vẽ theo nguyên tắc thiết kế chung nhưng có thể không đáp ứng mọi quy định địa phương. Người mua/nhà thầu chịu trách nhiệm tuân thủ luật địa phương và bồi hoàn Plan Asia. Hệ thống MEP có thể cần điều chỉnh tại chỗ. Chi phí thẩm định/đáp ứng yêu cầu địa phương do khách hàng chịu sau khi mua.",
       },
     ],
   },

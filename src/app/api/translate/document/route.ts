@@ -27,7 +27,7 @@ import { analyzePdfTextLayer } from "@/lib/pdf/text-layer";
 import {
   filenameFromUrl,
   getListingBlueprintUrls,
-} from "@/lib/store/listing-blueprints";
+} from "@/lib/store/listing-assets";
 import { fetchAssetBytes } from "@/lib/supabase/private-assets";
 import {
   isDocumentLanguage,

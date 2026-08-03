@@ -58,7 +58,7 @@ export function BrandLogo({
       ? "border-white/90"
       : "border-white";
 
-  const wordmarkClass = `font-brand whitespace-nowrap text-[17px] font-light uppercase leading-none tracking-[0.16em] sm:text-[18px] md:text-[19px] md:tracking-[0.18em] ${textClass}`;
+  const wordmarkClass = `font-brand whitespace-nowrap text-[17px] font-semibold uppercase leading-none tracking-[0.16em] sm:text-[18px] md:text-[19px] md:tracking-[0.18em] ${textClass}`;
 
   return (
     <Link

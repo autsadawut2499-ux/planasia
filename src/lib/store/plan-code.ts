@@ -32,6 +32,41 @@ export function planPrefixForStyle(style: string | null | undefined): string {
   return cleaned.slice(0, 3) || "CUS";
 }
 
+/** English style label used in auto house names (e.g. Modern, Minimal). */
+export function styleLabelForListingName(style: string | null | undefined): string {
+  const key = (style ?? "custom").trim().toLowerCase();
+  const known = STYLES.find((s) => s.id === key);
+  const en = known?.en ?? "Custom";
+  // Prefer the short head before a slash (e.g. "Nordic / Scandinavian" → "Nordic").
+  return en.split(" / ")[0]?.trim() || "Custom";
+}
+
+/**
+ * Uniform storefront title: "{PlanCode} {Style}" e.g. "MOD-001 Modern".
+ * English only — designers do not enter a manual name; the server assigns this on save.
+ */
+export function buildAutoListingName(
+  style: string | null | undefined,
+  planCode: string | null | undefined,
+): string {
+  const label = styleLabelForListingName(style);
+  const code = (planCode ?? "").trim().toUpperCase();
+  return code ? `${code} ${label}` : label;
+}
+
+/** Resolve the canonical English display name for a listing. */
+export function listingDisplayName(listing: {
+  name?: string | null;
+  style?: string | null;
+  planCode?: string | null;
+  planId?: string | null;
+}): string {
+  const code = (listing.planCode || listing.planId || "").trim();
+  if (code) return buildAutoListingName(listing.style, code);
+  const fallback = (listing.name ?? "").trim();
+  return fallback || styleLabelForListingName(listing.style);
+}
+
 /**
  * Atomically allocate the next code for a style (MOD-001, MOD-002, …).
  * Falls back to a UUID-shaped token only if Supabase is unavailable — never

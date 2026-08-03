@@ -26,9 +26,13 @@ interface StoreCartContextValue {
   addons: UpsellAddonId[];
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
-  addItem: (listing: StoreListing) => void;
+  addItem: (
+    listing: StoreListing,
+    opts?: { price?: number; format?: "pdf" | "cad"; addons?: UpsellAddonId[] },
+  ) => void;
   removeItem: (listingId: string) => void;
   toggleAddon: (addon: UpsellAddonId) => void;
+  setAddons: (addons: UpsellAddonId[]) => void;
   clearCart: () => void;
   isInCart: (listingId: string) => boolean;
   itemCount: number;
@@ -70,15 +74,34 @@ export function StoreCartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, addons }));
   }, [items, addons, hydrated]);
 
-  const addItem = useCallback((listing: StoreListing) => {
-    // Hard lock — pending listings are browse-only until admin Approve.
-    if (!isListingPurchasable(listing)) return;
-    setItems((prev) => {
-      if (prev.some((i) => i.listingId === listing.id)) return prev;
-      return [...prev, listingToCartItem(listing)];
-    });
-    setDrawerOpen(true);
-  }, []);
+  const addItem = useCallback(
+    (
+      listing: StoreListing,
+      opts?: { price?: number; format?: "pdf" | "cad"; addons?: UpsellAddonId[] },
+    ) => {
+      // Hard lock — pending listings are browse-only until admin Approve.
+      if (!isListingPurchasable(listing)) return;
+      setItems((prev) => {
+        if (prev.some((i) => i.listingId === listing.id)) return prev;
+        return [
+          ...prev,
+          listingToCartItem(listing, {
+            price: opts?.price,
+            format: opts?.format,
+          }),
+        ];
+      });
+      if (opts?.addons?.length) {
+        setAddons((prev) => {
+          const next = new Set(prev);
+          for (const id of opts.addons!) next.add(id);
+          return [...next];
+        });
+      }
+      setDrawerOpen(true);
+    },
+    [],
+  );
 
   const removeItem = useCallback((listingId: string) => {
     setItems((prev) => prev.filter((i) => i.listingId !== listingId));
@@ -88,6 +111,10 @@ export function StoreCartProvider({ children }: { children: ReactNode }) {
     setAddons((prev) =>
       prev.includes(addon) ? prev.filter((a) => a !== addon) : [...prev, addon],
     );
+  }, []);
+
+  const replaceAddons = useCallback((next: UpsellAddonId[]) => {
+    setAddons(next.filter(isUpsellAddonId));
   }, []);
 
   const clearCart = useCallback(() => {
@@ -111,12 +138,24 @@ export function StoreCartProvider({ children }: { children: ReactNode }) {
       addItem,
       removeItem,
       toggleAddon,
+      setAddons: replaceAddons,
       clearCart,
       isInCart,
       itemCount: items.length,
       pricing,
     }),
-    [items, addons, drawerOpen, addItem, removeItem, toggleAddon, clearCart, isInCart, pricing],
+    [
+      items,
+      addons,
+      drawerOpen,
+      addItem,
+      removeItem,
+      toggleAddon,
+      replaceAddons,
+      clearCart,
+      isInCart,
+      pricing,
+    ],
   );
 
   return <StoreCartContext.Provider value={value}>{children}</StoreCartContext.Provider>;

@@ -5,7 +5,7 @@ import {
   supabaseUpsertVendorListing,
 } from "@/lib/supabase/store-listings";
 import { getAllListingsForSitemap } from "@/lib/store/db";
-import { allocatePlanCode } from "@/lib/store/plan-code";
+import { allocatePlanCode, buildAutoListingName } from "@/lib/store/plan-code";
 import { buildListingSlug, ensureUniqueSlug } from "@/lib/seo/slug";
 import { createRandomId } from "@/lib/random-id";
 import type { VendorListing } from "@/lib/store/listing-types";
@@ -20,11 +20,36 @@ function num(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function fileList(list: unknown, legacy: unknown): string[] {
+/** Delivery docs: at most one URL per field (blueprint / CAD / BOQ / calc). */
+function fileList(list: unknown, legacy?: unknown): string[] {
   const urls = Array.isArray(list) ? list.map((u) => String(u).trim()).filter(Boolean) : [];
-  if (urls.length > 0) return Array.from(new Set(urls));
+  if (urls.length > 0) return Array.from(new Set(urls)).slice(0, 1);
   const single = legacy ? String(legacy).trim() : "";
   return single ? [single] : [];
+}
+
+function urlExt(url: string): string {
+  try {
+    const path = new URL(url).pathname;
+    return path.split(".").pop()?.toLowerCase() ?? "";
+  } catch {
+    const clean = url.split("?")[0] ?? url;
+    return clean.split(".").pop()?.toLowerCase() ?? "";
+  }
+}
+
+function assertSinglePdf(urls: string[], labelTh: string): string | null {
+  if (urls.length === 0) return null;
+  if (urls.length > 1) return `${labelTh} อัปโหลดได้เพียง 1 ไฟล์`;
+  if (urlExt(urls[0]) !== "pdf") return `${labelTh} ต้องเป็นไฟล์ .pdf เท่านั้น`;
+  return null;
+}
+
+function assertSingleDwg(urls: string[], labelTh: string): string | null {
+  if (urls.length === 0) return null;
+  if (urls.length > 1) return `${labelTh} อัปโหลดได้เพียง 1 ไฟล์`;
+  if (urlExt(urls[0]) !== "dwg") return `${labelTh} ต้องเป็นไฟล์ .dwg เท่านั้น`;
+  return null;
 }
 
 /**
@@ -109,9 +134,7 @@ export async function createOrUpdateVendorListing(
   rawBody: Record<string, unknown>,
 ): Promise<CreateVendorListingResult> {
   const body = normalizeListingUploadBody(rawBody);
-  const name = String(body.name ?? "").trim();
   const image = String(body.image ?? "").trim();
-  if (!name) return { ok: false, status: 400, error: "name is required" };
   if (!image) return { ok: false, status: 400, error: "A render image is required" };
 
   const editingId = body.id ? String(body.id) : null;
@@ -138,6 +161,9 @@ export async function createOrUpdateVendorListing(
     id = createRandomId();
     planCode = await allocatePlanCode(style);
   }
+
+  // Uniform naming: House Code + Style (e.g. "MIN-002 Minimal"). No manual title.
+  const name = buildAutoListingName(style, planCode);
 
   const floors = (num(body.floors, 1) === 2 ? 2 : 1) as 1 | 2;
   const beds = Math.max(0, Math.round(num(body.beds, 0)));
@@ -167,13 +193,56 @@ export async function createOrUpdateVendorListing(
   }
   const blueprintPdfUrls = fileList(body.blueprintPdfUrls, body.blueprintPdfUrl);
   const boqFileUrls = fileList(body.boqFileUrls, body.boqFileUrl);
+  const cadFileUrls = fileList(body.cadFileUrls);
+  const calcSheetUrls = fileList(body.calcSheetUrls);
   if (blueprintPdfUrls.length === 0) {
     return {
       ok: false,
       status: 400,
       error: "Blueprint PDF required",
-      message: "กรุณาอัปโหลดไฟล์แบบแปลน PDF อย่างน้อย 1 ไฟล์",
+      message: "กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF (1 ไฟล์)",
     };
+  }
+  const fileTypeError =
+    assertSinglePdf(blueprintPdfUrls, "แบบแปลนหลัก") ||
+    assertSingleDwg(cadFileUrls, "ไฟล์ AutoCAD") ||
+    assertSinglePdf(boqFileUrls, "ไฟล์ BOQ") ||
+    assertSinglePdf(calcSheetUrls, "รายการคำนวณ");
+  if (fileTypeError) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Invalid delivery file",
+      message: fileTypeError,
+    };
+  }
+
+  let boqPrice: number | undefined;
+  if (body.boqPrice != null && body.boqPrice !== "") {
+    const n = Number(body.boqPrice);
+    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      return {
+        ok: false,
+        status: 400,
+        error: "Invalid BOQ price",
+        message: "ราคา BOQ ต้องเป็นจำนวนเต็มไม่ติดลบ (บาท)",
+      };
+    }
+    boqPrice = n;
+  }
+
+  let calcPrice: number | undefined;
+  if (body.calcPrice != null && body.calcPrice !== "") {
+    const n = Number(body.calcPrice);
+    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      return {
+        ok: false,
+        status: 400,
+        error: "Invalid calc price",
+        message: "ราคารายการคำนวณต้องเป็นจำนวนเต็มไม่ติดลบ (บาท)",
+      };
+    }
+    calcPrice = n;
   }
 
   const all = await getAllListingsForSitemap();
@@ -244,6 +313,12 @@ export async function createOrUpdateVendorListing(
     boqFileUrl: boqFileUrls[0],
     blueprintPdfUrls,
     boqFileUrls,
+    cadFileUrls,
+    calcSheetUrls,
+    boqPrice,
+    calcPrice,
+    hasCadFiles: cadFileUrls.length > 0,
+    hasCalcSheets: calcSheetUrls.length > 0,
     permitReady: Boolean(body.permitReady),
     boqComplete: Boolean(body.boqComplete),
     contractConsent: Boolean(body.contractConsent),
