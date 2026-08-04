@@ -12,6 +12,7 @@ type PurchaseDownload = {
   token: string;
   planId: string;
   label: string;
+  filename?: string;
   downloadUrl: string;
   fileKind: string;
 };
@@ -105,18 +106,22 @@ export default function PurchasesPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-[#1e3a5f]">
-                    {d.label}
+                    {d.filename || d.label}
                   </p>
                   <p className="mt-0.5 text-[11px] text-text-muted">
                     {d.planId}
+                    {d.fileKind ? ` · ${d.fileKind}` : ""}
                   </p>
                 </div>
                 <a
                   href={d.downloadUrl}
                   className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1e40af] px-4 text-sm font-semibold text-white hover:bg-[#1e3a8a]"
+                  download={d.filename}
                 >
                   <Download className="h-4 w-4" />
-                  {thai ? "ดาวน์โหลด" : "Download"}
+                  {d.label?.startsWith("Download ")
+                    ? d.label
+                    : `Download ${d.filename || d.planId}`}
                 </a>
               </li>
             ))}

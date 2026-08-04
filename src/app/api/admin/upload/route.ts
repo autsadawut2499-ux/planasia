@@ -3,126 +3,96 @@ import { requireAdminSession } from "@/lib/admin/auth";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   extractSiteAssetPath,
+  formatMb,
   getSiteAssetPublicUrl,
   siteAssetPath,
   SITE_ASSETS_BUCKET,
+  SITE_ASSETS_DOC_MAX_BYTES,
+  SITE_ASSETS_IMAGE_MAX_BYTES,
 } from "@/lib/supabase/site-assets";
+import {
+  isSensitiveUploadKind,
+  toPrivateAssetRef,
+  VENDOR_PRIVATE_BUCKET,
+} from "@/lib/supabase/private-assets";
+import {
+  bufferLooksLikePdf,
+  looksLikeCalcDoc,
+  looksLikeDwg,
+  resolveDocumentContentType,
+  resolveImageContentType,
+} from "@/lib/uploads/mime";
 
-const MAX_BYTES = 10 * 1024 * 1024;
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-const ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/jpg",
-  "image/pjpeg",
-  "image/png",
-  "image/webp",
-  "image/svg+xml",
-  "image/gif",
-]);
+const IMAGE_MAX = SITE_ASSETS_IMAGE_MAX_BYTES;
+const DOC_MAX = SITE_ASSETS_DOC_MAX_BYTES;
 
-const EXT_TO_MIME: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-  svg: "image/svg+xml",
-};
+const DOC_KINDS = new Set(["pdf", "document", "boq", "cad", "calc"]);
+const IMAGE_KINDS = new Set(["cover", "render", "floorplan", "general", "image"]);
 
-function resolveContentType(file: File): string | null {
-  const raw = (file.type || "").toLowerCase().trim();
-  if (raw && ALLOWED_TYPES.has(raw)) {
-    return raw === "image/jpg" || raw === "image/pjpeg" ? "image/jpeg" : raw;
-  }
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  return EXT_TO_MIME[ext] ?? null;
+function isDocKind(kind: string): boolean {
+  return DOC_KINDS.has(kind);
 }
 
+function docKindError(kind: string): string {
+  if (kind === "cad") return "อัปโหลดได้เฉพาะไฟล์ AutoCAD (.dwg)";
+  if (kind === "calc" || kind === "pdf" || kind === "document" || kind === "boq") {
+    return "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)";
+  }
+  return "รูปแบบรูปภาพไม่รองรับ (ใช้ JPG, PNG, WEBP หรือ GIF)";
+}
+
+function resolveContentType(
+  kind: string,
+  file: { name: string; type?: string },
+): string | null {
+  return isDocKind(kind)
+    ? resolveDocumentContentType(file)
+    : resolveImageContentType(file);
+}
+
+function bucketForKind(kind: string): string {
+  return isSensitiveUploadKind(kind) ? VENDOR_PRIVATE_BUCKET : SITE_ASSETS_BUCKET;
+}
+
+function persistUrlFor(kind: string, storagePath: string): string {
+  if (isSensitiveUploadKind(kind)) {
+    return toPrivateAssetRef(VENDOR_PRIVATE_BUCKET, storagePath);
+  }
+  return getSiteAssetPublicUrl(storagePath);
+}
+
+function clientFacingUrl(kind: string, storagePath: string): string {
+  const base = persistUrlFor(kind, storagePath);
+  if (isSensitiveUploadKind(kind) || !base.startsWith("http")) return base;
+  return `${base}${base.includes("?") ? "&" : "?"}v=${Date.now()}`;
+}
+
+/**
+ * POST multipart → proxy upload (images / small files).
+ * POST JSON `{ mode: "sign", kind, fileName, sizeBytes }` → signed upload URL for large docs.
+ *
+ * Docs (pdf/cad/boq/calc) → private `vendor-private` (≤100MB).
+ * Images → public `site-assets` (≤10MB).
+ */
 export async function POST(request: NextRequest) {
   try {
-    await requireAdminSession();
+    const admin = await requireAdminSession();
     if (!isSupabaseConfigured()) {
-      console.error("[admin/upload] Supabase is not configured");
       return NextResponse.json(
         { error: "Supabase not configured — ตรวจ NEXT_PUBLIC_SUPABASE_URL และ SERVICE_ROLE_KEY" },
         { status: 503 },
       );
     }
 
-    // multipart/form-data — browser sets boundary automatically via FormData
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const category = (formData.get("category") as string)?.trim() || "general";
-
-    if (!(file instanceof File)) {
-      console.error("[admin/upload] Missing file field in FormData");
-      return NextResponse.json({ error: "file is required (multipart field name: file)" }, { status: 400 });
+    const contentTypeHeader = request.headers.get("content-type") || "";
+    if (contentTypeHeader.includes("application/json")) {
+      return signUpload(request, admin.email);
     }
 
-    const contentType = resolveContentType(file);
-    if (!contentType) {
-      console.error("[admin/upload] Unsupported type", {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      });
-      return NextResponse.json(
-        {
-          error: `รูปแบบไฟล์ไม่รองรับ (${file.type || "unknown"}). ใช้ JPG, PNG, WEBP หรือ GIF`,
-        },
-        { status: 400 },
-      );
-    }
-
-    if (file.size <= 0) {
-      return NextResponse.json({ error: "ไฟล์ว่างเปล่า" }, { status: 400 });
-    }
-
-    if (file.size > MAX_BYTES) {
-      console.error("[admin/upload] File too large", { name: file.name, size: file.size });
-      return NextResponse.json(
-        { error: `ไฟล์ใหญ่เกินไป (${(file.size / 1024 / 1024).toFixed(1)}MB) — สูงสุด 10MB` },
-        { status: 400 },
-      );
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const storagePath = siteAssetPath(category, file.name);
-
-    const { error } = await getSupabaseAdmin()
-      .storage.from(SITE_ASSETS_BUCKET)
-      .upload(storagePath, buffer, {
-        contentType,
-        upsert: true,
-        // Short CDN/browser TTL — admin often replaces covers; paths are unique but keep TTL low.
-        cacheControl: "60",
-      });
-
-    if (error) {
-      console.error("[admin/upload] Storage upload failed", {
-        storagePath,
-        bucket: SITE_ASSETS_BUCKET,
-        message: error.message,
-      });
-      throw new Error(`อัปโหลด Storage ไม่สำเร็จ: ${error.message}`);
-    }
-
-    const publicUrl = getSiteAssetPublicUrl(storagePath);
-    console.info("[admin/upload] OK", {
-      storagePath,
-      publicUrl,
-      mimeType: contentType,
-      sizeBytes: file.size,
-      category,
-    });
-
-    return NextResponse.json({
-      ok: true,
-      storagePath,
-      publicUrl,
-      mimeType: contentType,
-      sizeBytes: file.size,
-    });
+    return proxyUpload(request, admin.email);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed";
     console.error("[admin/upload] Error", message);
@@ -131,6 +101,185 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+async function signUpload(request: NextRequest, adminEmail: string) {
+  const body = (await request.json()) as {
+    mode?: string;
+    kind?: string;
+    fileName?: string;
+    sizeBytes?: number;
+    contentType?: string;
+  };
+
+  if (body.mode !== "sign") {
+    return NextResponse.json({ error: "mode ต้องเป็น sign" }, { status: 400 });
+  }
+
+  const kind = (body.kind || "").trim().toLowerCase();
+  const fileName = (body.fileName || "").trim();
+  const sizeBytes = Number(body.sizeBytes ?? 0);
+
+  if (!kind || (!DOC_KINDS.has(kind) && !IMAGE_KINDS.has(kind))) {
+    return NextResponse.json({ error: "ชนิดไฟล์ไม่ถูกต้อง" }, { status: 400 });
+  }
+  if (!fileName) {
+    return NextResponse.json({ error: "ต้องระบุชื่อไฟล์" }, { status: 400 });
+  }
+
+  const maxBytes = isDocKind(kind) ? DOC_MAX : IMAGE_MAX;
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+    return NextResponse.json({ error: "ขนาดไฟล์ไม่ถูกต้อง" }, { status: 400 });
+  }
+  if (sizeBytes > maxBytes) {
+    return NextResponse.json(
+      {
+        error: `ไฟล์ใหญ่เกินไป (${(sizeBytes / 1024 / 1024).toFixed(1)}MB) — สูงสุด ${formatMb(maxBytes)}MB`,
+      },
+      { status: 400 },
+    );
+  }
+
+  const resolved = resolveContentType(kind, {
+    name: fileName,
+    type: body.contentType,
+  });
+  if (!resolved) {
+    return NextResponse.json({ error: docKindError(kind) }, { status: 400 });
+  }
+
+  const safeAdmin = adminEmail.replace(/[^a-zA-Z0-9_-]/g, "_") || "admin";
+  const storagePath = isDocKind(kind)
+    ? siteAssetPath(`admin/${safeAdmin}/${kind}`, fileName)
+    : siteAssetPath(`listings/${kind === "image" ? "general" : kind}`, fileName);
+  const bucket = bucketForKind(kind);
+
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(bucket)
+    .createSignedUploadUrl(storagePath, { upsert: true });
+
+  if (error || !data) {
+    console.error("[admin/upload] createSignedUploadUrl failed", error?.message);
+    return NextResponse.json(
+      { error: error?.message || "สร้างลิงก์อัปโหลดไม่สำเร็จ" },
+      { status: 500 },
+    );
+  }
+
+  const path = data.path || storagePath;
+  const publicUrl = clientFacingUrl(kind, path);
+
+  return NextResponse.json({
+    mode: "sign",
+    storagePath: path,
+    token: data.token,
+    signedUrl: data.signedUrl,
+    publicUrl,
+    persistUrl: publicUrl,
+    private: isSensitiveUploadKind(kind),
+    contentType: resolved,
+    maxBytes,
+    kind,
+  });
+}
+
+async function proxyUpload(request: NextRequest, adminEmail: string) {
+  const formData = await request.formData();
+  const file = formData.get("file");
+  const kindRaw = ((formData.get("kind") as string) || "").trim().toLowerCase();
+  const category =
+    (formData.get("category") as string)?.trim() ||
+    (kindRaw && IMAGE_KINDS.has(kindRaw) ? `listings/${kindRaw}` : "general");
+
+  // Default: image upload (backward compatible with ImageUploadField).
+  const kind = kindRaw || "image";
+  const doc = isDocKind(kind);
+
+  if (!(file instanceof File)) {
+    return NextResponse.json(
+      { error: "file is required (multipart field name: file)" },
+      { status: 400 },
+    );
+  }
+
+  const contentType = resolveContentType(kind, file);
+  if (!contentType) {
+    return NextResponse.json({ error: docKindError(kind) }, { status: 400 });
+  }
+
+  const maxBytes = doc ? DOC_MAX : IMAGE_MAX;
+  if (file.size <= 0) {
+    return NextResponse.json({ error: "ไฟล์ว่างเปล่า" }, { status: 400 });
+  }
+  if (file.size > maxBytes) {
+    return NextResponse.json(
+      {
+        error: `ไฟล์ใหญ่เกินไป (${(file.size / 1024 / 1024).toFixed(1)}MB) — สูงสุด ${formatMb(maxBytes)}MB`,
+      },
+      { status: 400 },
+    );
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  if (
+    (kind === "pdf" || kind === "document" || kind === "boq" || kind === "calc") &&
+    !bufferLooksLikePdf(buffer)
+  ) {
+    return NextResponse.json(
+      { error: "เนื้อหาไฟล์ไม่ใช่ PDF ที่ถูกต้อง — ตรวจว่าเป็นไฟล์ .pdf จริง" },
+      { status: 400 },
+    );
+  }
+  if (kind === "cad" && !looksLikeDwg(file)) {
+    return NextResponse.json({ error: "อัปโหลดได้เฉพาะไฟล์ AutoCAD (.dwg)" }, { status: 400 });
+  }
+  if (kind === "calc" && !looksLikeCalcDoc(file)) {
+    return NextResponse.json({ error: "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)" }, { status: 400 });
+  }
+
+  const safeAdmin = adminEmail.replace(/[^a-zA-Z0-9_-]/g, "_") || "admin";
+  const storagePath = doc
+    ? siteAssetPath(`admin/${safeAdmin}/${kind}`, file.name)
+    : siteAssetPath(category, file.name);
+  const bucket = doc && isSensitiveUploadKind(kind) ? VENDOR_PRIVATE_BUCKET : SITE_ASSETS_BUCKET;
+
+  const { error } = await getSupabaseAdmin()
+    .storage.from(bucket)
+    .upload(storagePath, buffer, {
+      contentType,
+      upsert: true,
+      cacheControl: doc ? "3600" : "60",
+    });
+
+  if (error) {
+    console.error("[admin/upload] Storage upload failed", {
+      storagePath,
+      bucket,
+      message: error.message,
+    });
+    throw new Error(`อัปโหลด Storage ไม่สำเร็จ: ${error.message}`);
+  }
+
+  const publicUrl = clientFacingUrl(doc ? kind : "image", storagePath);
+
+  console.info("[admin/upload] OK", {
+    storagePath,
+    bucket,
+    kind: doc ? kind : "image",
+    mimeType: contentType,
+    sizeBytes: file.size,
+  });
+
+  return NextResponse.json({
+    ok: true,
+    storagePath,
+    publicUrl,
+    persistUrl: publicUrl,
+    mimeType: contentType,
+    sizeBytes: file.size,
+    private: Boolean(doc && isSensitiveUploadKind(kind)),
+    kind: doc ? kind : "image",
+  });
 }
 
 /** Remove a previously uploaded site-assets file (by public URL or storage path). */

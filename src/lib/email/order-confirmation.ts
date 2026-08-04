@@ -10,11 +10,15 @@ import {
 } from "@/lib/store/document-languages";
 import {
   findListingIdByPlanCode,
-  filenameFromUrl,
-  getListingBlueprintUrls,
+  getListingAssetUrls,
 } from "@/lib/store/listing-assets";
-import { fetchAssetBytes, parsePrivateAssetRef } from "@/lib/supabase/private-assets";
+import { fetchAssetBytes } from "@/lib/supabase/private-assets";
 import { getSiteUrl } from "@/lib/seo/site-url";
+import {
+  resolveDeliveryFileKind,
+  standardizedDeliveryFilename,
+  standardizedDownloadButtonLabel,
+} from "@/lib/payments/download-filenames";
 
 /** Resend total payload limit is ~40MB; keep headroom for HTML/headers. */
 const MAX_ATTACHMENT_BYTES_TOTAL = 28 * 1024 * 1024;
@@ -61,10 +65,14 @@ export async function sendOrderConfirmationEmail(
     (blueprintPacks.length > 0 || (translation.listings?.length ?? 0) > 0);
 
   const downloadEntries = grants.map((g) => {
+    const fileKind = resolveDeliveryFileKind({
+      fileKind: g.fileKind,
+      format: g.format,
+    });
+    const fileIndex =
+      typeof g.fileIndex === "number" && g.fileIndex >= 0 ? g.fileIndex : 0;
     const url = `${baseUrl}/api/download?token=${g.token}&format=${g.format}&locale=${stampLocale}&buyer=${buyer}&docLang=${order.documentLanguage ?? "th"}`;
-    const label = `${g.planId} (${g.format.toUpperCase()})${
-      typeof g.fileIndex === "number" && g.fileIndex > 0 ? ` · file ${g.fileIndex + 1}` : ""
-    }`;
+    const label = standardizedDownloadButtonLabel(g.planId, fileKind, fileIndex);
     return { label, url, grant: g };
   });
 
@@ -510,29 +518,37 @@ async function buildTranslationAttachments(
 async function buildPlanAttachments(
   grants: DownloadGrant[],
 ): Promise<OrderEmailAttachment[]> {
-  const pdfGrants = grants.filter((g) => g.format === "pdf");
   const attachments: OrderEmailAttachment[] = [];
   let total = 0;
   const usedNames = new Set<string>();
 
-  for (const grant of pdfGrants) {
+  for (const grant of grants) {
+    const fileKind = resolveDeliveryFileKind({
+      fileKind: grant.fileKind,
+      format: grant.format,
+    });
     const listingId =
       grant.listingId || (await findListingIdByPlanCode(grant.planId)) || undefined;
     if (!listingId) continue;
 
-    const urls = await getListingBlueprintUrls(listingId);
+    const urls = await getListingAssetUrls(listingId, fileKind);
     const index = Math.min(Math.max(0, grant.fileIndex ?? 0), Math.max(0, urls.length - 1));
     const sourceUrl = urls[index];
     if (!sourceUrl) continue;
 
     const asset = await fetchAssetBytes(sourceUrl);
     if (!asset?.bytes?.length) {
-      console.warn("[email] attachment fetch failed", { planId: grant.planId, index });
+      console.warn("[email] attachment fetch failed", {
+        planId: grant.planId,
+        fileKind,
+        index,
+      });
       continue;
     }
     if (asset.bytes.length > MAX_ATTACHMENT_BYTES_EACH) {
       console.warn("[email] skip oversized attachment", {
         planId: grant.planId,
+        fileKind,
         bytes: asset.bytes.length,
       });
       continue;
@@ -540,34 +556,26 @@ async function buildPlanAttachments(
     if (total + asset.bytes.length > MAX_ATTACHMENT_BYTES_TOTAL) {
       console.warn("[email] attachment budget reached — remaining files via download links", {
         planId: grant.planId,
+        fileKind,
       });
       break;
     }
 
-    const fallback = `${grant.planId}-${index + 1}.pdf`;
-    let filename = safeAttachmentFilename(sourceUrl, fallback);
-    if (!filename.toLowerCase().endsWith(".pdf")) filename = `${filename}.pdf`;
+    let filename = standardizedDeliveryFilename(grant.planId, fileKind, index);
     filename = uniquifyFilename(filename, usedNames);
     usedNames.add(filename.toLowerCase());
 
     attachments.push({
       filename,
       content: asset.bytes.toString("base64"),
-      contentType: asset.contentType || "application/pdf",
+      contentType:
+        asset.contentType ||
+        (fileKind === "cad" ? "application/acad" : "application/pdf"),
     });
     total += asset.bytes.length;
   }
 
   return attachments;
-}
-
-function safeAttachmentFilename(sourceUrl: string, fallback: string): string {
-  const privateParsed = parsePrivateAssetRef(sourceUrl);
-  if (privateParsed) {
-    const base = privateParsed.path.split("/").pop() || fallback;
-    return decodeURIComponent(base).replace(/[^\w.\-()+ ]+/g, "_") || fallback;
-  }
-  return filenameFromUrl(sourceUrl, fallback);
 }
 
 function uniquifyFilename(name: string, used: Set<string>): string {

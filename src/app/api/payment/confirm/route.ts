@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  resolveDeliveryFileKind,
+  standardizedDeliveryFilename,
+  standardizedDownloadButtonLabel,
+} from "@/lib/payments/download-filenames";
 import { findGrantsByStripeSession } from "@/lib/payments/tokens";
 import {
   getStripe,
@@ -146,11 +151,23 @@ export async function GET(request: NextRequest) {
       format: grant?.format,
       planId: grant?.planId,
       planIds: result.planIds,
-      downloads: result.grants.map((g) => ({
-        token: g.token,
-        planId: g.planId,
-        format: g.format,
-      })),
+      downloads: result.grants.map((g) => {
+        const fileKind = resolveDeliveryFileKind({
+          fileKind: g.fileKind,
+          format: g.format,
+        });
+        const fileIndex =
+          typeof g.fileIndex === "number" && g.fileIndex >= 0 ? g.fileIndex : 0;
+        return {
+          token: g.token,
+          planId: g.planId,
+          format: g.format,
+          fileKind,
+          filename: standardizedDeliveryFilename(g.planId, fileKind, fileIndex),
+          label: standardizedDownloadButtonLabel(g.planId, fileKind, fileIndex),
+          downloadUrl: `/api/download?token=${g.token}&format=${g.format}`,
+        };
+      }),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Fulfillment failed";

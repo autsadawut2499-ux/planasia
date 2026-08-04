@@ -517,8 +517,8 @@ export async function supabaseGetPopularListings(limit = 60): Promise<StoreListi
   return (data as unknown as StoreListingRow[]).map(rowToListing);
 }
 
-/** All listings (any status) for the admin ranking console. */
-export async function supabaseGetListingsForAdmin(limit = 200): Promise<StoreListing[]> {
+/** All listings (any status) for the admin ranking / listings console (includes delivery docs). */
+export async function supabaseGetListingsForAdmin(limit = 200): Promise<VendorListing[]> {
   const { data, error } = await getSupabaseAdmin()
     .from("store_listings")
     .select("*")
@@ -526,7 +526,26 @@ export async function supabaseGetListingsForAdmin(limit = 200): Promise<StoreLis
     .order("ranking_score", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data as StoreListingRow[]).map(rowToListing);
+  return (data as VendorListingRow[]).map(rowToVendorListing);
+}
+
+/** Admin: single listing including private delivery-document refs. */
+export async function supabaseGetVendorListingById(id: string): Promise<VendorListing | null> {
+  const byId = await getSupabaseAdmin()
+    .from("store_listings")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (byId.data) return rowToVendorListing(byId.data as VendorListingRow);
+  if (byId.error) throw byId.error;
+
+  const byPlan = await getSupabaseAdmin()
+    .from("store_listings")
+    .select("*")
+    .eq("plan_id", id)
+    .maybeSingle();
+  if (byPlan.error) throw byPlan.error;
+  return byPlan.data ? rowToVendorListing(byPlan.data as VendorListingRow) : null;
 }
 
 export async function supabaseSetPinned(listingId: string, pinned: boolean): Promise<void> {

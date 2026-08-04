@@ -176,7 +176,9 @@ export function StoreCartShell() {
               token: d.token,
               planId: d.planId || "plan",
               format: d.format,
-              label: d.planId || "plan.pdf",
+              fileKind: d.fileKind,
+              label: d.label || `Download ${d.filename || d.planId || "plan"}`,
+              filename: d.filename,
               downloadUrl: d.downloadUrl || `/api/download?token=${d.token}&format=${d.format}`,
             })),
           )

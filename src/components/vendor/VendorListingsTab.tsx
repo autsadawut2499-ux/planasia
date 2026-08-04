@@ -240,9 +240,7 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
 
   async function handleSave() {
     if (!form) return;
-    if (!form.image) return toast.error("กรุณาอัปโหลดรูปเรนเดอร์ 3D (รูปปก)");
-    const totalRenders = (form.image ? 1 : 0) + form.renderUrls.length;
-    if (totalRenders < 2) return toast.error("ต้องมีภาพเรนเดอร์ 3D อย่างน้อย 2 รูป");
+    if (!form.image) return toast.error("ต้องมีภาพเรนเดอร์ 3D อย่างน้อย 1 รูป");
     const priceErr = listingPriceErrorTh(form.price);
     if (priceErr) return toast.error(priceErr);
     if (!form.areaSqm || Number(form.areaSqm) <= 0)
@@ -556,22 +554,28 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
                       placeholder="เช่น 2000000"
                     />
                   </Field>
-                  <Field label="ที่ดินขั้นต่ำ — กว้าง (ม.)">
+                  <Field
+                    label="ที่ดินขั้นต่ำ — กว้าง (ม.)"
+                    hint="ใส่ขนาดบ้าน + 2 เมตร เพื่อให้ขออนุญาตก่อสร้างผ่านได้"
+                  >
                     <TextInput
                       type="number"
                       step="0.1"
                       value={form.widthMeters}
                       onChange={(e) => set("widthMeters", e.target.value)}
-                      placeholder="เช่น 10"
+                      placeholder="เช่น ขนาดบ้าน + 2 ม."
                     />
                   </Field>
-                  <Field label="ที่ดินขั้นต่ำ — ลึก (ม.)">
+                  <Field
+                    label="ที่ดินขั้นต่ำ — ลึก (ม.)"
+                    hint="ใส่ขนาดบ้าน + 2 เมตร เพื่อให้ขออนุญาตก่อสร้างผ่านได้"
+                  >
                     <TextInput
                       type="number"
                       step="0.1"
                       value={form.lengthMeters}
                       onChange={(e) => set("lengthMeters", e.target.value)}
-                      placeholder="เช่น 15"
+                      placeholder="เช่น ขนาดบ้าน + 2 ม."
                     />
                   </Field>
                 </div>
@@ -588,14 +592,14 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
             <SectionTitle
               step={2}
               title="อัปโหลดภาพเรนเดอร์ / ภาพ 3D"
-              desc="รูปปกและภาพเรนเดอร์อย่างน้อย 2 รูป"
+              desc="อัปโหลดรูปปกอย่างน้อย 1 รูป — เพิ่มมุมอื่นได้ตามต้องการ"
             />
             <div className="space-y-5">
               <div>
                 <p className="mb-1.5 text-xs font-semibold text-text-secondary">
                   ภาพเรนเดอร์ 3D *{" "}
                   <span className="text-text-muted">
-                    (อย่างน้อย 2 รูป — หน้าตรง / มุมเฉียง / ภายใน)
+                    (อย่างน้อย 1 รูป — แนะนำเพิ่มมุมอื่นถ้ามี)
                   </span>
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

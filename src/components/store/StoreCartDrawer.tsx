@@ -52,6 +52,9 @@ interface StoreCartDrawerProps {
       token: string;
       planId: string;
       format: string;
+      fileKind?: string;
+      label?: string;
+      filename?: string;
       downloadUrl?: string;
       docLang?: string;
       targetCountry?: string;
@@ -295,6 +298,7 @@ export function StoreCartDrawer({
       });
       const data = await res.json();
 
+      // Hosted Stripe Checkout (default production path).
       if (data.requiresCheckout && data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
         return;
@@ -308,7 +312,11 @@ export function StoreCartDrawer({
         return;
       }
 
-      setError(data.error ?? translate("payment.failed"));
+      const missing =
+        Array.isArray(data.missing) && data.missing.length
+          ? ` (${data.missing.join(", ")})`
+          : "";
+      setError((data.error ?? translate("payment.failed")) + missing);
     } catch {
       setError(translate("payment.failed"));
     } finally {

@@ -3,8 +3,8 @@ import { requireAdminSession } from "@/lib/admin/auth";
 import { listingFromAdminBody, markListingApproved } from "@/lib/admin/listing-mutate";
 import {
   supabaseDeleteListingById,
-  supabaseGetListingById,
-  supabaseUpsertListing,
+  supabaseGetVendorListingById,
+  supabaseUpsertVendorListing,
 } from "@/lib/supabase/store-listings";
 import { revalidateStoreSurfaces } from "@/lib/store/revalidate-store";
 
@@ -16,7 +16,7 @@ export async function GET(_request: NextRequest, ctx: Ctx) {
   try {
     await requireAdminSession();
     const { id } = await ctx.params;
-    const listing = await supabaseGetListingById(decodeURIComponent(id));
+    const listing = await supabaseGetVendorListingById(decodeURIComponent(id));
     if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ listing });
   } catch {
@@ -28,12 +28,12 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
   try {
     const admin = await requireAdminSession();
     const { id } = await ctx.params;
-    const existing = await supabaseGetListingById(decodeURIComponent(id));
+    const existing = await supabaseGetVendorListingById(decodeURIComponent(id));
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const body = (await request.json()) as Record<string, unknown>;
     const listing = await listingFromAdminBody(body, admin.email, existing);
-    const saved = await supabaseUpsertListing(listing);
+    const saved = await supabaseUpsertVendorListing(listing);
     await markListingApproved(saved.id);
     revalidateStoreSurfaces({ slug: saved.slug, listingId: saved.id });
     return NextResponse.json({ listing: saved });

@@ -6,7 +6,10 @@ export type PaymentSuccessDownload = {
   token: string;
   planId: string;
   format: string;
+  fileKind?: string;
+  /** Prefers English standardized label, e.g. Download MOD-008-Architectural-Plans.pdf */
   label: string;
+  filename?: string;
   downloadUrl: string;
   originalDownloadUrl?: string;
   variant?: "translated" | "original";
@@ -14,7 +17,7 @@ export type PaymentSuccessDownload = {
 };
 
 /**
- * Post-payment delivery panel — Thai domestic: original blueprint downloads + receipt email.
+ * Post-payment delivery panel — bilingual UI chrome; English standardized file names.
  */
 export function PaymentSuccessPanel({
   locale,
@@ -45,8 +48,8 @@ export function PaymentSuccessPanel({
             </p>
             <p className="mt-1 text-xs text-slate-600">
               {thai
-                ? "ดาวน์โหลดแบบแปลน PDF ได้จากปุ่มด้านล่าง"
-                : "Download your blueprint PDF from the button below"}
+                ? "ดาวน์โหลดไฟล์เอกสารจากปุ่มด้านล่าง (ชื่อไฟล์ภาษาอังกฤษมาตรฐานสากล)"
+                : "Download your documents from the buttons below (international English filenames)"}
             </p>
           </div>
           <button
@@ -77,16 +80,23 @@ export function PaymentSuccessPanel({
         </div>
 
         <div className="mt-3 space-y-2">
-          {downloads.map((d) => (
-            <a
-              key={`${d.token}-${d.label}`}
-              href={d.downloadUrl}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1e40af] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#1e3a8a]"
-            >
-              <Download className="h-4 w-4" />
-              {thai ? "ดาวน์โหลด" : "Download"} {d.label || d.planId}
-            </a>
-          ))}
+          {downloads.map((d) => {
+            const buttonLabel =
+              d.label?.startsWith("Download ")
+                ? d.label
+                : `Download ${d.filename || d.label || d.planId}`;
+            return (
+              <a
+                key={`${d.token}-${d.fileKind ?? d.format}-${buttonLabel}`}
+                href={d.downloadUrl}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1e40af] px-3 py-2.5 text-left text-sm font-semibold text-white hover:bg-[#1e3a8a]"
+                download={d.filename}
+              >
+                <Download className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 break-all">{buttonLabel}</span>
+              </a>
+            );
+          })}
         </div>
       </div>
     </div>

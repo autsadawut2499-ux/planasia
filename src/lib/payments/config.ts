@@ -1,4 +1,9 @@
 import "server-only";
+import {
+  getStripePublishableKey,
+  isStripePublishableConfigured,
+  stripePublishableKeyMode,
+} from "@/lib/payments/publishable-key";
 
 /**
  * Stripe / mock-payment configuration helpers.
@@ -14,6 +19,12 @@ export function isStripeSecretConfigured(): boolean {
 export function isStripeWebhookSecretConfigured(): boolean {
   return Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim());
 }
+
+export {
+  getStripePublishableKey,
+  isStripePublishableConfigured,
+  stripePublishableKeyMode,
+};
 
 /** Secret key present — enough to create Checkout sessions. */
 export function isStripeConfigured(): boolean {
@@ -107,5 +118,72 @@ export function getStripeWebhookReadiness(): StripeWebhookReadiness {
     status: 503,
     missing,
     error: `Stripe webhook not configured. Missing: ${missing.join(", ")}. Local test: stripe listen --forward-to localhost:3000/api/webhooks/stripe`,
+  };
+}
+
+/** Payment Intent / Elements needs secret + publishable key. */
+export function getStripePaymentIntentReadiness(): StripeCheckoutReadiness {
+  const missing: string[] = [];
+  if (!isStripeSecretConfigured()) missing.push("STRIPE_SECRET_KEY");
+  if (!isStripePublishableConfigured()) {
+    missing.push("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
+  }
+
+  if (missing.length === 0) return { ok: true };
+
+  return {
+    ok: false,
+    status: 503,
+    missing,
+    error:
+      "Stripe Payment Intent is not configured. Set STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.",
+  };
+}
+
+export type StripeStackStatus = {
+  configured: boolean;
+  checkoutReady: boolean;
+  paymentIntentReady: boolean;
+  webhookReady: boolean;
+  mockPaymentsAllowed: boolean;
+  publishableMode: ReturnType<typeof stripePublishableKeyMode>;
+  missing: string[];
+  routes: {
+    checkoutCart: string;
+    checkoutPurchase: string;
+    paymentIntent: string;
+    paymentConfirm: string;
+    intentConfirm: string;
+    webhook: string;
+    status: string;
+  };
+};
+
+/** Aggregate readiness for admin / ops diagnostics. */
+export function getStripeStackStatus(): StripeStackStatus {
+  const missing: string[] = [];
+  if (!isStripeSecretConfigured()) missing.push("STRIPE_SECRET_KEY");
+  if (!isStripeWebhookSecretConfigured()) missing.push("STRIPE_WEBHOOK_SECRET");
+  if (!isStripePublishableConfigured()) {
+    missing.push("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
+  }
+
+  return {
+    configured: isStripeSecretConfigured(),
+    checkoutReady: getStripeCheckoutReadiness().ok,
+    paymentIntentReady: getStripePaymentIntentReadiness().ok,
+    webhookReady: getStripeWebhookReadiness().ok,
+    mockPaymentsAllowed: isMockPaymentsAllowed(),
+    publishableMode: stripePublishableKeyMode(),
+    missing,
+    routes: {
+      checkoutCart: "/api/store/cart/checkout",
+      checkoutPurchase: "/api/store/purchase",
+      paymentIntent: "/api/payments/intent",
+      paymentConfirm: "/api/payment/confirm",
+      intentConfirm: "/api/payments/intent/confirm",
+      webhook: "/api/webhooks/stripe",
+      status: "/api/payments/status",
+    },
   };
 }

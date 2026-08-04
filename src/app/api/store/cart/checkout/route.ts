@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   createCartCheckoutSession,
   getStripeCheckoutReadiness,
+  getStripePaymentIntentReadiness,
+  getStripePublishableKey,
   isMockPaymentsAllowed,
   isStripeConfigured,
 } from "@/lib/payments/stripe";
+import { createCartPaymentIntent } from "@/lib/payments/payment-intent";
 import {
   computeCheckoutTotal,
   type CartLineItem,
@@ -81,6 +84,9 @@ export async function POST(request: NextRequest) {
     body.method === "promptpay" || body.method === "card"
       ? body.method
       : defaultPaymentMethod(currency, visitorCountryCode);
+  /** `checkout` = hosted Stripe Checkout (default). `intent` = PaymentIntent + clientSecret. */
+  const paymentMode =
+    body.mode === "intent" || body.paymentMode === "intent" ? "intent" : "checkout";
   const documentLanguage = THAI_DOMESTIC_MARKET
     ? "th"
     : resolveCheckoutDocumentLanguage(body.documentLanguage, targetCountry);
@@ -318,6 +324,66 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (paymentMode === "intent") {
+      const intentReady = getStripePaymentIntentReadiness();
+      if (!intentReady.ok) {
+        return NextResponse.json(
+          {
+            error: intentReady.error,
+            missing: intentReady.missing,
+            orderId,
+          },
+          { status: intentReady.status },
+        );
+      }
+
+      const intent = await createCartPaymentIntent({
+        cartOrderId: orderId,
+        planIds: orderItems.map((o) => o.planId),
+        amountThb: pricing.total,
+        currency,
+        method,
+        countryCode: visitorCountryCode,
+        targetCountry,
+        userId: buyerUserId,
+        uiLocale,
+        documentLanguage,
+        buyerName,
+        buyerEmail: buyerEmail || undefined,
+        buyerPhone,
+        description: lineItems.map((l) => l.name).join(" · ").slice(0, 500),
+      });
+
+      if (intent) {
+        return NextResponse.json({
+          success: true,
+          mode: "payment_intent",
+          requiresPaymentIntent: true,
+          orderId,
+          paymentIntentId: intent.paymentIntentId,
+          clientSecret: intent.clientSecret,
+          publishableKey: getStripePublishableKey(),
+          amountThb: pricing.total,
+          amountDisplay: intent.amountDisplay,
+          amountFormatted: formatMoney(pricing.total, currency),
+          currency,
+          uiLocale,
+          method,
+          documentLanguage,
+          confirmUrl: `/api/payments/intent/confirm?payment_intent_id=${intent.paymentIntentId}`,
+        });
+      }
+
+      return NextResponse.json(
+        {
+          error:
+            "Failed to create Stripe PaymentIntent. Check STRIPE_SECRET_KEY and payment method availability.",
+          orderId,
+        },
+        { status: 502 },
+      );
+    }
+
     const checkout = await createCartCheckoutSession({
       cartOrderId: orderId,
       planIds: orderItems.map((o) => o.planId),
@@ -338,6 +404,7 @@ export async function POST(request: NextRequest) {
 
     if (checkout) {
       return NextResponse.json({
+        mode: "checkout",
         requiresCheckout: true,
         checkoutUrl: checkout.url,
         sessionId: checkout.sessionId,

@@ -79,6 +79,8 @@ export async function updateSaleNotificationChannels(
     phoneE164?: string | null;
     smsStatus?: NotifyChannelStatus;
     smsError?: string | null;
+    smsMessageId?: string | null;
+    smsProvider?: string | null;
     pushStatus?: NotifyChannelStatus;
     emailStatus?: NotifyChannelStatus;
   },
@@ -88,13 +90,30 @@ export async function updateSaleNotificationChannels(
   if (patch.phoneE164 !== undefined) row.phone_e164 = patch.phoneE164;
   if (patch.smsStatus) row.sms_status = patch.smsStatus;
   if (patch.smsError !== undefined) row.sms_error = patch.smsError;
+  if (patch.smsMessageId !== undefined) row.sms_message_id = patch.smsMessageId;
+  if (patch.smsProvider !== undefined) row.sms_provider = patch.smsProvider;
   if (patch.pushStatus) row.push_status = patch.pushStatus;
   if (patch.emailStatus) row.email_status = patch.emailStatus;
   if (Object.keys(row).length === 0) return;
 
-  const { error } = await getSupabaseAdmin()
+  let { error } = await getSupabaseAdmin()
     .from("vendor_sale_notifications")
     .update(row)
     .eq("id", id);
+
+  // Older DBs may lack sms_message_id / sms_provider — retry without them.
+  if (error && /sms_message_id|sms_provider|column/i.test(error.message ?? "")) {
+    const {
+      sms_message_id: _m,
+      sms_provider: _p,
+      ...compat
+    } = row as Record<string, unknown>;
+    const retry = await getSupabaseAdmin()
+      .from("vendor_sale_notifications")
+      .update(compat)
+      .eq("id", id);
+    error = retry.error;
+  }
+
   if (error) console.error("[sale-notify] update failed", error);
 }

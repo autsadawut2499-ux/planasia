@@ -9,6 +9,8 @@ import {
   fulfillPaidCheckoutSession,
   isCheckoutSessionPaid,
 } from "@/lib/payments/fulfill-checkout";
+import { fulfillPaidPaymentIntent } from "@/lib/payments/fulfill-payment-intent";
+import { isPaymentIntentPaid } from "@/lib/payments/payment-intent";
 
 /**
  * Stripe payment webhook — signature-verified fulfillment.
@@ -19,13 +21,14 @@ import {
  *     - checkout.session.completed
  *     - checkout.session.async_payment_succeeded  (PromptPay / delayed methods)
  *     - checkout.session.async_payment_failed
+ *     - payment_intent.succeeded                 (embedded PaymentIntent path)
  *
  * Local:
  *   stripe listen --forward-to localhost:3000/api/webhooks/stripe
  */
 export const runtime = "nodejs";
 
-const FULFILLABLE_EVENTS = new Set([
+const FULFILLABLE_CHECKOUT_EVENTS = new Set([
   "checkout.session.completed",
   "checkout.session.async_payment_succeeded",
 ]);
@@ -83,7 +86,88 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, failed: true });
   }
 
-  if (!FULFILLABLE_EVENTS.has(event.type)) {
+  if (event.type === "payment_intent.succeeded") {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    const meta = intent.metadata ?? {};
+    const planIdsFromMeta = (meta.planIds ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const { isNew } = await beginWebhookEvent({
+      eventId: event.id,
+      eventType: event.type,
+      stripeSessionId: intent.id,
+      cartOrderId: meta.cartOrderId,
+      planIds: planIdsFromMeta,
+      amountTotal: intent.amount_received ?? intent.amount,
+      currency: intent.currency,
+      status: "received",
+      payload: {
+        id: event.id,
+        type: event.type,
+        paymentIntentId: intent.id,
+        status: intent.status,
+        metadata: meta,
+      },
+    });
+
+    if (!isNew) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
+    if (!isPaymentIntentPaid(intent)) {
+      await completeWebhookEvent(event.id, {
+        status: "ignored",
+        planIds: planIdsFromMeta,
+        errorMessage: `payment_intent_not_succeeded status=${intent.status}`,
+      });
+      return NextResponse.json({ received: true, pending: true });
+    }
+
+    try {
+      const result = await fulfillPaidPaymentIntent(intent);
+      if (result.kind === "ignored") {
+        await completeWebhookEvent(event.id, {
+          status: "ignored",
+          planIds: result.planIds,
+          errorMessage: result.reason,
+        });
+        return NextResponse.json({
+          received: true,
+          ignored: true,
+          reason: result.reason,
+        });
+      }
+
+      console.info(
+        `[payment-webhook] ${event.type} → unlocked ${result.planIds.join(", ") || "(none)"} (${result.kind})`,
+      );
+      await completeWebhookEvent(event.id, {
+        status: "fulfilled",
+        planIds: result.planIds,
+        cartOrderId: result.kind === "cart" ? result.cartOrderId : meta.cartOrderId,
+      });
+      return NextResponse.json({
+        received: true,
+        fulfilled: true,
+        kind: result.kind,
+        planIds: result.planIds,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "fulfillment failed";
+      console.error("[payment-webhook] payment_intent fulfillment error", err);
+      await completeWebhookEvent(event.id, {
+        status: "failed",
+        planIds: planIdsFromMeta,
+        cartOrderId: meta.cartOrderId,
+        errorMessage: message,
+      });
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
+
+  if (!FULFILLABLE_CHECKOUT_EVENTS.has(event.type)) {
     await beginWebhookEvent({
       eventId: event.id,
       eventType: event.type,

@@ -397,7 +397,11 @@ export function StoreCheckoutModal({
         return;
       }
 
-      setError(data.error ?? translate("payment.failed"));
+      const missing =
+        Array.isArray(data.missing) && data.missing.length
+          ? ` (${data.missing.join(", ")})`
+          : "";
+      setError((data.error ?? translate("payment.failed")) + missing);
     } catch {
       setError(translate("payment.failed"));
     } finally {

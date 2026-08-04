@@ -8,39 +8,16 @@ export interface DesignerSaleLine {
   priceThb: number;
 }
 
-/** SMS body for post-sale designer alert (Thai). Keep concise for multi-segment SMS. */
+/**
+ * SMS body for post-sale designer alert (Thai) via ThaiBulkSMS.
+ * Exact template required for seller notifications.
+ */
 export function buildDesignerSaleSms(opts: {
   items: DesignerSaleLine[];
   cartOrderId: string;
 }): string {
-  const { items, cartOrderId } = opts;
-  const totalThb = items.reduce((s, i) => s + i.priceThb, 0);
-  const vendorEarn = vendorNetPreview(totalThb);
-  const dashboardUrl = `${getSiteUrl()}/dashboard/draftsman`;
-  const orderShort = cartOrderId.replace(/^cart_/, "").slice(0, 10);
-
-  if (items.length === 1) {
-    const item = items[0];
-    return [
-      "[Planasia] ขายแล้ว!",
-      `แบบ: ${item.name}`,
-      `รหัส: ${item.planId}`,
-      `ยอดขาย: ฿${totalThb.toLocaleString("th-TH")}`,
-      `ส่วนแบ่งคุณ ~฿${vendorEarn.toLocaleString("th-TH")} (70%)`,
-      `ตรวจ/เตรียมส่งมอบ: ${dashboardUrl}`,
-      `ออเดอร์: ${orderShort}`,
-    ].join("\n");
-  }
-
-  const codes = items.map((i) => i.planId).join(", ");
-  return [
-    `[Planasia] ขายแล้ว ${items.length} แบบ!`,
-    `รหัส: ${codes}`,
-    `ยอดขายรวม: ฿${totalThb.toLocaleString("th-TH")}`,
-    `ส่วนแบ่งคุณ ~฿${vendorEarn.toLocaleString("th-TH")} (70%)`,
-    `ตรวจ/เตรียมส่งมอบ: ${dashboardUrl}`,
-    `ออเดอร์: ${orderShort}`,
-  ].join("\n");
+  const codes = opts.items.map((i) => i.planId).filter(Boolean).join(", ") || "—";
+  return `แจ้งเตือนการขาย: รหัสแบบบ้าน ${codes} ได้รับการสั่งซื้อเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ Plan Asia`;
 }
 
 export function buildDesignerSaleEmail(opts: {

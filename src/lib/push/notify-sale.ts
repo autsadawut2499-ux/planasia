@@ -10,7 +10,7 @@ import {
 import { vendorNetPreview } from "@/lib/commerce/commission";
 import { getVendorByOwnerKey } from "@/lib/supabase/vendors";
 import { toE164Phone } from "@/lib/sms/phone";
-import { isSmsConfigured, sendSms } from "@/lib/sms/twilio";
+import { isSmsConfigured, sendSms } from "@/lib/sms/send";
 import {
   buildDesignerSaleSms,
   type DesignerSaleLine,
@@ -29,7 +29,7 @@ export type SalePushItem = DesignerSaleLine;
  * After payment clears (Paid / Success):
  *  1. Map each listing → designer (store_listings.owner_id → vendor_profiles)
  *  2. Web Push to registered devices
- *  3. SMS to contact_phone (Twilio) when configured
+ *  3. SMS to contact_phone (ThaiBulkSMS preferred, Twilio fallback)
  *  4. Email fallback to contact_email (Resend)
  *
  * Never throws — sale unlock must not fail because a phone was offline.
@@ -103,6 +103,8 @@ async function notifyOwnerOfSale(
     pushStatus,
     smsStatus: smsOutcome.status,
     smsError: smsOutcome.error ?? null,
+    smsMessageId: smsOutcome.messageId ?? null,
+    smsProvider: smsOutcome.provider ?? null,
     emailStatus,
   });
 }
@@ -111,20 +113,33 @@ async function sendSaleSmsToOwner(
   phoneE164: string | null,
   items: SalePushItem[],
   cartOrderId: string,
-): Promise<{ status: NotifyChannelStatus; error?: string }> {
+): Promise<{
+  status: NotifyChannelStatus;
+  error?: string;
+  messageId?: string;
+  provider?: string;
+}> {
   if (!phoneE164) {
     console.info("[sms] skipped — designer has no contact_phone on vendor_profiles");
     return { status: "skipped", error: "no_phone" };
   }
   if (!isSmsConfigured()) {
-    return { status: "skipped", error: "twilio_not_configured" };
+    return { status: "skipped", error: "sms_not_configured" };
   }
 
   const body = buildDesignerSaleSms({ items, cartOrderId });
   const result = await sendSms(phoneE164, body);
-  if (result.skipped) return { status: "skipped", error: result.error };
-  if (!result.ok) return { status: "failed", error: result.error };
-  return { status: "sent" };
+  if (result.skipped) {
+    return { status: "skipped", error: result.error, provider: result.provider };
+  }
+  if (!result.ok) {
+    return { status: "failed", error: result.error, provider: result.provider };
+  }
+  return {
+    status: "sent",
+    messageId: result.messageId,
+    provider: result.provider,
+  };
 }
 
 async function sendSaleEmailToOwner(

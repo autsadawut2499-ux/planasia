@@ -174,15 +174,6 @@ export async function createOrUpdateVendorListing(
   const floorPlanUrlsEarly = Array.isArray(body.floorPlanUrls)
     ? body.floorPlanUrls.map((u: unknown) => String(u)).filter(Boolean).slice(0, 12)
     : [];
-  const totalRenders = (image ? 1 : 0) + renderUrlsEarly.length;
-  if (totalRenders < 2) {
-    return {
-      ok: false,
-      status: 400,
-      error: "At least 2 render images are required",
-      message: "ต้องมีภาพเรนเดอร์ 3D อย่างน้อย 2 รูป",
-    };
-  }
   if (floorPlanUrlsEarly.length < 1) {
     return {
       ok: false,

@@ -3,11 +3,11 @@ import { findValidGrant } from "@/lib/payments/tokens";
 import { fetchAssetBytes } from "@/lib/supabase/private-assets";
 import { findCartOrderByStripeSession } from "@/lib/store/cart-orders";
 import {
-  filenameFromUrl,
   findListingIdByPlanCode,
   getListingAssetUrls,
   type ListingFileKind,
 } from "@/lib/store/listing-assets";
+import { standardizedDeliveryFilename } from "@/lib/payments/download-filenames";
 import {
   parseDocumentLanguage,
   resolveTranslatedBlueprintForGrant,
@@ -80,11 +80,7 @@ export async function GET(request: NextRequest) {
       assetUrls.length - 1,
     );
     const sourceUrl = assetUrls[index];
-    const fallbackExt = format === "cad" ? "dwg" : "pdf";
-    const filename = filenameFromUrl(
-      sourceUrl,
-      `${grant.planId}-${fileKind}-${index + 1}.${fallbackExt}`,
-    );
+    const filename = standardizedDeliveryFilename(grant.planId, fileKind, index);
 
     if (
       fileKind === "blueprint" &&
@@ -211,8 +207,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
   }
 
-  const filename = `${plan.project.projectName || "house-plan"}-${grant.planId}`;
   const opts = { unitSystem };
+  const deliveryName = standardizedDeliveryFilename(
+    grant.planId,
+    format === "cad" ? "cad" : "blueprint",
+    grant.fileIndex ?? 0,
+  );
 
   if (format === "pdf") {
     let pdfBytes = await generatePlanPdf(plan, opts);
@@ -225,7 +225,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}.pdf"`,
+        "Content-Disposition": `attachment; filename="${deliveryName}"`,
         "Cache-Control": "no-store",
         "X-Planasia-Source": "legacy-generative",
       },
@@ -233,10 +233,12 @@ export async function GET(request: NextRequest) {
   }
 
   const dxf = generatePlanDxf(plan, opts);
+  // Generative CAD is DXF; keep extension accurate while using the CAD-Files stem.
+  const cadFilename = deliveryName.replace(/\.dwg$/i, ".dxf");
   return new NextResponse(dxf, {
     headers: {
       "Content-Type": "application/dxf",
-      "Content-Disposition": `attachment; filename="${filename}.dxf"`,
+      "Content-Disposition": `attachment; filename="${cadFilename}"`,
       "Cache-Control": "no-store",
       "X-Planasia-Source": "legacy-generative",
     },

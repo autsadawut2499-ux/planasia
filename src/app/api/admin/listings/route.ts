@@ -3,7 +3,7 @@ import { requireAdminSession } from "@/lib/admin/auth";
 import { listingFromAdminBody, markListingApproved } from "@/lib/admin/listing-mutate";
 import {
   supabaseGetListingsForAdmin,
-  supabaseUpsertListing,
+  supabaseUpsertVendorListing,
 } from "@/lib/supabase/store-listings";
 import { revalidateStoreSurfaces } from "@/lib/store/revalidate-store";
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const admin = await requireAdminSession();
     const body = (await request.json()) as Record<string, unknown>;
     const listing = await listingFromAdminBody(body, admin.email, null);
-    const saved = await supabaseUpsertListing(listing);
+    const saved = await supabaseUpsertVendorListing(listing);
     await markListingApproved(saved.id);
     revalidateStoreSurfaces({ slug: saved.slug, listingId: saved.id });
     return NextResponse.json({ listing: saved }, { status: 201 });

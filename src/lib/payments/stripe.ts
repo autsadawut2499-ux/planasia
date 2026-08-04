@@ -15,6 +15,10 @@ export {
   isMockPaymentsAllowed,
   getStripeCheckoutReadiness,
   getStripeWebhookReadiness,
+  getStripePaymentIntentReadiness,
+  getStripeStackStatus,
+  getStripePublishableKey,
+  isStripePublishableConfigured,
 } from "@/lib/payments/config";
 
 let stripeClient: Stripe | null = null;
