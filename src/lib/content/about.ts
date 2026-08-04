@@ -61,14 +61,14 @@ export const ABOUT_PAGES: AboutPage[] = [
         heading: { en: "Site-specific review", th: "ตรวจทานตามสภาพที่ดิน" },
         body: {
           en: "Standard plans assume typical flat lots. Sloped land, setback limits, soil conditions, or coastal/flood rules may require a draftsman or engineer to adapt the design.",
-          th: "แบบมาตรฐานสมมติที่ดินราบทั่วไป ที่ลาดชัน ข้อจำกัดระยะร่น สภาพดิน หรือพื้นที่ชายฝั่ง/น้ำท่วม อาจต้องให้ช่างเขียนแบบหรือวิศวกรปรับแบบให้เหมาะสม",
+          th: "แบบมาตรฐานสมมติที่ดินราบทั่วไป ที่ลาดชัน ข้อจำกัดระยะร่น สภาพดิน หรือพื้นที่ชายฝั่ง/น้ำท่วม อาจต้องให้สถาปนิกและนักออกแบบหรือวิศวกรปรับแบบให้เหมาะสม",
         },
       },
       {
         heading: { en: "How we can help", th: "เราช่วยได้อย่างไร" },
         body: {
           en: "Use Find a Draftsman to connect with professionals who can revise floor levels, foundations, and site plans for your plot.",
-          th: "ใช้เมนูค้นหาช่างเขียนแบบเพื่อเชื่อมต่อผู้เชี่ยวชาญที่ปรับระดับพื้น ฐานราก และผังที่ดินให้เข้ากับแปลงของคุณได้",
+          th: "ใช้เมนูค้นหาสถาปนิกและนักออกแบบเพื่อเชื่อมต่อผู้เชี่ยวชาญที่ปรับระดับพื้น ฐานราก และผังที่ดินให้เข้ากับแปลงของคุณได้",
         },
       },
     ],
@@ -261,7 +261,7 @@ export const ABOUT_PAGES: AboutPage[] = [
         heading: { en: "Conversions", th: "การแปลงหน่วย" },
         body: {
           en: "If you need imperial or other units, convert carefully or ask your draftsman. Do not mix unit systems on the same construction set without clear labeling.",
-          th: "หากต้องการหน่วยอังกฤษหรือหน่วยอื่น ให้แปลงอย่างระมัดระวังหรือปรึกษาช่างเขียนแบบ อย่าผสมระบบหน่วยในชุดก่อสร้างเดียวกันโดยไม่ติดป้ายให้ชัด",
+          th: "หากต้องการหน่วยอังกฤษหรือหน่วยอื่น ให้แปลงอย่างระมัดระวังหรือปรึกษาสถาปนิกและนักออกแบบ อย่าผสมระบบหน่วยในชุดก่อสร้างเดียวกันโดยไม่ติดป้ายให้ชัด",
         },
       },
     ],

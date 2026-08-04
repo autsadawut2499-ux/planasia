@@ -83,6 +83,13 @@ function persistUrlFor(kind: string, storagePath: string): string {
   return getSiteAssetPublicUrl(storagePath);
 }
 
+/** Public image URLs get a unique `v=` so browsers never keep a replaced cover/avatar. */
+function clientFacingUrl(kind: string, storagePath: string): string {
+  const base = persistUrlFor(kind, storagePath);
+  if (isSensitiveUploadKind(kind) || !base.startsWith("http")) return base;
+  return `${base}${base.includes("?") ? "&" : "?"}v=${Date.now()}`;
+}
+
 /**
  * POST multipart → proxy upload through Next (images / small files).
  * POST JSON `{ mode: "sign", ... }` → signed upload URL.
@@ -179,7 +186,7 @@ async function signUpload(request: NextRequest, ownerKey: string) {
   }
 
   const path = data.path || storagePath;
-  const persistUrl = persistUrlFor(kind, path);
+  const publicUrl = clientFacingUrl(kind, path);
 
   return NextResponse.json({
     mode: "sign",
@@ -187,8 +194,8 @@ async function signUpload(request: NextRequest, ownerKey: string) {
     token: data.token,
     signedUrl: data.signedUrl,
     /** Durable value to store in DB (private ref or public URL). */
-    publicUrl: persistUrl,
-    persistUrl,
+    publicUrl,
+    persistUrl: publicUrl,
     private: isSensitiveUploadKind(kind),
     contentType: resolved,
     maxBytes,
@@ -274,12 +281,12 @@ async function proxyUpload(request: NextRequest, ownerKey: string) {
     .upload(storagePath, uploadBuffer, { contentType: uploadType, upsert: true });
   if (error) throw error;
 
-  const persistUrl = persistUrlFor(kind, storagePath);
+  const publicUrl = clientFacingUrl(kind, storagePath);
 
   return NextResponse.json({
     storagePath,
-    publicUrl: persistUrl,
-    persistUrl,
+    publicUrl,
+    persistUrl: publicUrl,
     private: isSensitiveUploadKind(kind),
     mimeType: uploadType,
     sizeBytes: uploadBuffer.length,

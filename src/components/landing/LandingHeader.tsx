@@ -122,11 +122,11 @@ export function LandingHeader() {
 
   const sloganText = L(
     "The hub for Thai designers' blueprints and portfolios — going global",
-    "ศูนย์รวมแบบแปลนและผลงานนักเขียนแบบไทย ก้าวไกลสู่สากล",
+    "ศูนย์รวมแบบแปลนและผลงานสถาปนิกและนักออกแบบไทย ก้าวไกลสู่สากล",
   );
 
   return (
-    <header className="sticky top-0 z-50 max-w-full overflow-x-clip border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
+    <header className="sticky top-0 z-50 max-w-full border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
       {/* 1) Top phone banner — phone only on mobile (ABHP-style) */}
       <div className="bg-[#1A2744] text-white">
         <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-end px-3 py-1.5 sm:px-4 md:min-h-10 md:px-6">
@@ -148,8 +148,8 @@ export function LandingHeader() {
         </div>
       </div>
 
-      {/* 2) Mobile slogan strip — single neat line under the phone bar */}
-      <div className="border-b border-[#e6e8ee] bg-[#f7f8fa] md:hidden">
+      {/* 2) Mobile slogan strip — ≤768px only (does not affect desktop) */}
+      <div className="header-mobile-only w-full flex-col border-b border-[#e6e8ee] bg-[#f7f8fa]">
         <p
           className="site-topbar-slogan mx-auto max-w-[1440px] truncate px-3 py-1 text-center text-[10px] font-medium leading-none tracking-[0.01em] text-[#1A2744]/80"
           title={sloganText}
@@ -160,11 +160,11 @@ export function LandingHeader() {
 
       {/*
         3) Main header row
-        Mobile: [logo | search | menu]
-        Desktop: [brand+Store | nav | tools]
+        Desktop (>768): [brand+Store | nav | tools] — CSS grid, no overlap
+        Mobile (≤768): [logo | search | hamburger] — isolated media query
       */}
       <div className="site-header-bar mx-auto w-full max-w-[1440px] px-3 sm:px-5 md:px-6 lg:px-8">
-        {/* LEFT — logo */}
+        {/* LEFT — logo (+ Store on desktop) */}
         <div className="site-header-brand">
           <BrandLogo variant="light" className="site-header-logo" />
           <Link
@@ -175,11 +175,8 @@ export function LandingHeader() {
           </Link>
         </div>
 
-        {/* CENTER — mobile search OR desktop nav */}
-        <form
-          onSubmit={submitPlanSearch}
-          className="site-header-mobile-search min-w-0 flex-1 md:hidden"
-        >
+        {/* Mobile search — hidden on desktop via .site-header-mobile-search */}
+        <form onSubmit={submitPlanSearch} className="site-header-mobile-search">
           <div className="flex h-9 w-full min-w-0 items-stretch overflow-hidden rounded-md border border-[#d5d9e0] bg-white focus-within:border-[#1e40af] focus-within:ring-1 focus-within:ring-[#1e40af]/25">
             <input
               type="search"
@@ -201,6 +198,7 @@ export function LandingHeader() {
           </div>
         </form>
 
+        {/* Desktop nav — hidden on ≤768px via .site-header-nav */}
         <nav aria-label={L("Main navigation", "เมนูหลัก")} className="site-header-nav">
           <NavDropdown label={L("Collections", "คอลเลคชั่น")} items={collectionItems} mega="collections" />
           <NavLink href="/whats-included" label={planIncludesLabel} />
@@ -214,7 +212,7 @@ export function LandingHeader() {
           <NavLink href="/home-building" label={homeBuildingLabel} />
         </nav>
 
-        {/* RIGHT — mobile: menu only · desktop: full tools */}
+        {/* RIGHT — desktop tools · mobile hamburger only */}
         <div className="site-header-tools">
           <form onSubmit={submitPlanSearch} className="header-desktop-only">
             <div className="header-search border border-border bg-white shadow-sm focus-within:border-[#1e40af]/50 focus-within:ring-1 focus-within:ring-[#1e40af]/20">
@@ -244,9 +242,9 @@ export function LandingHeader() {
             </div>
           </form>
 
-          <span className="site-header-tools__divider" aria-hidden />
+          <span className="site-header-tools__divider header-desktop-only" aria-hidden />
 
-          <div className="site-header-tools__cluster header-desktop-only flex">
+          <div className="site-header-tools__cluster header-desktop-only">
             <LanguageToggle variant="light" />
 
             {status === "authenticated" ? (
@@ -271,9 +269,9 @@ export function LandingHeader() {
             )}
           </div>
 
-          <span className="site-header-tools__divider" aria-hidden />
+          <span className="site-header-tools__divider header-desktop-only" aria-hidden />
 
-          <div className="site-header-tools__cluster header-desktop-only flex">
+          <div className="site-header-tools__cluster header-desktop-only">
             <button
               type="button"
               onClick={openWishlist}
@@ -312,7 +310,7 @@ export function LandingHeader() {
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="header-control-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#1e3a5f] hover:bg-surface-raised hover:text-[#1e40af] md:hidden"
+            className="header-mobile-only header-control-icon h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#1e3a5f] hover:bg-surface-raised hover:text-[#1e40af]"
             aria-label={translate("nav.menu")}
           >
             <Menu className="h-5 w-5" strokeWidth={2} />
@@ -526,11 +524,15 @@ function AccountMenu({
   );
 }
 
-function NavLink({ href, label }: NavItem) {
+function NavLink({
+  href,
+  label,
+  className = "",
+}: NavItem & { className?: string }) {
   return (
     <Link
       href={href}
-      className="header-control text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A]"
+      className={`header-control text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A] ${className}`}
     >
       {label}
     </Link>
@@ -557,32 +559,69 @@ function NavDropdown({
   list?: "default" | "clean";
 }) {
   const [open, setOpen] = useState(false);
+  const [megaTop, setMegaTop] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const megaPanelRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
 
+  const updateMegaPosition = () => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    // Sit just under the trigger; keep a small gap inside the viewport.
+    setMegaTop(Math.min(rect.bottom + 6, window.innerHeight - 24));
+  };
+
   useEffect(() => {
     if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      const inTrigger = wrapRef.current?.contains(target);
+      const inMega = megaPanelRef.current?.contains(target);
+      if (!inTrigger && !inMega) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onClick);
+    document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || mega !== "collections") return;
+    updateMegaPosition();
+    window.addEventListener("resize", updateMegaPosition);
+    window.addEventListener("scroll", updateMegaPosition, true);
+    return () => {
+      window.removeEventListener("resize", updateMegaPosition);
+      window.removeEventListener("scroll", updateMegaPosition, true);
+    };
+  }, [open, mega]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  }, []);
+
   const openNow = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    updateMegaPosition();
     setOpen(true);
   };
   const closeSoon = () => {
-    closeTimer.current = setTimeout(() => setOpen(false), 160);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpen(false), 180);
+  };
+  const toggleOpen = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    updateMegaPosition();
+    setOpen((v) => !v);
   };
 
   // Store = brand pill reference; all nav triggers share header-control scale.
@@ -625,8 +664,7 @@ function NavDropdown({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (closeTimer.current) clearTimeout(closeTimer.current);
-            setOpen((v) => !v);
+            toggleOpen();
           }}
         >
           {label}
@@ -638,11 +676,14 @@ function NavDropdown({
         </button>
       )}
 
+      {/* Viewport-centered fixed panel — never clipped by nav / never overflows edges */}
       {open && mega === "collections" && (
         <div
+          ref={megaPanelRef}
           id={menuId}
           role="menu"
-          className="absolute left-0 top-full z-[80] pt-2"
+          className="fixed left-1/2 z-[120] w-[min(920px,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] -translate-x-1/2"
+          style={{ top: megaTop }}
           onMouseEnter={openNow}
           onMouseLeave={closeSoon}
         >
@@ -656,9 +697,11 @@ function NavDropdown({
           role="menu"
           className={
             list === "clean"
-              ? "absolute left-0 top-full z-[80] mt-1.5 min-w-[260px] max-w-[320px] rounded-lg border border-border/80 bg-white py-2 shadow-[0_10px_28px_rgba(15,23,42,0.12)]"
-              : "absolute left-0 top-full z-[80] mt-1 min-w-[200px] rounded-md border border-border bg-white py-1 shadow-lg"
+              ? "absolute left-0 top-full z-[120] mt-1.5 min-w-[260px] max-w-[320px] rounded-lg border border-border/80 bg-white py-2 shadow-[0_10px_28px_rgba(15,23,42,0.12)]"
+              : "absolute left-0 top-full z-[120] mt-1 min-w-[200px] rounded-md border border-border bg-white py-1 shadow-lg"
           }
+          onMouseEnter={openNow}
+          onMouseLeave={closeSoon}
         >
           {items.length === 0 ? (
             <span className="block px-3 py-1.5 text-[11px] font-medium italic text-slate-500">

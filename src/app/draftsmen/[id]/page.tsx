@@ -6,23 +6,27 @@ import { BadgeCheck, Globe, Mail, MapPin, MessageCircle, Phone } from "lucide-re
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { HousePlanCard } from "@/components/store/HousePlanCard";
+import { DraftsmanCoverBanner } from "@/components/vendors/DraftsmanCoverBanner";
 import { DraftsmanProfileTabs } from "@/components/vendors/DraftsmanProfileTabs";
 import { provinceLabel } from "@/lib/geo/th-provinces";
 import { buildBreadcrumbJsonLd, buildDraftsmanJsonLd } from "@/lib/seo/json-ld";
 import { getSiteUrl } from "@/lib/seo/site-url";
+import { withMediaCacheBust } from "@/lib/media/cache-bust";
 import { getDraftsmanByKey } from "@/lib/vendors/directory";
 
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
+export const revalidate = 0;
 
 type PageProps = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const data = await getDraftsmanByKey(decodeURIComponent(id));
-  if (!data) return { title: "ช่างเขียนแบบ | Planasia" };
+  if (!data) return { title: "สถาปนิกและนักออกแบบ | Planasia" };
   const canonical = `${getSiteUrl()}/draftsmen/${encodeURIComponent(data.card.ownerKey)}`;
   return {
-    title: `${data.card.displayName} — ช่างเขียนแบบ | Planasia`,
+    title: `${data.card.displayName} — สถาปนิกและนักออกแบบ | Planasia`,
     description:
       data.card.headline ??
       `ผลงานแบบบ้านและแปลนพิมพ์เขียวโดย ${data.card.displayName} — ${data.card.planCount} แบบบน Planasia`,
@@ -65,30 +69,23 @@ export default async function DraftsmanProfilePage({ params }: PageProps) {
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: "หน้าแรก", path: "/" },
-          { name: "หาช่างเขียนแบบ", path: "/draftsmen" },
+          { name: "หาสถาปนิกและนักออกแบบ", path: "/draftsmen" },
           { name: card.displayName, path: `/draftsmen/${encodeURIComponent(card.ownerKey)}` },
         ])}
       />
       <LandingHeader />
       <main>
-        <section className="relative border-b border-border bg-gradient-to-br from-[#1e3a5f] to-[#1e40af] py-12 text-white">
-          {card.coverUrl && (
-            <>
-              <Image
-                src={card.coverUrl}
-                alt=""
-                fill
-                sizes="100vw"
-                priority
-                className="object-cover"
-              />
-              <span className="absolute inset-0 bg-gradient-to-r from-[#1e3a5f]/95 to-[#1e40af]/80" />
-            </>
-          )}
-          <div className="relative mx-auto flex max-w-[1400px] flex-wrap items-center gap-5 px-4 md:px-6">
+        <DraftsmanCoverBanner
+          ownerKey={card.ownerKey}
+          initialCoverUrl={card.coverUrl}
+          initialUpdatedAt={card.updatedAt}
+        >
+          <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-5 px-4 md:px-6">
             {card.avatarUrl ? (
-              <Image
-                src={card.avatarUrl}
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={card.avatarUrl}
+                src={withMediaCacheBust(card.avatarUrl, card.updatedAt ?? card.avatarUrl)}
                 alt={card.displayName}
                 width={88}
                 height={88}
@@ -148,7 +145,7 @@ export default async function DraftsmanProfilePage({ params }: PageProps) {
               )}
             </div>
           </div>
-        </section>
+        </DraftsmanCoverBanner>
 
         <DraftsmanProfileTabs
           portfolioCount={listings.length}
@@ -157,7 +154,7 @@ export default async function DraftsmanProfilePage({ params }: PageProps) {
             <section className="mx-auto max-w-[1400px] px-4 py-10 md:px-6">
               <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
                 <div className="rounded-2xl border border-border bg-[var(--color-card,#fff)] p-7 md:p-8">
-                  <h2 className="text-lg font-bold text-text-primary">เกี่ยวกับช่างเขียนแบบ</h2>
+                  <h2 className="text-lg font-bold text-text-primary">เกี่ยวกับสถาปนิกและนักออกแบบ</h2>
                   <p className="mt-3 whitespace-pre-line leading-relaxed text-text-secondary">
                     {card.headline ?? `ผลงานแบบบ้านโดย ${card.displayName} บน Planasia`}
                   </p>
@@ -239,7 +236,7 @@ export default async function DraftsmanProfilePage({ params }: PageProps) {
                   </dl>
                   {!card.contactPhone && !card.contactEmail && !card.lineId && (
                     <p className="mt-3 text-sm text-text-muted">
-                      ช่างเขียนแบบยังไม่ได้เปิดเผยข้อมูลติดต่อ
+                      สถาปนิกและนักออกแบบยังไม่ได้เปิดเผยข้อมูลติดต่อ
                     </p>
                   )}
                 </aside>

@@ -455,13 +455,13 @@ export async function supabaseDeleteDummyListings(): Promise<number> {
 }
 
 export async function supabaseGetAllListings(): Promise<StoreListing[]> {
-  // Public surface: show approved + pending immediately (Buy locked until admin
-  // approves). Hide rejected and seller-unpublished. Legacy null rows stay visible.
+  // Public search / storefront: published + admin-approved only
+  // (legacy null moderation treated as approved). Pending stays in vendor/admin views.
   // Lean column projection — skips project_snapshot / seo_json_ld / galleries.
   const { data, error } = await getSupabaseAdmin()
     .from("store_listings")
     .select(STORE_LISTING_CATALOGUE_SELECT)
-    .or("moderation_status.eq.approved,moderation_status.eq.pending,moderation_status.is.null")
+    .or("moderation_status.eq.approved,moderation_status.is.null")
     .or("is_published.eq.true,is_published.is.null")
     .order("created_at", { ascending: false });
 
@@ -507,7 +507,7 @@ export async function supabaseGetPopularListings(limit = 60): Promise<StoreListi
   const { data, error } = await getSupabaseAdmin()
     .from("store_listings")
     .select(STORE_LISTING_CATALOGUE_SELECT)
-    .or("moderation_status.eq.approved,moderation_status.eq.pending,moderation_status.is.null")
+    .or("moderation_status.eq.approved,moderation_status.is.null")
     .or("is_published.eq.true,is_published.is.null")
     .order("pinned", { ascending: false })
     .order("pinned_at", { ascending: false, nullsFirst: false })

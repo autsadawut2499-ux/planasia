@@ -739,9 +739,9 @@
   }
 
   /*
-   * Site header — balanced 3-column grid:
-   * [ brand + Store | centered nav | tools ]
-   * Equal side columns keep the nav optically centered; sides never overlap.
+   * Site header — desktop & mobile are isolated with media queries.
+   * Desktop (>768): [brand+Store | nav | tools] — never overlap.
+   * Mobile (≤768): [logo | search | hamburger] — desktop chrome hidden.
    */
   .site-topbar-slogan {
     white-space: nowrap;
@@ -749,157 +749,78 @@
     text-overflow: ellipsis;
   }
 
-  /*
-   * Mobile: [logo | search | menu] in one clean row (ABHP-style).
-   * Desktop (md+): 3-column grid with centered nav.
-   */
+  /* ── Desktop-first base (restored layout) ── */
   .site-header-bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: flex-start;
-    height: 52px;
-    column-gap: 0.5rem;
-    isolation: isolate;
+    height: 58px;
+    column-gap: 0.75rem;
     width: 100%;
     max-width: 100%;
     min-width: 0;
-  }
-
-  @media (min-width: 640px) {
-    .site-header-bar {
-      height: 54px;
-      column-gap: 0.625rem;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .site-header-bar {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-      height: 58px;
-      column-gap: 0.875rem;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .site-header-bar {
-      height: 60px;
-      column-gap: 1rem;
-    }
+    /* Keep dropdowns (Collection mega menu) visible below the bar */
+    overflow: visible;
   }
 
   .site-header-brand {
     display: flex;
-    min-width: 0;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.5rem;
-    flex: 0 0 auto;
-  }
-
-  @media (min-width: 768px) {
-    .site-header-brand {
-      justify-self: start;
-      gap: 0.625rem;
-      flex: unset;
-    }
-  }
-
-  .site-header-mobile-search {
-    display: flex;
+    gap: 0.625rem;
+    flex-shrink: 0;
     min-width: 0;
-    flex: 1 1 auto;
+    justify-self: start;
   }
 
-  @media (min-width: 768px) {
-    .site-header-mobile-search {
-      display: none;
-    }
-  }
-
-  .site-header-nav {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 0.125rem;
-    justify-self: center;
-  }
-
-  @media (min-width: 768px) {
-    .site-header-nav {
-      display: flex;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .site-header-nav {
-      gap: 0.25rem;
-    }
+  /* Keep wordmark from eating the nav column on mid-width desktops */
+  .site-header-logo .font-brand {
+    font-size: 15px;
+    letter-spacing: 0.12em;
   }
 
   @media (min-width: 1280px) {
-    .site-header-nav {
-      gap: 0.375rem;
+    .site-header-logo .font-brand {
+      font-size: 17px;
+      letter-spacing: 0.16em;
     }
   }
 
   @media (min-width: 1536px) {
-    .site-header-nav {
-      gap: 0.5rem;
+    .site-header-logo .font-brand {
+      font-size: 19px;
+      letter-spacing: 0.18em;
     }
+  }
+
+  .site-header-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.2rem;
+    min-width: 0;
+    max-width: 100%;
+    /* Do NOT use overflow:hidden — it clips Collection / dropdown panels */
+    overflow: visible;
+    justify-self: center;
   }
 
   .site-header-tools {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    flex: 0 0 auto;
-    gap: 0.25rem;
-    margin-left: auto;
-    min-width: 0;
-    max-width: none;
-  }
-
-  @media (min-width: 768px) {
-    .site-header-tools {
-      margin-left: 0;
-      justify-self: end;
-      gap: 0.625rem;
-      flex: unset;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .site-header-tools {
-      gap: 0.75rem;
-    }
-  }
-
-  /* Soft grouping inside the tools cluster — do NOT set display here
-     (it would override Tailwind `hidden` / responsive show-hide). */
-  .site-header-tools__cluster {
-    align-items: center;
-    gap: 0.125rem;
     flex-shrink: 0;
+    gap: 0.5rem;
+    min-width: 0;
+    justify-self: end;
   }
 
-  @media (min-width: 640px) {
-    .site-header-tools__cluster {
-      gap: 0.25rem;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .site-header-tools__cluster {
-      gap: 0.5rem;
-    }
-  }
-
-  /* Desktop-only header controls — beats .header-control { display: inline-flex } */
-  @media (max-width: 767.98px) {
-    .header-desktop-only {
-      display: none !important;
-    }
+  .site-header-tools__cluster {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
   }
 
   .site-header-tools__divider {
@@ -910,9 +831,103 @@
     background-color: #e6e8ee;
   }
 
+  .site-header-mobile-search {
+    display: none;
+  }
+
+  /* Hidden on desktop; revealed only inside @media (max-width: 768px) below */
+  .header-mobile-only {
+    display: none !important;
+  }
+
   @media (min-width: 1024px) {
+    .site-header-bar {
+      height: 58px;
+      column-gap: 0.875rem;
+    }
+
+    .site-header-nav {
+      gap: 0.3rem;
+    }
+
+    .site-header-tools {
+      gap: 0.625rem;
+    }
+
     .site-header-tools__divider {
       display: block;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .site-header-bar {
+      height: 60px;
+      column-gap: 1rem;
+    }
+
+    .site-header-nav {
+      gap: 0.4rem;
+    }
+
+    .site-header-tools {
+      gap: 0.75rem;
+    }
+
+    .site-header-tools__cluster {
+      gap: 0.45rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .site-header-nav {
+      gap: 0.5rem;
+    }
+  }
+
+  /*
+   * Mobile only (≤768px) — must not change desktop rules above.
+   * [logo | flexible search | hamburger]
+   */
+  @media (max-width: 768px) {
+    .site-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 52px;
+      column-gap: 0.5rem;
+    }
+
+    .site-header-brand {
+      flex: 0 0 auto;
+      gap: 0.5rem;
+    }
+
+    .site-header-nav {
+      display: none !important;
+    }
+
+    .site-header-mobile-search {
+      display: flex;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .site-header-tools {
+      flex: 0 0 auto;
+      margin-left: 0;
+      gap: 0.25rem;
+    }
+
+    .header-desktop-only {
+      display: none !important;
+    }
+
+    .header-mobile-only {
+      display: flex !important;
+    }
+
+    button.header-mobile-only {
+      display: inline-flex !important;
     }
   }
 
@@ -962,22 +977,23 @@
 
   .header-search {
     display: flex;
-    width: 112px;
+    width: 120px;
     height: 26px;
     align-items: stretch;
     overflow: hidden;
     border-radius: 0.375rem;
+    flex-shrink: 0;
   }
 
   @media (min-width: 1280px) {
     .header-search {
-      width: 136px;
+      width: 148px;
     }
   }
 
   @media (min-width: 1536px) {
     .header-search {
-      width: 152px;
+      width: 168px;
     }
   }
 
@@ -1006,6 +1022,15 @@
   .nav-store-btn:hover {
     background-color: #243556;
     box-shadow: 0 2px 6px rgba(26, 39, 68, 0.3);
+  }
+
+  /* Mid-desktop: slightly tighter nav type so Thai labels fit without overlap */
+  @media (min-width: 769px) and (max-width: 1279.98px) {
+    .site-header-nav .header-control {
+      padding-inline: 0.28rem;
+      font-size: 10px;
+      letter-spacing: 0;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

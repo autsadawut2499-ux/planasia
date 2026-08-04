@@ -29,11 +29,13 @@ export interface DraftsmanCard {
   socials: string[];
   /** True when backed by a real vendor_profiles row (vs derived from listings). */
   hasProfile: boolean;
+  /** ISO timestamp — used to cache-bust cover/avatar URLs on the storefront. */
+  updatedAt?: string;
 }
 
 function shortHandle(ownerKey: string): string {
   const tail = ownerKey.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase() || "0000";
-  return `ช่างเขียนแบบ #${tail}`;
+  return `สถาปนิกและนักออกแบบ #${tail}`;
 }
 
 /**
@@ -85,6 +87,7 @@ export async function getDraftsmanDirectory(): Promise<DraftsmanCard[]> {
       website: vendor.website,
       socials: vendor.socials,
       hasProfile: true,
+      updatedAt: vendor.updatedAt,
     });
   }
 
@@ -149,6 +152,7 @@ export async function getDraftsmanByKey(
         website: vendor.website,
         socials: vendor.socials,
         hasProfile: true,
+        updatedAt: vendor.updatedAt,
       }
     : {
         ownerKey,

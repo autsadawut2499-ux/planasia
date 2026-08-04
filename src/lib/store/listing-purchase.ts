@@ -1,17 +1,17 @@
 import type { StoreListing } from "@/lib/store/listing-types";
 
 /**
- * Public catalogue visibility.
+ * Public catalogue visibility (store search / grid).
  * - Seller unpublished (`isPublished === false`) → hidden
- * - pending + approved → customers can view details
- * - rejected → hidden
- * - null/undefined moderation → treat as visible (legacy rows)
+ * - approved (or legacy null) → visible
+ * - pending / rejected → hidden from public search
  */
 export function isListingPubliclyVisible(
   listing: Pick<StoreListing, "moderationStatus" | "isPublished">,
 ): boolean {
   if (listing.isPublished === false) return false;
-  return listing.moderationStatus !== "rejected";
+  const status = listing.moderationStatus;
+  return status === "approved" || status == null;
 }
 
 /**

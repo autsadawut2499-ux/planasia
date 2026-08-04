@@ -14,8 +14,15 @@ export interface RecommendationFilters {
   /** Budget range in THB (matched against construction-cost estimate). */
   budgetMin?: number;
   budgetMax?: number;
+  /** Hard listing sale-price range (THB) — used by house-search Part 1. */
+  priceMin?: number;
+  priceMax?: number;
   style?: string;
   collection?: string;
+  /** Soft AI tags (style / lifestyle / site) — never hard-exclude alone. */
+  styleTags?: string[];
+  lifestyleFeatures?: string[];
+  siteConstraints?: Array<"narrow-lot" | "wide-lot" | "small-footprint">;
 }
 
 export interface RecommendationRequest {

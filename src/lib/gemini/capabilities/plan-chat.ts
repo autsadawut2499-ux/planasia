@@ -1,12 +1,18 @@
 /**
  * Plan-finder chat: Gemini extracts search filters from natural language,
- * then `recommendListings` returns real storefront plans.
+ * then the Hard/Soft/Guardrails house-search pipeline returns real plans.
  */
 
 import { getTextModel, isGeminiConfigured } from "@/lib/ai/gemini";
 import { isGeminiFeatureEnabled } from "@/lib/gemini/config";
-import { recommendListings } from "@/lib/recommend/engine";
 import type { RecommendationFilters } from "@/lib/recommend/types";
+import {
+  extractSoftIntentFromText,
+  filtersToHardConstraints,
+  intentToSoftConstraints,
+} from "@/lib/search/intent";
+import { searchHousePlans } from "@/lib/search/house-search";
+import { getListings } from "@/lib/store/db";
 import { listingStorePath } from "@/lib/seo/slug";
 import type { UiLocale } from "@/lib/geo/countries";
 
@@ -38,19 +44,24 @@ export interface PlanChatResult {
   keywords: string[];
   listings: PlanChatListingCard[];
   provider: "gemini" | "heuristic";
+  usedFallback?: boolean;
 }
 
 interface GeminiPlanIntent {
   reply?: string;
   filters?: RecommendationFilters;
   keywords?: string[];
+  styleTags?: string[];
+  lifestyleFeatures?: string[];
+  siteConstraints?: Array<"narrow-lot" | "wide-lot" | "small-footprint">;
   needsClarification?: boolean;
 }
 
 const SYSTEM_PROMPT = `You are Planasia's house-plan shopping assistant for Thailand.
 Help buyers find real house plans from our marketplace.
 
-Extract structured search filters from the user message. Reply in the same language as the user (Thai or English).
+Split intent into HARD numeric filters (exact) and SOFT lifestyle/style tags (semantic).
+Reply in the same language as the user (Thai or English).
 
 Return ONLY valid JSON:
 {
@@ -65,20 +76,29 @@ Return ONLY valid JSON:
     "lengthMeters": number | omit,
     "budgetMin": number | omit,
     "budgetMax": number | omit,
+    "priceMin": number | omit,
+    "priceMax": number | omit,
     "style": string | omit,
     "collection": string | omit
   },
+  "styleTags": ["Modern", "Warm/Cozy"],
+  "lifestyleFeatures": ["Home Office", "Elderly Bedroom on 1st Floor"],
+  "siteConstraints": ["narrow-lot"],
   "keywords": ["optional", "search", "terms"],
   "needsClarification": boolean
 }
 
 Rules:
-- Budget is construction budget in THB (e.g. 2 ล้าน → budgetMax: 2000000).
-- Land size "กว้าง 10 ม. ลึก 15 ม." → widthMeters / lengthMeters.
-- Usable area "120 ตร.ม." → areaMin/areaMax (±15% band OK).
-- Styles common in catalog: Modern, Minimal, Tropical, Contemporary, Classic, Scandinavian. Omit style if unsure.
-- If the user is only greeting or asking how you work, set needsClarification true and ask for beds, budget, style, or land size. Leave filters empty.
-- Keep reply concise and friendly. Do not invent listing names or prices.`;
+- HARD: beds/baths are minimums; areaMin/areaMax in m²; priceMin/priceMax = plan sale price in THB when user talks about ราคาแบบ/ราคาไฟล์.
+- Construction budget (งบสร้าง 2 ล้าน) → budgetMax: 2000000 (soft financial context, not always sale price).
+- Land "หน้าแคบ แต่ลึก" → siteConstraints: ["narrow-lot"] and/or collection "small".
+- "มุมทำงาน WFH" → lifestyleFeatures: ["Home Office"].
+- "ห้องนอนผู้สูงอายุชั้นล่าง" → lifestyleFeatures: ["Elderly Bedroom on 1st Floor"].
+- Warm/modern vibe → styleTags like ["Modern","Warm/Cozy"] (soft); also set filters.style when clear.
+- Usable area "ไม่เกิน 200 ตร.ม." → areaMax: 200.
+- If greeting only, needsClarification true; leave filters empty.
+- Keep reply concise. Never invent listing names or prices.
+- If constraints look impossible together, still search — the system will suggest near matches.`;
 
 function positiveNumber(value: unknown): number | undefined {
   const n = typeof value === "number" ? value : Number(value);
@@ -98,6 +118,8 @@ function cleanFilters(raw: RecommendationFilters | undefined): RecommendationFil
   const lengthMeters = positiveNumber(raw.lengthMeters);
   const budgetMin = positiveNumber(raw.budgetMin);
   const budgetMax = positiveNumber(raw.budgetMax);
+  const priceMin = positiveNumber(raw.priceMin);
+  const priceMax = positiveNumber(raw.priceMax);
   if (beds) out.beds = Math.round(beds);
   if (baths) out.baths = Math.round(baths);
   if (floors) out.floors = Math.round(floors);
@@ -107,6 +129,8 @@ function cleanFilters(raw: RecommendationFilters | undefined): RecommendationFil
   if (lengthMeters) out.lengthMeters = lengthMeters;
   if (budgetMin) out.budgetMin = budgetMin;
   if (budgetMax) out.budgetMax = budgetMax;
+  if (priceMin) out.priceMin = priceMin;
+  if (priceMax) out.priceMax = priceMax;
   if (typeof raw.style === "string" && raw.style.trim()) {
     out.style = raw.style.trim();
   }
@@ -179,23 +203,18 @@ export function heuristicPlanIntent(
   if (width) filters.widthMeters = Number(width[1]);
   if (depth) filters.lengthMeters = Number(depth[1]);
 
-  const styleMap: Array<[RegExp, string]> = [
-    [/โมเดิร์น|modern/i, "Modern"],
-    [/มินิมอล|minimal/i, "Minimal"],
-    [/ทรอปิคอล|tropical/i, "Tropical"],
-    [/คลาสสิก|classic/i, "Classic"],
-    [/สแกนดิ|scandinavian/i, "Scandinavian"],
-    [/ร่วมสมัย|contemporary/i, "Contemporary"],
-  ];
-  for (const [re, style] of styleMap) {
-    if (re.test(text)) {
-      filters.style = style;
-      keywords.push(style.toLowerCase());
-      break;
-    }
+  const soft = extractSoftIntentFromText(text);
+  if (soft.styleTags[0]) {
+    filters.style = soft.styleTags.find((t) =>
+      /modern|minimal|tropical|classic|scandinavian|contemporary|loft|muji/i.test(t),
+    ) || soft.styleTags[0];
   }
+  if (soft.siteConstraints.includes("narrow-lot")) {
+    filters.collection = "small";
+  }
+  keywords.push(...soft.keywords, ...soft.styleTags.map((t) => t.toLowerCase()));
 
-  const needsClarification = !hasAnyFilter(filters);
+  const needsClarification = !hasAnyFilter(filters) && soft.styleTags.length === 0;
   const th = uiLocale === "th";
   let reply: string;
   if (needsClarification) {
@@ -208,7 +227,15 @@ export function heuristicPlanIntent(
       : "Got it — searching our catalog for plans that match.";
   }
 
-  return { reply, filters, keywords, needsClarification };
+  return {
+    reply,
+    filters,
+    keywords,
+    styleTags: soft.styleTags,
+    lifestyleFeatures: soft.lifestyleFeatures,
+    siteConstraints: soft.siteConstraints,
+    needsClarification,
+  };
 }
 
 async function extractIntentWithGemini(
@@ -246,30 +273,31 @@ ${message}`;
 
 async function fetchMatchingListings(
   filters: RecommendationFilters,
-  viewerKey?: string,
+  softExtras: {
+    keywords?: string[];
+    styleTags?: string[];
+    lifestyleFeatures?: string[];
+    siteConstraints?: RecommendationFilters["siteConstraints"];
+  },
   limit = 5,
-): Promise<PlanChatListingCard[]> {
-  const run = async (f: RecommendationFilters) =>
-    recommendListings({
-      viewerKey,
-      filters: hasAnyFilter(f) ? f : undefined,
-      limit,
-    });
+): Promise<{
+  cards: PlanChatListingCard[];
+  usedFallback: boolean;
+  fallbackMessage: { th: string; en: string } | null;
+}> {
+  const listings = await getListings();
+  const hard = filtersToHardConstraints(filters);
+  const soft = intentToSoftConstraints({
+    filters,
+    keywords: softExtras.keywords,
+    styleTags: softExtras.styleTags ?? filters.styleTags,
+    lifestyleFeatures: softExtras.lifestyleFeatures ?? filters.lifestyleFeatures,
+    siteConstraints: softExtras.siteConstraints ?? filters.siteConstraints,
+  });
 
-  let scored = await run(filters);
+  const result = searchHousePlans(listings, { hard, soft, limit });
 
-  // Soften style if it wiped the catalog.
-  if (scored.length < 2 && filters.style) {
-    const { style: _style, ...rest } = filters;
-    scored = await run(rest);
-  }
-
-  // Last resort: popular / personalized without hard filters.
-  if (scored.length === 0 && hasAnyFilter(filters)) {
-    scored = await run({});
-  }
-
-  return scored.map((row) => ({
+  const cards = result.hits.map((row) => ({
     id: row.listing.id,
     slug: row.listing.slug,
     name: row.listing.name,
@@ -285,16 +313,32 @@ async function fetchMatchingListings(
     matchScore: row.matchScore,
     reasons: row.reasons,
   }));
+
+  return {
+    cards,
+    usedFallback: result.usedFallback,
+    fallbackMessage: result.fallbackMessage,
+  };
 }
 
 function enrichReplyWithResults(
   reply: string,
   listings: PlanChatListingCard[],
   uiLocale: UiLocale,
-  needsClarification?: boolean,
+  opts?: {
+    needsClarification?: boolean;
+    usedFallback?: boolean;
+    fallbackMessage?: { th: string; en: string } | null;
+  },
 ): string {
-  if (needsClarification && listings.length === 0) return reply;
+  if (opts?.needsClarification && listings.length === 0) return reply;
   const th = uiLocale === "th";
+
+  if (opts?.usedFallback && opts.fallbackMessage) {
+    const note = th ? opts.fallbackMessage.th : opts.fallbackMessage.en;
+    return `${reply} ${note}`.trim();
+  }
+
   if (listings.length === 0) {
     return (
       reply +
@@ -356,20 +400,50 @@ export async function runPlanFinderChat(input: {
   }
 
   const filters = cleanFilters(intent.filters);
-  const keywords = Array.isArray(intent.keywords)
-    ? intent.keywords.map((k) => String(k).trim().toLowerCase()).filter(Boolean).slice(0, 8)
-    : [];
+  const heuristicSoft = extractSoftIntentFromText(message);
+  const styleTags = uniqueStrings([
+    ...(Array.isArray(intent.styleTags) ? intent.styleTags : []),
+    ...heuristicSoft.styleTags,
+    ...(filters.styleTags ?? []),
+  ]);
+  const lifestyleFeatures = uniqueStrings([
+    ...(Array.isArray(intent.lifestyleFeatures) ? intent.lifestyleFeatures : []),
+    ...heuristicSoft.lifestyleFeatures,
+    ...(filters.lifestyleFeatures ?? []),
+  ]);
+  const siteConstraints = uniqueStrings([
+    ...(Array.isArray(intent.siteConstraints) ? intent.siteConstraints : []),
+    ...heuristicSoft.siteConstraints,
+    ...(filters.siteConstraints ?? []),
+  ]) as NonNullable<RecommendationFilters["siteConstraints"]>;
 
-  const shouldSearch = hasAnyFilter(filters) || !intent.needsClarification;
-  const listings = shouldSearch
-    ? await fetchMatchingListings(filters, input.viewerKey, input.limit ?? 5)
-    : [];
+  const keywords = uniqueStrings([
+    ...(Array.isArray(intent.keywords) ? intent.keywords : []),
+    ...heuristicSoft.keywords,
+  ]).slice(0, 10);
+
+  filters.styleTags = styleTags;
+  filters.lifestyleFeatures = lifestyleFeatures;
+  filters.siteConstraints = siteConstraints;
+
+  const hasSoftIntent =
+    styleTags.length > 0 || lifestyleFeatures.length > 0 || siteConstraints.length > 0;
+  const shouldSearch =
+    hasAnyFilter(filters) || hasSoftIntent || !intent.needsClarification;
+
+  const matched = shouldSearch
+    ? await fetchMatchingListings(
+        filters,
+        { keywords, styleTags, lifestyleFeatures, siteConstraints },
+        input.limit ?? 5,
+      )
+    : { cards: [], usedFallback: false, fallbackMessage: null };
 
   // Greeting / clarify path: still surface a few popular plans as inspiration.
   const inspiration =
-    listings.length === 0 && intent.needsClarification
-      ? await fetchMatchingListings({}, input.viewerKey, 3)
-      : listings;
+    matched.cards.length === 0 && intent.needsClarification
+      ? await fetchMatchingListings({}, {}, 3)
+      : matched;
 
   const baseReply =
     (intent.reply && String(intent.reply).trim()) ||
@@ -377,17 +451,31 @@ export async function runPlanFinderChat(input: {
     "";
 
   return {
-    reply: enrichReplyWithResults(
-      baseReply,
-      inspiration,
-      uiLocale,
-      intent.needsClarification && !hasAnyFilter(filters),
-    ),
+    reply: enrichReplyWithResults(baseReply, inspiration.cards, uiLocale, {
+      needsClarification: intent.needsClarification && !hasAnyFilter(filters) && !hasSoftIntent,
+      usedFallback: inspiration.usedFallback,
+      fallbackMessage: inspiration.fallbackMessage,
+    }),
     filters,
     keywords,
-    listings: inspiration,
+    listings: inspiration.cards,
     provider,
+    usedFallback: inspiration.usedFallback,
   };
+}
+
+function uniqueStrings(values: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of values) {
+    const v = String(raw).trim();
+    if (!v) continue;
+    const key = v.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
 }
 
 export function isPlanChatReady(): boolean {

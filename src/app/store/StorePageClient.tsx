@@ -16,6 +16,8 @@ import { RecommendedForYou } from "@/components/store/RecommendedForYou";
 import { useApp } from "@/context/AppContext";
 import { listingMatchesSearch, useStoreBrowse } from "@/context/StoreBrowseContext";
 import { useStoreViewer } from "@/hooks/useStoreViewer";
+import { filtersToHardConstraints } from "@/lib/search/intent";
+import { searchHousePlans } from "@/lib/search/house-search";
 import { STORE_GRID_PAGE_SIZE } from "@/lib/store/catalogue-columns";
 import type { StoreListing } from "@/lib/store/db";
 
@@ -53,6 +55,8 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
     const style = searchParams.get("style") ?? "";
     const collection = searchParams.get("collection") ?? "";
     const province = searchParams.get("province") ?? "";
+    const priceMin = Number(searchParams.get("priceMin"));
+    const priceMax = Number(searchParams.get("priceMax"));
     const search = searchParams.get("search");
     setFilters((f) => ({
       ...f,
@@ -63,6 +67,8 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       style: style || f.style,
       collection: collection || f.collection,
       province: province || f.province,
+      priceMin: Number.isFinite(priceMin) && priceMin > 0 ? priceMin : f.priceMin,
+      priceMax: Number.isFinite(priceMax) && priceMax > 0 ? priceMax : f.priceMax,
     }));
     setAreaRange({
       min: Number.isFinite(areaMin) && areaMin > 0 ? areaMin : 0,
@@ -112,6 +118,42 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       return listingMatchesStoreFilters(item, filters, areaRange);
     });
   }, [listings, filters, areaRange, searchQuery, showFavoritesOnly, isFavorite]);
+
+  /** Near-match fallback when hard filters wipe the grid (Guardrails). */
+  const nearMatch = useMemo(() => {
+    if (filtered.length > 0 || showFavoritesOnly) return null;
+    const hasHard =
+      filters.beds > 0 ||
+      filters.baths > 0 ||
+      filters.floors > 0 ||
+      filters.priceMin > 0 ||
+      filters.priceMax > 0 ||
+      areaRange.min > 0 ||
+      areaRange.max > 0;
+    if (!hasHard && !filters.style && !filters.collection) return null;
+
+    const hard = filtersToHardConstraints({
+      beds: filters.beds || undefined,
+      baths: filters.baths || undefined,
+      floors: filters.floors || undefined,
+      priceMin: filters.priceMin || undefined,
+      priceMax: filters.priceMax || undefined,
+      areaMin: areaRange.min || undefined,
+      areaMax: areaRange.max || undefined,
+    });
+    const result = searchHousePlans(listings, {
+      hard,
+      soft: {
+        styleTags: filters.style ? [filters.style] : undefined,
+        siteConstraints:
+          filters.collection === "small" ? ["narrow-lot", "small-footprint"] : undefined,
+        keywords: searchQuery.trim() ? [searchQuery.trim()] : undefined,
+      },
+      limit: 8,
+    });
+    if (!result.usedFallback || result.hits.length === 0) return null;
+    return result;
+  }, [filtered.length, listings, filters, areaRange, searchQuery, showFavoritesOnly]);
 
   // Reset lazy page window whenever the active filter/search set changes.
   useEffect(() => {
@@ -169,6 +211,8 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
             style: filters.style,
             areaMin: areaRange.min,
             areaMax: areaRange.max,
+            priceMin: filters.priceMin,
+            priceMax: filters.priceMax,
           }}
           limit={8}
         />
@@ -212,8 +256,35 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-[var(--color-card,#fff)] py-24 text-center">
-                <p className="text-text-muted">{translate("store.empty")}</p>
+              <div className="space-y-6">
+                <div className="rounded-xl border border-dashed border-border bg-[var(--color-card,#fff)] px-6 py-10 text-center">
+                  <p className="text-text-muted">{translate("store.empty")}</p>
+                  {nearMatch?.fallbackMessage && (
+                    <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#1e3a5f]">
+                      {locale === "th"
+                        ? nearMatch.fallbackMessage.th
+                        : nearMatch.fallbackMessage.en}
+                    </p>
+                  )}
+                </div>
+                {nearMatch && nearMatch.hits.length > 0 && (
+                  <div>
+                    <h2 className="mb-4 text-sm font-semibold text-[#1e3a5f]">
+                      {locale === "th"
+                        ? "แบบบ้านที่ใกล้เคียงที่สุด"
+                        : "Closest matching plans"}
+                    </h2>
+                    <div className="store-card-grid">
+                      {nearMatch.hits.map((hit, i) => (
+                        <StorePlanCard
+                          key={hit.listing.id}
+                          item={hit.listing}
+                          index={i}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getEmailFrom, getResendApiKey } from "@/lib/email/config";
 import {
   buildDesignerSaleEmail,
   type DesignerSaleLine,
@@ -15,8 +16,8 @@ export async function sendDesignerSaleEmail(opts: {
   const email = opts.to.trim();
   if (!email) return false;
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "Planasia <noreply@planasia.com>";
+  const apiKey = getResendApiKey();
+  const from = getEmailFrom();
   if (!apiKey) {
     if (process.env.NODE_ENV !== "production") {
       console.info("[email] designer sale skipped — RESEND_API_KEY missing", {

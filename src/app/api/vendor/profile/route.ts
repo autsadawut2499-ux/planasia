@@ -20,13 +20,23 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "displayName is required" }, { status: 400 });
     }
 
+    // Accept empty string as "clear"; keep absolute URLs (incl. ?v= cache-bust) as-is.
+    const avatarUrl =
+      body.avatarUrl === undefined || body.avatarUrl === null
+        ? undefined
+        : String(body.avatarUrl).trim() || undefined;
+    const coverUrl =
+      body.coverUrl === undefined || body.coverUrl === null
+        ? undefined
+        : String(body.coverUrl).trim() || undefined;
+
     const profile = await upsertVendorProfile({
       ownerKey: auth.ownerKey,
       displayName,
       headline: body.headline ? String(body.headline).trim() : undefined,
       bio: body.bio ? String(body.bio).trim() : undefined,
-      avatarUrl: body.avatarUrl ? String(body.avatarUrl) : undefined,
-      coverUrl: body.coverUrl ? String(body.coverUrl) : undefined,
+      avatarUrl,
+      coverUrl,
       brandImageUrl: body.brandImageUrl ? String(body.brandImageUrl) : undefined,
       galleryUrls: cleanList(body.galleryUrls),
       location: body.location ? String(body.location).trim() : undefined,

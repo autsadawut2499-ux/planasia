@@ -546,7 +546,7 @@ export default function StoreListingPageClient({
               {listing.pitch && (
                 <div className="border-t border-slate-100 px-4 py-4 sm:px-8 sm:py-5">
                   <p className="text-[11px] font-bold uppercase tracking-wide text-[#1e40af]">
-                    {L("From the designer", "จากช่างเขียนแบบ")}
+                    {L("From the designer", "จากสถาปนิกและนักออกแบบ")}
                   </p>
                   <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-600">
                     {listing.pitch}

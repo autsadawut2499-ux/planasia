@@ -32,7 +32,7 @@ export function CollectionsMegaMenuPanel({ onNavigate }: CollectionsMegaMenuPane
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=480&q=80";
 
   return (
-    <div className="w-[min(920px,calc(100vw-2rem))] rounded-xl border border-border/80 bg-white p-5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] md:p-6">
+    <div className="box-border w-full max-w-full rounded-xl border border-border/80 bg-white p-4 shadow-[0_16px_48px_rgba(15,23,42,0.16)] sm:p-5 md:p-6">
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 md:grid-cols-3 md:gap-x-5 md:gap-y-6">
         {tiles.map((tile) => {
           const href =

@@ -26,9 +26,9 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
       },
       {
-        // Supabase Storage (uploaded plan previews / vendor avatars).
+        // Supabase Storage (uploaded plan previews / vendor covers / avatars).
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "**.supabase.co",
       },
     ],
   },

@@ -111,9 +111,10 @@ export interface StoreListing {
   creator?: ListingCreator;
   /**
    * Admin marketplace gate (public-safe):
-   * - pending = visible on store, Buy/Checkout locked
+   * - pending = hidden from public store / search (vendor + admin still see)
    * - approved = visible + purchasable
    * - rejected = hidden from store
+   * - null/undefined = legacy rows treated as approved
    */
   moderationStatus?: "pending" | "approved" | "rejected";
   /**

@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
   ExternalLink,
@@ -16,6 +17,7 @@ import { FileUpload } from "@/components/vendor/FileUpload";
 import { Card, Field, PrimaryButton, Select, TextArea, TextInput } from "@/components/vendor/ui";
 import { ASIA_COUNTRIES } from "@/lib/geo/asia-countries";
 import { PROVINCES_BY_REGION, findProvince, provinceLabel } from "@/lib/geo/th-provinces";
+import { withMediaCacheBust } from "@/lib/media/cache-bust";
 import type { UploadKind, useVendorDashboard } from "@/hooks/useVendorDashboard";
 
 type Dashboard = ReturnType<typeof useVendorDashboard>;
@@ -23,8 +25,9 @@ type Dashboard = ReturnType<typeof useVendorDashboard>;
 const MAX_GALLERY = 12;
 
 export function VendorProfileTab({ dash }: { dash: Dashboard }) {
-  const { data, saveProfile, uploadFile } = dash;
+  const { data, saveProfile, uploadFile, refresh } = dash;
   const toast = useToast();
+  const router = useRouter();
   const p = data?.profile;
 
   // Live form state — the preview card reads directly from here, so any change
@@ -52,20 +55,81 @@ export function VendorProfileTab({ dash }: { dash: Dashboard }) {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync when /api/vendor/me finishes loading (useState only captures the first null profile).
+  useEffect(() => {
+    if (!p) return;
+    setDisplayName(p.displayName ?? "");
+    setHeadline(p.headline ?? "");
+    setBio(p.bio ?? "");
+    setLocation(p.location ?? "");
+    setCountryCode(p.countryCode ?? "TH");
+    setYears(p.yearsExperience?.toString() ?? "");
+    setSpecialties((p.specialties ?? []).join(", "));
+    setAvatarUrl(p.avatarUrl ?? "");
+    setCoverUrl(p.coverUrl ?? "");
+    setGalleryUrls(p.galleryUrls ?? []);
+    setContactEmail(p.contactEmail ?? "");
+    setContactPhone(p.contactPhone ?? "");
+    setLineId(p.lineId ?? "");
+    setWebsite(p.website ?? "");
+    setSocials((p.socials ?? []).join(", "));
+  }, [p?.updatedAt, p?.ownerKey]);
+
   const specialtyList = specialties.split(",").map((s) => s.trim()).filter(Boolean);
   const initials = (displayName || "?").replace(/[^a-zA-Z0-9ก-๙]/g, "").slice(0, 2).toUpperCase();
+
+  function profilePayload(overrides?: { avatarUrl?: string; coverUrl?: string }) {
+    return {
+      displayName,
+      headline,
+      bio,
+      location,
+      countryCode,
+      yearsExperience,
+      specialties: specialtyList,
+      avatarUrl: overrides?.avatarUrl ?? avatarUrl,
+      coverUrl: overrides?.coverUrl ?? coverUrl,
+      brandImageUrl,
+      galleryUrls,
+      contactEmail,
+      contactPhone,
+      lineId,
+      website,
+      socials: socials.split(",").map((s) => s.trim()).filter(Boolean),
+      isPublished: true,
+    };
+  }
 
   async function handlePreviewUpload(file: File | undefined | null, kind: "avatar" | "cover") {
     if (!file) return;
     setUploading(kind);
     try {
       const url = await uploadFile(file, kind as UploadKind);
-      if (kind === "avatar") {
-        setAvatarUrl(url);
-        toast.success("อัปโหลดรูปโปรไฟล์แล้ว");
+      const nextAvatar = kind === "avatar" ? url : avatarUrl;
+      const nextCover = kind === "cover" ? url : coverUrl;
+      if (kind === "avatar") setAvatarUrl(url);
+      else setCoverUrl(url);
+
+      // Persist immediately so public profile / directory show the new cover.
+      if (displayName.trim()) {
+        const saved = await saveProfile(
+          profilePayload({ avatarUrl: nextAvatar, coverUrl: nextCover }),
+        );
+        if (saved.coverUrl) setCoverUrl(saved.coverUrl);
+        if (saved.avatarUrl) setAvatarUrl(saved.avatarUrl);
+        await refresh({ quiet: true });
+        router.refresh();
+        toast.success(
+          kind === "avatar"
+            ? "อัปโหลดและบันทึกรูปโปรไฟล์แล้ว"
+            : "อัปโหลดและบันทึกภาพปกแล้ว",
+        );
       } else {
-        setCoverUrl(url);
-        toast.success("อัปโหลดภาพปกแล้ว");
+        toast.success(
+          kind === "avatar"
+            ? "อัปโหลดรูปโปรไฟล์แล้ว — กรอกชื่อแล้วกดบันทึกเพื่อเผยแพร่"
+            : "อัปโหลดภาพปกแล้ว — กรอกชื่อแล้วกดบันทึกเพื่อเผยแพร่",
+        );
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "อัปโหลดไม่สำเร็จ");
@@ -83,25 +147,11 @@ export function VendorProfileTab({ dash }: { dash: Dashboard }) {
     }
     setSaving(true);
     try {
-      await saveProfile({
-        displayName,
-        headline,
-        bio,
-        location,
-        countryCode,
-        yearsExperience,
-        specialties: specialtyList,
-        avatarUrl,
-        coverUrl,
-        brandImageUrl,
-        galleryUrls,
-        contactEmail,
-        contactPhone,
-        lineId,
-        website,
-        socials: socials.split(",").map((s) => s.trim()).filter(Boolean),
-        isPublished: true,
-      });
+      const saved = await saveProfile(profilePayload());
+      if (saved.coverUrl) setCoverUrl(saved.coverUrl);
+      if (saved.avatarUrl) setAvatarUrl(saved.avatarUrl);
+      await refresh({ quiet: true });
+      router.refresh();
       toast.success("บันทึกโปรไฟล์แล้ว");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
@@ -251,7 +301,12 @@ export function VendorProfileTab({ dash }: { dash: Dashboard }) {
           <div className="group/cover relative h-28 bg-gradient-to-br from-[#1e3a5f] to-[#1e40af]">
             {coverUrl && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverUrl} alt="cover" className="h-full w-full object-cover" />
+              <img
+                key={coverUrl}
+                src={withMediaCacheBust(coverUrl)}
+                alt="cover"
+                className="h-full w-full object-cover"
+              />
             )}
             <button
               type="button"
@@ -279,7 +334,8 @@ export function VendorProfileTab({ dash }: { dash: Dashboard }) {
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={avatarUrl}
+                    key={avatarUrl}
+                    src={withMediaCacheBust(avatarUrl)}
                     alt={displayName}
                     className="h-20 w-20 rounded-full object-cover ring-4 ring-white"
                   />

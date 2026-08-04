@@ -2,10 +2,15 @@
  * Central store taxonomy — single source of truth for the header dropdowns,
  * store filters and the vendor submission form. Bilingual (en / th).
  *
- * Style labels always start with "แบบบ้าน" for storefront display.
+ * Styles use "แบบบ้าน…" (house-style look).
+ * Collections use type-correct "แบบ…" labels (แบบโกดัง, แบบอาคารพาณิชย์, …).
  */
 
-import { withBanBaanPrefix } from "@/lib/store/style-label";
+import {
+  formatCollectionTitleEn,
+  formatCollectionTitleTh,
+  withBanBaanPrefix,
+} from "@/lib/store/style-label";
 
 export interface TaxonomyItem {
   /** Filter value used in ?style= / ?collection= query params + DB column. */
@@ -23,33 +28,33 @@ export interface TaxonomyItem {
 export const COLLECTIONS: TaxonomyItem[] = [
   {
     id: "single-storey",
-    en: withBanBaanPrefix("Single-Storey Houses"),
-    th: withBanBaanPrefix("บ้านชั้นเดียว"),
+    en: formatCollectionTitleEn("Single-Storey Houses"),
+    th: formatCollectionTitleTh("บ้านชั้นเดียว"),
   },
   {
     id: "two-storey",
-    en: withBanBaanPrefix("Two-Storey Houses"),
-    th: withBanBaanPrefix("บ้านสองชั้น"),
+    en: formatCollectionTitleEn("Two-Storey Houses"),
+    th: formatCollectionTitleTh("บ้านสองชั้น"),
   },
   {
     id: "small",
-    en: withBanBaanPrefix("Small / Narrow Houses"),
-    th: withBanBaanPrefix("บ้านขนาดเล็ก / หน้าแคบ"),
+    en: formatCollectionTitleEn("Small / Narrow Houses"),
+    th: formatCollectionTitleTh("บ้านขนาดเล็ก / หน้าแคบ"),
   },
   {
     id: "commercial",
-    en: withBanBaanPrefix("Commercial Building"),
-    th: withBanBaanPrefix("อาคารพาณิชย์ / ตึกแถว"),
+    en: formatCollectionTitleEn("Commercial Building"),
+    th: formatCollectionTitleTh("อาคารพาณิชย์ / ตึกแถว"),
   },
   {
     id: "warehouse",
-    en: withBanBaanPrefix("Warehouse / Factory"),
-    th: withBanBaanPrefix("โกดัง / โรงงาน"),
+    en: formatCollectionTitleEn("Warehouse / Factory"),
+    th: formatCollectionTitleTh("โกดัง / โรงงาน"),
   },
   {
     id: "resort",
-    en: withBanBaanPrefix("Resort / Bungalow"),
-    th: withBanBaanPrefix("รีสอร์ท / บังกะโล"),
+    en: formatCollectionTitleEn("Resort / Bungalow"),
+    th: formatCollectionTitleTh("รีสอร์ท / บังกะโล"),
   },
 ];
 

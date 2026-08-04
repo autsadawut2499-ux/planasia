@@ -27,7 +27,7 @@ export function DraftsmanProfileTabs({
   const [tab, setTab] = useState<DraftsmanTabId>("portfolio");
 
   const tabs: Array<{ id: DraftsmanTabId; label: string; icon: React.ReactNode; count?: number }> = [
-    { id: "overview", label: "เกี่ยวกับช่างเขียนแบบ", icon: <UserRound className="h-4 w-4" /> },
+    { id: "overview", label: "เกี่ยวกับสถาปนิกและนักออกแบบ", icon: <UserRound className="h-4 w-4" /> },
     {
       id: "portfolio",
       label: "ผลงานทั้งหมดของช่างคนนี้",

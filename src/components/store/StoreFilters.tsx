@@ -10,15 +10,19 @@ import type { StoreListing } from "@/lib/store/db";
 
 export interface StoreFiltersState {
   floors: 0 | 1 | 2;
-  /** 0 = any; 4 = 4+ bedrooms */
+  /** 0 = any; otherwise minimum bedrooms (4 = 4+) */
   beds: number;
-  /** 0 = any; 3 = 3+ bathrooms */
+  /** 0 = any; otherwise minimum bathrooms (3 = 3+) */
   baths: number;
   /** 0 = any; 3 = 3+ parking spaces */
   parking: number;
   style: string;
   collection: string;
   province: string;
+  /** Listing sale price floor (THB). 0 = any. */
+  priceMin: number;
+  /** Listing sale price ceiling (THB). 0 = any. */
+  priceMax: number;
 }
 
 export const DEFAULT_STORE_FILTERS: StoreFiltersState = {
@@ -29,7 +33,24 @@ export const DEFAULT_STORE_FILTERS: StoreFiltersState = {
   style: "",
   collection: "",
   province: "",
+  priceMin: 0,
+  priceMax: 0,
 };
+
+/** Plan sale-price presets (THB) for hard budget filter. */
+export const PRICE_PRESETS: {
+  id: string;
+  min: number;
+  max: number;
+  labelTh: string;
+  labelEn: string;
+}[] = [
+  { id: "any", min: 0, max: 0, labelTh: "ทั้งหมด", labelEn: "Any" },
+  { id: "u5k", min: 0, max: 5000, labelTh: "ไม่เกิน ฿5,000", labelEn: "Up to ฿5,000" },
+  { id: "5-15k", min: 5000, max: 15000, labelTh: "฿5,000–15,000", labelEn: "฿5,000–15,000" },
+  { id: "15-30k", min: 15000, max: 30000, labelTh: "฿15,000–30,000", labelEn: "฿15,000–30,000" },
+  { id: "30k+", min: 30000, max: 0, labelTh: "฿30,000 ขึ้นไป", labelEn: "฿30,000+" },
+];
 
 /** Area presets in m² (draftsman `area` field). */
 export const AREA_PRESETS: { id: string; min: number; max: number; labelTh: string; labelEn: string }[] = [
@@ -77,6 +98,16 @@ export function StoreFilters({
     return "";
   }, [areaRange]);
 
+  const activePriceId = useMemo(() => {
+    const match = PRICE_PRESETS.find(
+      (p) =>
+        p.id !== "any" && p.min === filters.priceMin && p.max === filters.priceMax,
+    );
+    if (match) return match.id;
+    if (!filters.priceMin && !filters.priceMax) return "any";
+    return "";
+  }, [filters.priceMin, filters.priceMax]);
+
   const counts = useMemo(() => {
     const style = new Map<string, number>();
     const collection = new Map<string, number>();
@@ -95,6 +126,8 @@ export function StoreFilters({
     !!filters.style ||
     !!filters.collection ||
     !!filters.province ||
+    filters.priceMin > 0 ||
+    filters.priceMax > 0 ||
     areaRange.min > 0 ||
     areaRange.max > 0;
 
@@ -160,6 +193,34 @@ export function StoreFilters({
         </FilterGroup>
 
         <FilterGroup
+          label={thai ? "ช่วงราคาแบบบ้าน" : "Plan price"}
+          hint={thai ? "ราคาขายไฟล์แบบ (Hard filter)" : "Listing sale price (hard filter)"}
+        >
+          <div className="space-y-1.5">
+            {PRICE_PRESETS.map((preset) => {
+              const selected = activePriceId === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() =>
+                    onChange({ priceMin: preset.min, priceMax: preset.max })
+                  }
+                  className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[12px] transition ${
+                    selected
+                      ? "border-[#1e40af] bg-[#1e40af]/5 font-semibold text-[#1e40af]"
+                      : "border-border bg-white text-text-secondary hover:border-[#1e40af]/35"
+                  }`}
+                >
+                  <span>{thai ? preset.labelTh : preset.labelEn}</span>
+                  {selected && <span className="h-1.5 w-1.5 rounded-full bg-[#1e40af]" />}
+                </button>
+              );
+            })}
+          </div>
+        </FilterGroup>
+
+        <FilterGroup
           label={thai ? "พื้นที่ใช้สอย" : "Usable area"}
           hint={thai ? "ตร.ม. ตามข้อมูลแบบบ้าน" : "Square metres from listing area"}
         >
@@ -185,7 +246,10 @@ export function StoreFilters({
           </div>
         </FilterGroup>
 
-        <FilterGroup label={translate("store.filterBeds")}>
+        <FilterGroup
+          label={translate("store.filterBeds")}
+          hint={thai ? "จำนวนห้องนอนขั้นต่ำ" : "Minimum bedrooms"}
+        >
           <Segmented
             options={[0, 1, 2, 3, 4].map((n) => ({
               value: n,
@@ -196,7 +260,10 @@ export function StoreFilters({
           />
         </FilterGroup>
 
-        <FilterGroup label={translate("store.filterBaths")}>
+        <FilterGroup
+          label={translate("store.filterBaths")}
+          hint={thai ? "จำนวนห้องน้ำขั้นต่ำ" : "Minimum bathrooms"}
+        >
           <Segmented
             options={[0, 1, 2, 3].map((n) => ({
               value: n,
@@ -256,7 +323,7 @@ export function StoreFilters({
   );
 }
 
-/** Shared filter predicate used by the store grid. */
+/** Shared filter predicate used by the store grid (Hard Constraints). */
 export function listingMatchesStoreFilters(
   item: StoreListing,
   filters: StoreFiltersState,
@@ -264,21 +331,9 @@ export function listingMatchesStoreFilters(
 ): boolean {
   if (filters.floors && item.floors !== filters.floors) return false;
 
-  if (filters.beds) {
-    if (filters.beds >= 4) {
-      if (item.beds < 4) return false;
-    } else if (item.beds !== filters.beds) {
-      return false;
-    }
-  }
-
-  if (filters.baths) {
-    if (filters.baths >= 3) {
-      if (item.baths < 3) return false;
-    } else if (item.baths !== filters.baths) {
-      return false;
-    }
-  }
+  // Minimum beds / baths (spec: bedrooms >= min AND bathrooms >= min)
+  if (filters.beds && item.beds < filters.beds) return false;
+  if (filters.baths && item.baths < filters.baths) return false;
 
   if (filters.parking) {
     const parking = item.parking ?? 0;
@@ -292,6 +347,10 @@ export function listingMatchesStoreFilters(
   if (filters.style && item.style !== filters.style) return false;
   if (filters.collection && item.collection !== filters.collection) return false;
   if (filters.province && item.province !== filters.province) return false;
+
+  // Spec: price <= max (and optional min floor)
+  if (filters.priceMin && item.price < filters.priceMin) return false;
+  if (filters.priceMax && item.price > filters.priceMax) return false;
 
   if (areaRange.min || areaRange.max) {
     const area = parseAreaSqm(item.area);

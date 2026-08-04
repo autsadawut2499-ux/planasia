@@ -110,9 +110,9 @@ export default async function PlanLandingPage({ params }: PageProps) {
           <div className="mt-12 rounded-xl border border-border bg-surface-raised/80 p-7 md:p-8">
             <h2 className="text-base font-bold text-text-primary">เกี่ยวกับ{page.titleTh}</h2>
             <p className="mt-3 text-sm leading-relaxed text-text-secondary">
-              {page.longDescriptionTh} หากต้องการปรับแบบเพิ่มเติม สามารถติดต่อช่างเขียนแบบได้โดยตรงผ่านหน้า
+              {page.longDescriptionTh} หากต้องการปรับแบบเพิ่มเติม สามารถติดต่อสถาปนิกและนักออกแบบได้โดยตรงผ่านหน้า
               <Link href="/draftsmen" className="mx-1 text-[#1e40af] underline">
-                หาช่างเขียนแบบ
+                หาสถาปนิกและนักออกแบบ
               </Link>
             </p>
           </div>

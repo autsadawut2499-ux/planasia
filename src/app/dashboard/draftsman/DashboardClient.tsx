@@ -143,7 +143,7 @@ export default function DashboardClient() {
         <p className="mt-8 text-center text-xs text-text-muted">
           ต้องการดูหน้าร้านสาธารณะ?{" "}
           <Link href="/draftsmen" className="text-[#1e40af] hover:underline">
-            ไดเรกทอรีช่างเขียนแบบ
+            ไดเรกทอรีสถาปนิกและนักออกแบบ
           </Link>
           {dash.data?.ownerKey ? (
             <>

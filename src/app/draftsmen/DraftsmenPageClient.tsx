@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BadgeCheck, MapPin, Ruler, Search } from "lucide-react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { useBilingual } from "@/components/landing/useBilingual";
+import { withMediaCacheBust } from "@/lib/media/cache-bust";
 import type { DraftsmanCard } from "@/lib/vendors/directory";
 
 export default function DraftsmenPageClient() {
@@ -14,7 +15,7 @@ export default function DraftsmenPageClient() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    fetch("/api/draftsmen")
+    fetch("/api/draftsmen", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => setCards(data.draftsmen ?? []))
       .catch(() => setCards([]))
@@ -38,12 +39,12 @@ export default function DraftsmenPageClient() {
         <section className="border-b border-border bg-gradient-to-br from-[#1e3a5f] to-[#1e40af] py-16 text-white md:py-20">
           <div className="mx-auto max-w-[1400px] px-5 md:px-8">
             <h1 className="text-3xl font-bold md:text-4xl">
-              {t("Find a Draftsman", "หาช่างเขียนแบบ")}
+              {t("Find Architects & Designers", "หาสถาปนิกและนักออกแบบ")}
             </h1>
             <p className="mt-3 max-w-2xl text-blue-100">
               {t(
-                "Browse verified architects and draftsmen, view their work, and hire them directly.",
-                "ค้นหาสถาปนิกและช่างเขียนแบบ ดูผลงาน และติดต่อจ้างงานได้โดยตรง",
+                "Browse verified architects and designers, view their work, and hire them directly.",
+                "ค้นหาสถาปนิกและนักออกแบบ ดูผลงาน และติดต่อจ้างงานได้โดยตรง",
               )}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -76,19 +77,22 @@ export default function DraftsmenPageClient() {
           ) : filtered.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-[var(--color-card,#fff)] py-24 text-center">
               <p className="text-text-muted">
-                {t("No draftsmen found yet.", "ยังไม่มีช่างเขียนแบบในระบบ")}
+                {t("No architects or designers found yet.", "ยังไม่มีสถาปนิกและนักออกแบบในระบบ")}
               </p>
               <Link
                 href="/dashboard/draftsman"
                 className="mt-4 inline-block rounded-full bg-[#1e40af] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1d4ed8]"
               >
-                {t("Become a draftsman", "สมัครเป็นช่างเขียนแบบ")}
+                {t("Become a seller", "สมัครเป็นสถาปนิกและนักออกแบบ")}
               </Link>
             </div>
           ) : (
             <>
               <p className="mb-6 text-sm text-text-secondary">
-                {t(`${filtered.length} draftsmen`, `พบช่างเขียนแบบ ${filtered.length} คน`)}
+                {t(
+                  `${filtered.length} architects & designers`,
+                  `พบสถาปนิกและนักออกแบบ ${filtered.length} คน`,
+                )}
               </p>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
                 {filtered.map((card) => (
@@ -104,13 +108,15 @@ export default function DraftsmenPageClient() {
 }
 
 function draftsmanCoverSrc(card: DraftsmanCard): string | undefined {
-  return (
+  // Prefer explicit cover; only fall back when the vendor never set one.
+  const raw =
     card.coverUrl ||
     card.galleryUrls[0] ||
     card.sampleImages[0] ||
     card.brandImageUrl ||
-    undefined
-  );
+    undefined;
+  if (!raw) return undefined;
+  return withMediaCacheBust(raw, card.updatedAt ?? card.coverUrl);
 }
 
 function DraftsmanCardView({
@@ -130,6 +136,7 @@ function DraftsmanCardView({
       <Link href={profileHref} className="relative block aspect-[16/7] overflow-hidden bg-surface-raised">
         {coverSrc ? (
           <img
+            key={coverSrc}
             src={coverSrc}
             alt=""
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] hover:scale-[1.02]"

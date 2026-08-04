@@ -109,7 +109,7 @@ export function SiteFooter({ variant: _variant = "light" }: SiteFooterProps) {
           <BrandLogo variant="dark" centered className="w-full lg:w-auto" />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
             ตลาดกลางแบบบ้านและแปลนพิมพ์เขียวดิจิทัล
-            พร้อมช่างเขียนแบบมืออาชีพ — ดาวน์โหลดไฟล์ได้ทันทีหลังชำระเงิน
+            พร้อมสถาปนิกและนักออกแบบมืออาชีพ — ดาวน์โหลดไฟล์ได้ทันทีหลังชำระเงิน
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2.5 lg:justify-start">
             <Link
@@ -122,7 +122,7 @@ export function SiteFooter({ variant: _variant = "light" }: SiteFooterProps) {
               href="/draftsmen"
               className="inline-flex items-center rounded-md border border-white/15 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-white/30 hover:bg-white/5"
             >
-              หาช่างเขียนแบบ
+              หาสถาปนิกและนักออกแบบ
             </Link>
             <Link
               href="/admin"

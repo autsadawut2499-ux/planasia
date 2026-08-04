@@ -3,6 +3,7 @@ import "server-only";
 import type { CartOrder } from "@/lib/store/cart-orders";
 import type { DownloadGrant } from "@/lib/payments/tokens";
 import type { PostPaymentTranslationResult } from "@/lib/gemini/post-payment-translation";
+import { getEmailFrom, getResendApiKey, SUPPORT_EMAIL } from "@/lib/email/config";
 import {
   documentLanguageToStampLocale,
   getDocumentLanguage,
@@ -171,7 +172,7 @@ export async function sendOrderConfirmationEmail(
           "เมื่อดาวน์โหลดแบบแปลนสำเร็จแล้ว จะไม่คืนเงินเพราะเปลี่ยนใจ — ดูนโยบายคืนเงินที่เว็บไซต์",
           "",
           "— Planasia",
-          "hello@planasia.com",
+          SUPPORT_EMAIL,
         ]
       : [
           `Hello ${order.buyerName || "Customer"},`,
@@ -199,7 +200,7 @@ export async function sendOrderConfirmationEmail(
           "After a successful blueprint download, refunds are not given for change of mind — see our Refund Policy.",
           "",
           "— Planasia",
-          "hello@planasia.com",
+          SUPPORT_EMAIL,
         ]
   )
     .filter((line) => line !== null)
@@ -342,13 +343,13 @@ export async function sendOrderConfirmationEmail(
           }
         </p>
 
-        <p style="margin:24px 0 0;font-size:13px;color:#64748b">— Planasia · <a href="mailto:hello@planasia.com" style="color:#1e40af">hello@planasia.com</a></p>
+        <p style="margin:24px 0 0;font-size:13px;color:#64748b">— Planasia · <a href="mailto:${SUPPORT_EMAIL}" style="color:#1e40af">${SUPPORT_EMAIL}</a></p>
       </div>
     </div>
   `;
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "Planasia <noreply@planasia.com>";
+  const apiKey = getResendApiKey();
+  const from = getEmailFrom();
 
   if (!apiKey) {
     if (process.env.NODE_ENV !== "production") {

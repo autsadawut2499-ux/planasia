@@ -20,7 +20,7 @@ interface VendorBylineRow {
 
 function fallbackName(ownerKey: string): string {
   const tail = ownerKey.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase() || "0000";
-  return `ช่างเขียนแบบ #${tail}`;
+  return `สถาปนิกและนักออกแบบ #${tail}`;
 }
 
 async function loadCreators(ownerKeys: string[]): Promise<Map<string, ListingCreator>> {
