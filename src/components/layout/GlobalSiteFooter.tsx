@@ -2,12 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-
-/** Paths that use their own chrome (admin panel) — skip the public storefront footer. */
-function shouldHideFooter(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === "/admin" || pathname.startsWith("/admin/");
-}
+import { shouldHidePublicChrome } from "@/lib/layout/storefront-chrome";
 
 /**
  * Root-layout footer gate: renders SiteFooter on every public page,
@@ -15,6 +10,6 @@ function shouldHideFooter(pathname: string | null): boolean {
  */
 export function GlobalSiteFooter() {
   const pathname = usePathname();
-  if (shouldHideFooter(pathname)) return null;
+  if (shouldHidePublicChrome(pathname)) return null;
   return <SiteFooter />;
 }

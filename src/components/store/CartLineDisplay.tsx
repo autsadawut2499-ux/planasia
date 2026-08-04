@@ -21,7 +21,7 @@ function CartLineTranslated({
       <img src={item.image} alt={copy.name} className="h-16 w-20 shrink-0 rounded-lg object-cover" />
       <div className="min-w-0 flex-1">
         <p className="line-clamp-2 text-sm font-semibold text-text-primary">{copy.name}</p>
-        <p className="mt-1 text-sm font-bold text-[#1e40af]">{formatMoney(item.price)}</p>
+        <p className="font-price mt-1 text-sm font-bold text-[#1e40af]">{formatMoney(item.price)}</p>
       </div>
     </>
   );
@@ -36,7 +36,7 @@ function CartLineStatic({ item }: { item: CartLineItem }) {
       <img src={item.image} alt={item.name} className="h-16 w-20 shrink-0 rounded-lg object-cover" />
       <div className="min-w-0 flex-1">
         <p className="line-clamp-2 text-sm font-semibold text-text-primary">{item.name}</p>
-        <p className="mt-1 text-sm font-bold text-[#1e40af]">{formatMoney(item.price)}</p>
+        <p className="font-price mt-1 text-sm font-bold text-[#1e40af]">{formatMoney(item.price)}</p>
       </div>
     </>
   );

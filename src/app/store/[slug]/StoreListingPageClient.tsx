@@ -45,6 +45,11 @@ import {
   type PlanCardSpec,
 } from "@/lib/store/plan-card-specs";
 import { isListingPurchasable } from "@/lib/store/listing-purchase";
+import {
+  forceDownloadMedia,
+  guessDownloadFilename,
+} from "@/lib/media/force-download";
+import { printRemoteImage } from "@/lib/media/print-image";
 import type { PlanReview, RatingAggregate } from "@/lib/supabase/reviews";
 
 const RecommendedForYou = dynamic(
@@ -158,6 +163,7 @@ export default function StoreListingPageClient({
 
   const [floorIndex, setFloorIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [floorDownloading, setFloorDownloading] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [purchaseSelection, setPurchaseSelection] =
     useState<ListingPurchaseSelection | null>(null);
@@ -299,25 +305,41 @@ export default function StoreListingPageClient({
       toastError(L("No floor plan available", "ยังไม่มีภาพแปลน"));
       return;
     }
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(
-      `<html><head><title>${copy.name}</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#fff"><img src="${activeFloorUrl}" style="max-width:100%;${flipped ? "transform:scaleX(-1)" : ""}" onload="window.print()" /></body></html>`,
-    );
-    w.document.close();
+    const opened = printRemoteImage({
+      url: activeFloorUrl,
+      title: copy.name,
+      flipX: flipped,
+    });
+    if (!opened) {
+      toastError(L("Could not open print window", "เปิดหน้าต่างพิมพ์ไม่สำเร็จ"));
+    }
   }
 
-  function downloadFloorPlan() {
+  async function downloadFloorPlan() {
     if (!activeFloorUrl) {
       toastError(L("No floor plan available", "ยังไม่มีภาพแปลน"));
       return;
     }
-    const a = document.createElement("a");
-    a.href = activeFloorUrl;
-    a.download = `${listing.slug || listing.id}-floor-${floorIndex + 1}.jpg`;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.click();
+    if (floorDownloading) return;
+
+    const filename = guessDownloadFilename(
+      activeFloorUrl,
+      `${listing.slug || listing.id}-floor-${floorIndex + 1}`,
+    );
+
+    setFloorDownloading(true);
+    try {
+      await forceDownloadMedia(activeFloorUrl, filename, { flipX: flipped });
+    } catch {
+      toastError(
+        L(
+          "Could not download the image. Please try again.",
+          "ดาวน์โหลดรูปไม่สำเร็จ กรุณาลองอีกครั้ง",
+        ),
+      );
+    } finally {
+      setFloorDownloading(false);
+    }
   }
 
   if (hidden) {
@@ -337,7 +359,7 @@ export default function StoreListingPageClient({
   return (
     <>
       <LandingHeader />
-      <main className="page-canvas min-h-screen pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-16">
+      <main className="page-canvas listing-detail-main min-h-screen">
         <div className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
           <button
             type="button"
@@ -513,11 +535,14 @@ export default function StoreListingPageClient({
                     </button>
                     <button
                       type="button"
-                      onClick={downloadFloorPlan}
-                      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-2 text-xs font-semibold text-gray-700 hover:bg-slate-100 hover:text-[#1e40af] sm:gap-2 sm:bg-transparent sm:px-3 sm:text-sm sm:font-medium"
+                      onClick={() => void downloadFloorPlan()}
+                      disabled={floorDownloading}
+                      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-2 text-xs font-semibold text-gray-700 hover:bg-slate-100 hover:text-[#1e40af] disabled:cursor-wait disabled:opacity-60 sm:gap-2 sm:bg-transparent sm:px-3 sm:text-sm sm:font-medium"
                     >
                       <Download className="h-4 w-4 shrink-0" />
-                      {L("Download", "ดาวน์โหลด")}
+                      {floorDownloading
+                        ? L("Downloading…", "กำลังดาวน์โหลด…")
+                        : L("Download", "ดาวน์โหลด")}
                     </button>
                   </div>
                 </>
@@ -573,15 +598,14 @@ export default function StoreListingPageClient({
           />
         </div>
 
-        {/* Sticky buy bar — scrolls user back to the package panel on small screens */}
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-3 pt-2.5 shadow-[0_-8px_24px_rgba(15,23,42,0.12)] backdrop-blur-md lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="listing-sticky-buy-bar lg:hidden">
           <div className="mx-auto flex max-w-7xl items-stretch gap-2 sm:gap-3">
             <div className="min-w-0 flex-[0.95] self-center pl-0.5 sm:flex-1">
               <p className="truncate text-[10px] text-gray-500 sm:text-xs">
                 {translate("store.startingAt")}
               </p>
               <p
-                className={`truncate text-base font-bold tabular-nums leading-tight sm:text-lg ${
+                className={`font-price truncate text-base font-bold tabular-nums leading-tight sm:text-lg ${
                   sale.price <= 0 ? "text-emerald-700" : "text-[#1e40af]"
                 }`}
               >
@@ -595,7 +619,7 @@ export default function StoreListingPageClient({
                   .getElementById("listing-purchase-panel")
                   ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
-              className="flex min-h-12 min-w-0 flex-[1.35] items-center justify-center gap-1.5 rounded-xl bg-[#1e40af] px-3 text-[11px] font-semibold leading-tight text-white active:bg-[#1d4ed8] sm:px-5 sm:text-sm"
+              className="relative z-10 flex min-h-12 min-w-0 flex-[1.35] items-center justify-center gap-1.5 rounded-xl bg-[#1e40af] px-3 text-[11px] font-semibold leading-tight text-white active:bg-[#1d4ed8] sm:px-5 sm:text-sm"
             >
               <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
               <span className="truncate">

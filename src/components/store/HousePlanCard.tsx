@@ -144,7 +144,7 @@ export function HousePlanCard({
                 <p className="store-card-kicker text-[11px] font-semibold leading-none text-[#b91c1c]">
                   {L("Sale", "ลดราคา")}
                 </p>
-                <p className="mt-1 truncate text-[11px] font-semibold text-[#94a3b8] line-through">
+                <p className="store-card-price mt-1 truncate text-[11px] font-semibold text-[#94a3b8] line-through">
                   {formatMoney(sale.compareAt)}
                 </p>
                 <p className="store-card-price truncate text-sm font-bold leading-none text-[#1e40af] md:text-base">

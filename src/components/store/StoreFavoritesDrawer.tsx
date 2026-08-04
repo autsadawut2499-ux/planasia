@@ -80,7 +80,7 @@ export function StoreFavoritesDrawer() {
                       {item.name}
                     </Link>
                     <ListingCreatorByline creator={item.creator} className="mt-1" />
-                    <p className="mt-1 text-sm font-bold text-[#1e40af]">
+                    <p className="font-price mt-1 text-sm font-bold text-[#1e40af]">
                       {formatMoney(item.price)}
                     </p>
                   </div>

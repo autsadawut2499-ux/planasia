@@ -7,11 +7,13 @@ import { signIn, useSession } from "next-auth/react";
 import { useApp } from "@/context/AppContext";
 import { useStoreBrowseOptional } from "@/context/StoreBrowseContext";
 import { useStoreCartOptional } from "@/context/StoreCartContext";
-import { OPEN_CONTACT_EVENT } from "@/components/layout/FloatingContactFab";
+import {
+  OPEN_CONTACT_EVENT,
+  shouldHidePublicChrome,
+} from "@/lib/layout/storefront-chrome";
 
 function shouldHideBottomNav(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === "/admin" || pathname.startsWith("/admin/");
+  return shouldHidePublicChrome(pathname);
 }
 
 /** Blueprint / shop mark — architectural outline for the store tab. */

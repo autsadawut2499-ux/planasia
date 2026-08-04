@@ -148,14 +148,14 @@ export function ListingPurchasePanel({
         </p>
         <div className="mt-1 flex flex-wrap items-baseline gap-2">
           <p
-            className={`text-[1.65rem] font-bold tracking-tight sm:text-3xl ${
+            className={`font-price text-[1.65rem] font-bold tracking-tight sm:text-3xl ${
               startingPrice <= 0 ? "text-emerald-700" : "text-[#1e40af]"
             }`}
           >
             {startingPrice <= 0 ? L("Free", "ฟรี") : formatMoney(startingPrice)}
           </p>
           {sale.price > 0 && sale.compareAt != null && (
-            <p className="text-sm text-gray-400 line-through">
+            <p className="font-price text-sm text-gray-400 line-through">
               {formatMoney(sale.compareAt)}
             </p>
           )}
@@ -254,12 +254,12 @@ export function ListingPurchasePanel({
         </p>
       )}
 
-      <div className="mt-4 space-y-2.5">
+      <div className="relative z-10 mt-4 space-y-2.5">
         <button
           type="button"
           onClick={() => requirePackage(onAddToCart)}
           disabled={inCart || !canPurchase}
-          className="flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-300 text-sm font-semibold text-[#1e3a5f] transition hover:border-[#1e40af]/40 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="relative flex min-h-12 w-full cursor-pointer items-center justify-center rounded-xl border border-slate-300 text-sm font-semibold text-[#1e3a5f] transition hover:border-[#1e40af]/40 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {!canPurchase
             ? L("Purchase locked", "ยังไม่เปิดขาย")
@@ -271,7 +271,7 @@ export function ListingPurchasePanel({
           type="button"
           onClick={() => requirePackage(onBuyNow)}
           disabled={!canPurchase}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1e40af] text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+          className="relative flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#1e40af] text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
         >
           <Download className="h-4 w-4" />
           {!canPurchase ? L("Pending approval", "รออนุมัติ") : translate("store.buyNow")}

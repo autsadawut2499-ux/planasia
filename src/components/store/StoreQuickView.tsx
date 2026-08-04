@@ -150,14 +150,14 @@ export function StoreQuickView({ listing, onClose, onBuy, onAddToCart, inCart }:
               ].map((s) => (
                 <div key={s.label} className="rounded-lg border border-border bg-surface-raised px-1 py-2.5">
                   <p className="truncate text-[9px] font-bold uppercase text-text-muted">{s.label}</p>
-                  <p className="text-sm font-bold tabular-nums">{s.value}</p>
+                  <p className="font-price text-sm font-bold tabular-nums">{s.value}</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-auto border-t border-border pt-4">
               <p className="text-xs text-text-muted">{translate("store.startingAt")}</p>
-              <p className="text-2xl font-bold tabular-nums text-[#1e40af]">
+              <p className="font-price text-2xl font-bold tabular-nums text-[#1e40af]">
                 {formatMoney(listing.price)}
               </p>
               {!canPurchase && (

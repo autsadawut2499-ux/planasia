@@ -107,7 +107,7 @@ export function PreCheckoutReview({
                   ))}
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-bold text-[#1e40af]">{item.priceFormatted}</span>
+                  <span className="font-price text-sm font-bold text-[#1e40af]">{item.priceFormatted}</span>
                   {item.translated && (
                     <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
                       AI {L("translated", "แปลแล้ว")}

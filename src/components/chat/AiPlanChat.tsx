@@ -10,6 +10,7 @@ import { useToast } from "@/context/ToastContext";
 import { useInteractionTracker } from "@/hooks/useInteractionTracker";
 import { useStoreViewer } from "@/hooks/useStoreViewer";
 import type { PlanChatListingCard } from "@/lib/gemini/capabilities/plan-chat";
+import { isAdminPath, shouldHideAiFab } from "@/lib/layout/storefront-chrome";
 
 type ChatRole = "user" | "assistant";
 
@@ -33,15 +34,11 @@ export function openAiPlanChat(message?: string) {
 }
 
 function shouldHideAiChat(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === "/admin" || pathname.startsWith("/admin/");
+  return isAdminPath(pathname);
 }
 
 function shouldHideFab(pathname: string | null): boolean {
-  if (!pathname) return false;
-  // Home uses the in-hero AI search entry — hide the floating FAB there.
-  if (pathname === "/") return true;
-  return shouldHideAiChat(pathname);
+  return shouldHideAiFab(pathname);
 }
 
 function makeId(): string {
@@ -345,7 +342,7 @@ export function AiPlanChat() {
                                 <p className="line-clamp-2 text-[13px] font-semibold text-[#1a2744]">
                                   {item.name}
                                 </p>
-                                <p className="mt-0.5 text-sm font-bold text-[#1e40af]">
+                                <p className="font-price mt-0.5 text-sm font-bold text-[#1e40af]">
                                   {formatMoney(item.price)}
                                 </p>
                                 <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-muted">

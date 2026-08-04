@@ -17,7 +17,7 @@
  */
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { IBM_Plex_Sans_Thai, Prompt, Sarabun } from "next/font/google";
+import { IBM_Plex_Sans_Thai, Poppins, Prompt, Sarabun } from "next/font/google";
 import { ClientRecovery } from "@/components/ClientRecovery";
 import { LocaleHtmlLang } from "@/components/i18n/LocaleHtmlLang";
 import { AppProvider } from "@/context/AppContext";
@@ -67,6 +67,14 @@ const sarabun = Sarabun({
   subsets: ["latin", "thai"],
   variable: "--font-sarabun",
   weight: ["400", "500"],
+  display: "swap",
+});
+
+/** Prices / numerals — modern geometric Latin sans (Inter/Poppins family) */
+const poppins = Poppins({
+  subsets: ["latin"],
+  variable: "--font-poppins",
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -131,7 +139,7 @@ export default async function RootLayout({
         <MultilingualSeoHead />
       </head>
       <body
-        className={`${prompt.variable} ${ibmPlexSansThai.variable} ${sarabun.variable} min-h-screen font-sans font-normal antialiased`}
+        className={`${prompt.variable} ${ibmPlexSansThai.variable} ${sarabun.variable} ${poppins.variable} min-h-screen font-sans font-normal antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <JsonLd data={buildOrganizationJsonLd()} />

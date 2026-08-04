@@ -46,7 +46,7 @@ function CompactUpsellCard({
       />
       <div className="min-w-0 flex-1">
         <p className="line-clamp-1 text-xs font-semibold text-text-primary">#{listing.planId}</p>
-        <p className="mt-0.5 text-xs font-bold text-[#1e40af]">{formatMoney(listing.price)}</p>
+        <p className="font-price mt-0.5 text-xs font-bold text-[#1e40af]">{formatMoney(listing.price)}</p>
         <button
           type="button"
           disabled={inCart || !canPurchase}

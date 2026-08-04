@@ -22,6 +22,7 @@
   /*
    * Typography system (Thai-first architectural UI)
    * Headings: Prompt 600/700 · Body: IBM Plex Sans Thai 400/500 → Sarabun
+   * Prices / numerals: Poppins 500–700 (modern geometric Latin sans)
    */
   --font-sans: var(--font-body), var(--font-sarabun), "IBM Plex Sans Thai", Sarabun,
     ui-sans-serif, system-ui, sans-serif;
@@ -29,9 +30,20 @@
     ui-sans-serif, system-ui, sans-serif;
   /* Navbar / brand wordmark uses the heading face */
   --font-brand: var(--font-heading);
+  /* Money + figure display — Poppins for Latin digits/currency; Thai falls back to body */
+  --font-price: var(--font-poppins), "Poppins", var(--font-body), var(--font-sarabun),
+    ui-sans-serif, system-ui, sans-serif;
   /* Back-compat aliases used by a few decorative brand-mark styles */
   --font-jakarta: var(--font-body);
   --font-montserrat: var(--font-prompt);
+
+  /* Mobile storefront chrome — shared by bottom nav, sticky buy bar, FABs */
+  --mobile-nav-height: 3.75rem;
+  --mobile-chrome-stack: 5.5rem;
+  --z-sticky-buy: 43;
+  --z-mobile-nav: 44;
+  --z-contact-fab: 45;
+  --z-ai-fab: 46;
 }
 
 /* ── Store (Clean American house-plan catalog) ── */
@@ -486,9 +498,20 @@
     letter-spacing: -0.015em;
   }
 
-  .store-card-price {
-    font-family: var(--font-sans);
-    font-weight: 500;
+  .store-card-price,
+  .font-price {
+    font-family: var(--font-price);
+    font-weight: 600;
+    font-variant-numeric: lining-nums;
+    font-feature-settings: "lnum" 1, "kern" 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Spec figures on plan cards (beds / baths / m²) share the same numeral face */
+  .store-card__specs .tabular-nums {
+    font-family: var(--font-price);
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: -0.015em;
   }
 
   .store-card__specs-wrap {
@@ -1135,7 +1158,7 @@
   position: fixed;
   inset-inline: 0;
   bottom: 0;
-  z-index: 44;
+  z-index: var(--z-mobile-nav);
   display: block;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   border-top: 1px solid rgba(26, 39, 68, 0.1);
@@ -1156,7 +1179,7 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: stretch;
-  height: 3.75rem;
+  height: var(--mobile-nav-height);
   max-width: 1440px;
   margin-inline: auto;
   padding-inline: 0.25rem;
@@ -1229,9 +1252,35 @@
 
 .mobile-bottom-nav-spacer {
   display: block;
-  height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
   pointer-events: none;
+}
+
+/* Listing detail: room for sticky buy bar + mobile nav */
+.listing-detail-main {
+  padding-bottom: calc(
+    var(--mobile-nav-height) + 5rem + env(safe-area-inset-bottom, 0px)
+  );
+}
+
+@media (min-width: 1024px) {
+  .listing-detail-main {
+    padding-bottom: 4rem;
+  }
+}
+
+.listing-sticky-buy-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--z-sticky-buy);
+  border-top: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.625rem 0.75rem;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* ── AI plan-finder FAB: glowing pill + running-light border ── */
@@ -1259,7 +1308,7 @@
   position: fixed !important;
   right: max(0.75rem, env(safe-area-inset-right));
   bottom: calc(max(1.25rem, env(safe-area-inset-bottom)) + 4.5rem);
-  z-index: 46;
+  z-index: var(--z-ai-fab);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1282,7 +1331,9 @@
 @media (max-width: 1023px) {
   .ai-plan-fab {
     /* Clear mobile bottom nav + contact FAB below. */
-    bottom: calc(max(5.5rem, env(safe-area-inset-bottom) + 4.25rem) + 4.5rem);
+    bottom: calc(
+      max(var(--mobile-chrome-stack), env(safe-area-inset-bottom) + 4.25rem) + 4.5rem
+    );
   }
 }
 
@@ -1323,6 +1374,7 @@
   );
   animation: ai-fab-orbit 2.4s linear infinite;
   z-index: 0;
+  pointer-events: none;
 }
 
 .ai-plan-fab__glow {

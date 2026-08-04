@@ -576,7 +576,7 @@ export function PreCheckoutWizard({
       <section className="rounded-xl border border-border bg-surface-raised/60 p-3 text-sm">
         <div className="flex justify-between text-text-secondary">
           <span>{basePlanLabel ?? (thai ? "แบบบ้าน" : "House plan")}</span>
-          <span>{formatMoney(basePlanPrice)}</span>
+          <span className="font-price">{formatMoney(basePlanPrice)}</span>
         </div>
         {extraLines.map((line) => (
           <div
@@ -584,7 +584,7 @@ export function PreCheckoutWizard({
             className={`mt-1 flex justify-between ${line.tone === "green" ? "text-green-700" : "text-text-secondary"}`}
           >
             <span>{line.label}</span>
-            <span>
+            <span className="font-price">
               {line.amount < 0 ? "-" : ""}
               {formatMoney(Math.abs(line.amount))}
             </span>
@@ -597,12 +597,12 @@ export function PreCheckoutWizard({
                 ? "ค่าแปลภาษาและแปลงหน่วย (ต่างประเทศ)"
                 : "Localization & unit conversion"}
             </span>
-            <span>+{formatMoney(localizationFee)}</span>
+            <span className="font-price">+{formatMoney(localizationFee)}</span>
           </div>
         )}
         <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-bold text-text-primary">
           <span>{thai ? "ยอดชำระ" : "Total"}</span>
-          <span className="text-[#1e40af]">{formatMoney(total)}</span>
+          <span className="font-price text-[#1e40af]">{formatMoney(total)}</span>
         </div>
       </section>
     </div>

@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import { MessageCircle, Phone, X } from "lucide-react";
 import { useSiteConfigOptional } from "@/context/SiteConfigContext";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/admin/defaults";
+import {
+  OPEN_CONTACT_EVENT,
+  shouldHideContactFab,
+  shouldHideContactFabTrigger,
+} from "@/lib/layout/storefront-chrome";
 
-/** Dispatched by MobileBottomNav Chat tab to open this contact menu. */
-export const OPEN_CONTACT_EVENT = "planasia:open-contact";
-
-function shouldHideFab(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === "/admin" || pathname.startsWith("/admin/");
-}
+/** Re-export for existing imports (MobileBottomNav, etc.). */
+export { OPEN_CONTACT_EVENT };
 
 function LineIcon({ className = "" }: { className?: string }) {
   return (
@@ -92,12 +92,14 @@ export function FloatingContactFab() {
     return () => window.removeEventListener(OPEN_CONTACT_EVENT, onOpenContact);
   }, []);
 
-  if (shouldHideFab(pathname)) return null;
+  if (shouldHideContactFab(pathname)) return null;
+
+  const hideTrigger = shouldHideContactFabTrigger(pathname);
 
   return (
     <div
       ref={rootRef}
-      className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[45] flex flex-col items-end gap-3 max-lg:bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.25rem))] sm:right-5 lg:bottom-8"
+      className="pointer-events-none fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[var(--z-contact-fab)] flex flex-col items-end gap-3 max-lg:bottom-[max(var(--mobile-chrome-stack),calc(env(safe-area-inset-bottom)+4.25rem))] sm:right-5 lg:bottom-8"
     >
       <div
         id={menuId}
@@ -106,7 +108,7 @@ export function FloatingContactFab() {
         className={`flex w-[min(calc(100vw-2rem),17.5rem)] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/95 shadow-[0_18px_40px_rgba(26,39,68,0.22)] backdrop-blur-md transition-all duration-300 ease-out ${
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-            : "pointer-events-none translate-y-3 scale-95 opacity-0"
+            : "pointer-events-none invisible absolute bottom-full mb-3 translate-y-3 scale-95 opacity-0"
         }`}
       >
         <div className="border-b border-slate-100 px-4 py-3">
@@ -166,10 +168,12 @@ export function FloatingContactFab() {
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
-        className={`group relative h-14 w-14 items-center justify-center rounded-full text-white transition duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0066FF] active:scale-95 ${
+        className={`pointer-events-auto group relative h-14 w-14 items-center justify-center rounded-full text-white transition duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0066FF] active:scale-95 ${
           open
             ? "inline-flex bg-blue-700 shadow-[0_10px_28px_rgba(0,102,255,0.4)]"
-            : "hidden bg-[#0066FF] shadow-[0_12px_32px_rgba(0,102,255,0.45)] hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-[0_16px_36px_rgba(0,102,255,0.55)] lg:inline-flex"
+            : hideTrigger
+              ? "hidden"
+              : "hidden bg-[#0066FF] shadow-[0_12px_32px_rgba(0,102,255,0.45)] hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-[0_16px_36px_rgba(0,102,255,0.55)] lg:inline-flex"
         }`}
       >
         <span
