@@ -3,7 +3,7 @@ import { isListingPurchasable, isListingPubliclyVisible } from "@/lib/store/list
 
 /**
  * Test / integration contract: `is_approved` mirrors purchase unlock.
- * false by default on create (moderation_status = pending).
+ * true for verified designers on create (moderation_status = approved).
  */
 export function listingIsApproved(listing: Pick<StoreListing, "moderationStatus">): boolean {
   return isListingPurchasable(listing);

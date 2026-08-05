@@ -304,7 +304,7 @@ export function useVendorDashboard() {
     ): Promise<{
       listing: VendorListing;
       published: boolean;
-      /** Visible on store but Buy locked until admin Approve. */
+      /** Auto-published when verified + AI pass; false when AI rejected. */
       awaitingAdminApproval: boolean;
       awaitingKyc: boolean;
       reasons: string[];

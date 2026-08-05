@@ -110,10 +110,10 @@ export interface StoreListing {
   /** Attached at read time from vendor_profiles — never persisted on the row. */
   creator?: ListingCreator;
   /**
-   * Admin marketplace gate (public-safe):
-   * - pending = hidden from public store / search (vendor + admin still see)
-   * - approved = visible + purchasable
-   * - rejected = hidden from store
+   * Marketplace moderation (public-safe):
+   * - approved = verified designer + AI pass → live / purchasable (auto-publish)
+   * - rejected = AI fail or admin takedown → hidden from store
+   * - pending = legacy / pre-KYC backlog (auto-flipped to approved on KYC pass)
    * - null/undefined = legacy rows treated as approved
    */
   moderationStatus?: "pending" | "approved" | "rejected";

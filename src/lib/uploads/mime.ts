@@ -60,11 +60,26 @@ export function looksLikeCalcDoc(file: { name: string; type?: string }): boolean
   return looksLikePdf(file);
 }
 
+/** ZIP plan packages (optional document delivery). */
+export function looksLikeZip(file: { name: string; type?: string }): boolean {
+  const ext = extOf(file.name);
+  if (ext !== "zip") return false;
+  const type = (file.type || "").toLowerCase().trim();
+  if (!type) return true;
+  return (
+    type === "application/zip" ||
+    type === "application/x-zip-compressed" ||
+    type === "multipart/x-zip" ||
+    type === "application/octet-stream"
+  );
+}
+
 export function resolveDocumentContentType(file: {
   name: string;
   type?: string;
 }): string | null {
   if (looksLikePdf(file)) return "application/pdf";
+  if (looksLikeZip(file)) return "application/zip";
   if (looksLikeDwg(file)) {
     const type = (file.type || "").toLowerCase().trim();
     if (
@@ -86,5 +101,17 @@ export function bufferLooksLikePdf(buf: Buffer | Uint8Array): boolean {
     buf[1] === 0x50 && // P
     buf[2] === 0x44 && // D
     buf[3] === 0x46 // F
+  );
+}
+
+/** True when buffer looks like a ZIP archive (local file header / empty archive). */
+export function bufferLooksLikeZip(buf: Buffer | Uint8Array): boolean {
+  if (buf.length < 4) return false;
+  // PK\x03\x04 (file) · PK\x05\x06 (empty) · PK\x07\x08 (spanned)
+  return (
+    buf[0] === 0x50 &&
+    buf[1] === 0x4b &&
+    (buf[2] === 0x03 || buf[2] === 0x05 || buf[2] === 0x07) &&
+    (buf[3] === 0x04 || buf[3] === 0x06 || buf[3] === 0x08)
   );
 }

@@ -2,7 +2,7 @@
  * AI auto-verification for vendor blueprint listings.
  *
  * Runs immediately on upload: completeness + security + file suitability.
- * Pass → listing stays pending (visible, Buy locked until admin Approve).
+ * Pass → verified designers auto-publish (approved); AI fail → rejected.
  * Fail → rejected (hidden from store).
  */
 

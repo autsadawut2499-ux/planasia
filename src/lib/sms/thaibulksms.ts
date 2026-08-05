@@ -109,7 +109,7 @@ export async function sendThaiBulkSms(
     });
 
     const text = await res.text();
-    let json: {
+    type ThaiBulkResponse = {
       phone_number?: string;
       message_id?: string | number;
       remaining_credit?: number;
@@ -124,18 +124,20 @@ export async function sendThaiBulkSms(
         message_id?: string | number;
       }>;
       bad_phone_number_list?: unknown[];
-    } | null = null;
+    };
+    let json: ThaiBulkResponse | null = null;
     try {
-      json = text ? (JSON.parse(text) as typeof json) : null;
+      json = text ? (JSON.parse(text) as ThaiBulkResponse) : null;
     } catch {
       json = null;
     }
 
     // ThaiBulkSMS returns 201 Created on success.
     if (!res.ok) {
+      const errField = json?.error;
       const error =
-        (typeof json?.error === "string" && json.error) ||
-        (typeof json?.error === "object" && json.error?.message) ||
+        (typeof errField === "string" ? errField : "") ||
+        (errField && typeof errField === "object" ? errField.message || "" : "") ||
         json?.message ||
         (text ? text.slice(0, 180) : `thaibulksms_http_${res.status}`);
       console.error("[sms/thaibulksms] send failed", {

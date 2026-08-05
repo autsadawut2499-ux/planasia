@@ -171,7 +171,7 @@ function KycBanner({
 }) {
   const copy: Record<string, { msg: string; cls: string; cta: string }> = {
     unverified: {
-      msg: "ขั้นตอนสุดท้ายคือยืนยันตัวตน (Digital KYC) — เตรียมโปรไฟล์ ผลงาน และบัญชีรับเงินให้ครบก่อน แล้วผลงานทั้งหมดจะเผยแพร่อัตโนมัติเมื่อผ่าน",
+      msg: "ยืนยันตัวตน (Digital KYC) เพื่ออัปโหลดและเผยแพร่แบบบ้านได้ทันที — ไม่ต้องรอแอดมินอนุมัติ",
       cls: "border-amber-300 bg-amber-50 text-amber-800",
       cta: "ไปขั้นตอนสุดท้าย",
     },

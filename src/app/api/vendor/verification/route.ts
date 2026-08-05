@@ -104,8 +104,13 @@ export async function POST(request: NextRequest) {
         decision.approved ? undefined : decision.reasons.join("; "),
       );
 
-      // Listings appear on upload as pending; purchase unlock is admin Approve.
-      // KYC only verifies the seller identity — it does not auto-approve sales.
+      let publishedCount = 0;
+      if (decision.approved) {
+        const { supabasePublishPendingListings } = await import(
+          "@/lib/supabase/store-listings"
+        );
+        publishedCount = await supabasePublishPendingListings(ownerKey);
+      }
 
       return NextResponse.json({
         verificationStatus: decision.approved ? "approved" : "rejected",
@@ -114,7 +119,8 @@ export async function POST(request: NextRequest) {
         submittedAt: new Date().toISOString(),
         aiDecision: decision,
         autoVerified: true,
-        publishedCount: 0,
+        publishedCount,
+        autoPublishEnabled: decision.approved,
       });
     }
 

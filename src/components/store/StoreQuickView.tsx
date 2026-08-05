@@ -163,8 +163,8 @@ export function StoreQuickView({ listing, onClose, onBuy, onAddToCart, inCart }:
               {!canPurchase && (
                 <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
                   {L(
-                    "This plan is visible for browsing. Purchase unlocks after admin approval.",
-                    "แบบบ้านนี้ดูรายละเอียดได้แล้ว แต่ยังไม่เปิดให้ซื้อ — รอแอดมินอนุมัติ",
+                    "This plan is not available for purchase yet.",
+                    "แบบบ้านนี้ยังไม่เปิดให้ซื้อในขณะนี้",
                   )}
                 </p>
               )}
@@ -190,7 +190,7 @@ export function StoreQuickView({ listing, onClose, onBuy, onAddToCart, inCart }:
                   className={`flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#1e40af] py-3 text-sm font-semibold text-white hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 ${onAddToCart ? "" : "col-span-full"}`}
                 >
                   <Download className="h-4 w-4" />
-                  {!canPurchase ? L("Pending approval", "รออนุมัติ") : translate("store.buyNow")}
+                  {!canPurchase ? L("Unavailable", "ยังไม่เปิดขาย") : translate("store.buyNow")}
                 </button>
               </div>
             </div>

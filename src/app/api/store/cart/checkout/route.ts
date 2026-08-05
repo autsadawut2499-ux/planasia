@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           code: "PURCHASE_LOCKED",
           is_approved: false,
           listingId: listing.id,
-          message: `แบบบ้าน “${listing.name}” ยังไม่เปิดให้ซื้อ — รอแอดมินอนุมัติ (is_approved=false)`,
+          message: `แบบบ้าน “${listing.name}” ยังไม่เปิดให้ซื้อในขณะนี้`,
         },
         { status: 403 },
       );

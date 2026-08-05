@@ -14,6 +14,7 @@ import { attachListingSeo } from "@/lib/seo/listing-seo-generate";
 import { revalidateStoreSurfaces } from "@/lib/store/revalidate-store";
 import { isListingPurchasable } from "@/lib/store/listing-purchase";
 import { validateListingPrice } from "@/lib/store/listing-price";
+import { isVendorKycApproved } from "@/lib/supabase/vendors";
 
 function num(value: unknown, fallback = 0): number {
   const n = Number(value);
@@ -42,6 +43,17 @@ function assertSinglePdf(urls: string[], labelTh: string): string | null {
   if (urls.length === 0) return null;
   if (urls.length > 1) return `${labelTh} อัปโหลดได้เพียง 1 ไฟล์`;
   if (urlExt(urls[0]) !== "pdf") return `${labelTh} ต้องเป็นไฟล์ .pdf เท่านั้น`;
+  return null;
+}
+
+/** Blueprint packages: one PDF or ZIP. */
+function assertSinglePdfOrZip(urls: string[], labelTh: string): string | null {
+  if (urls.length === 0) return null;
+  if (urls.length > 1) return `${labelTh} อัปโหลดได้เพียง 1 ไฟล์`;
+  const ext = urlExt(urls[0]);
+  if (ext !== "pdf" && ext !== "zip") {
+    return `${labelTh} ต้องเป็นไฟล์ .pdf หรือ .zip เท่านั้น`;
+  }
   return null;
 }
 
@@ -126,13 +138,25 @@ export type CreateVendorListingResult =
   | { ok: false; status: number; error: string; message?: string };
 
 /**
- * Persist a vendor house-plan listing immediately.
- * New listings are visible with is_approved=false (purchase locked) until admin Approve.
+ * Persist a vendor house-plan listing.
+ * Verified designers auto-publish (moderation_status=approved) after AI screening.
+ * Unverified designers cannot create/update listings.
  */
 export async function createOrUpdateVendorListing(
   ownerKey: string,
   rawBody: Record<string, unknown>,
 ): Promise<CreateVendorListingResult> {
+  const kycApproved = await isVendorKycApproved(ownerKey);
+  if (!kycApproved) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Identity verification required",
+      message:
+        "กรุณายืนยันตัวตนให้ผ่านก่อนอัปโหลดและเผยแพร่แบบบ้าน — เมื่อยืนยันแล้วจะเผยแพร่ได้ทันทีโดยไม่ต้องรอแอดมิน",
+    };
+  }
+
   const body = normalizeListingUploadBody(rawBody);
   const image = String(body.image ?? "").trim();
   if (!image) return { ok: false, status: 400, error: "A render image is required" };
@@ -191,11 +215,11 @@ export async function createOrUpdateVendorListing(
       ok: false,
       status: 400,
       error: "Blueprint PDF required",
-      message: "กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF (1 ไฟล์)",
+      message: "กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF หรือ ZIP (1 ไฟล์)",
     };
   }
   const fileTypeError =
-    assertSinglePdf(blueprintPdfUrls, "แบบแปลนหลัก") ||
+    assertSinglePdfOrZip(blueprintPdfUrls, "แบบแปลนหลัก") ||
     assertSingleDwg(cadFileUrls, "ไฟล์ AutoCAD") ||
     assertSinglePdf(boqFileUrls, "ไฟล์ BOQ") ||
     assertSinglePdf(calcSheetUrls, "รายการคำนวณ");
@@ -322,10 +346,13 @@ export async function createOrUpdateVendorListing(
   let moderationStatus: VendorListing["moderationStatus"] = "pending";
   if (!screening.approved) {
     moderationStatus = "rejected";
-  } else if (editingId && previousStatus === "approved") {
-    moderationStatus = "approved";
   } else {
-    moderationStatus = "pending";
+    // Verified designer + AI pass → publish immediately (no admin queue).
+    moderationStatus = "approved";
+  }
+  // Preserve explicit admin rejection until the seller re-submits a passing listing.
+  if (editingId && previousStatus === "rejected" && !screening.approved) {
+    moderationStatus = "rejected";
   }
 
   const listing: VendorListing = await attachListingSeo({
@@ -341,8 +368,8 @@ export async function createOrUpdateVendorListing(
     ok: true,
     listing: saved,
     is_approved: isListingPurchasable(saved),
-    published: screening.approved,
-    awaitingAdminApproval: screening.approved && moderationStatus === "pending",
+    published: screening.approved && moderationStatus === "approved",
+    awaitingAdminApproval: false,
     aiScreening: screening,
   };
 }

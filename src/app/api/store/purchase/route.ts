@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         error: "Forbidden",
         code: "PURCHASE_LOCKED",
         is_approved: false,
-        message: "แบบบ้านนี้แสดงบนเว็บแล้ว แต่ยังไม่เปิดให้ซื้อ — รอแอดมินอนุมัติ (is_approved=false)",
+        message: "แบบบ้านนี้ยังไม่เปิดให้ซื้อในขณะนี้",
       },
       { status: 403 },
     );

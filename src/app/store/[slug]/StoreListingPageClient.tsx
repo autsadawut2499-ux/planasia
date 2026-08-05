@@ -261,8 +261,8 @@ export default function StoreListingPageClient({
     if (!canPurchase) {
       toastError(
         L(
-          "This plan is awaiting admin approval before purchase.",
-          "แบบบ้านนี้ยังไม่เปิดให้ซื้อ — รอแอดมินอนุมัติ",
+          "This plan is not available for purchase yet.",
+          "แบบบ้านนี้ยังไม่เปิดให้ซื้อในขณะนี้",
         ),
       );
       return;
@@ -280,8 +280,8 @@ export default function StoreListingPageClient({
     if (!canPurchase) {
       toastError(
         L(
-          "This plan is awaiting admin approval before purchase.",
-          "แบบบ้านนี้ยังไม่เปิดให้ซื้อ — รอแอดมินอนุมัติ",
+          "This plan is not available for purchase yet.",
+          "แบบบ้านนี้ยังไม่เปิดให้ซื้อในขณะนี้",
         ),
       );
       return;
@@ -623,7 +623,7 @@ export default function StoreListingPageClient({
             >
               <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
               <span className="truncate">
-                {!canPurchase ? L("Pending", "รออนุมัติ") : L("Choose package", "เลือกแพ็กเกจ")}
+                {!canPurchase ? L("Unavailable", "ยังไม่เปิดขาย") : L("Choose package", "เลือกแพ็กเกจ")}
               </span>
             </button>
           </div>

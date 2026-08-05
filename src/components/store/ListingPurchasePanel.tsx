@@ -248,8 +248,8 @@ export function ListingPurchasePanel({
       {!canPurchase && (
         <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800">
           {L(
-            "Browsing is open. Buy / Checkout unlock after admin approval.",
-            "ดูรายละเอียดได้แล้ว แต่ปุ่มซื้อยังล็อกอยู่ — รอแอดมินกดอนุมัติ",
+            "This plan is not available for purchase yet.",
+            "แบบบ้านนี้ยังไม่เปิดให้ซื้อในขณะนี้",
           )}
         </p>
       )}
@@ -274,7 +274,7 @@ export function ListingPurchasePanel({
           className="relative flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#1e40af] text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
         >
           <Download className="h-4 w-4" />
-          {!canPurchase ? L("Pending approval", "รออนุมัติ") : translate("store.buyNow")}
+          {!canPurchase ? L("Unavailable", "ยังไม่เปิดขาย") : translate("store.buyNow")}
         </button>
       </div>
 

@@ -181,7 +181,7 @@ function listingToRow(listing: StoreListing): StoreListingRow {
     project_snapshot: listing.projectSnapshot ?? null,
     source: listing.source,
     created_at: listing.createdAt,
-    // Always persist — default pending so Buy stays locked until admin Approve.
+    // Persist moderation status (verified designers save as approved).
     moderation_status: listing.moderationStatus ?? "pending",
     is_published: listing.isPublished !== false,
     seo_title: listing.seoTitle ?? null,
@@ -376,12 +376,18 @@ export async function supabaseUpsertVendorListing(listing: VendorListing): Promi
 }
 
 /**
- * @deprecated Purchase unlock is admin-only now.
- * Listings appear on the store as `pending` immediately; Buy stays locked until
- * an admin sets `moderation_status = approved`. Kept as a no-op for callers.
+ * Auto-publish a verified designer's pending listings (e.g. right after KYC pass).
+ * Skips rejected rows — those need a fresh seller edit + AI pass.
  */
-export async function supabasePublishPendingListings(_ownerKey: string): Promise<number> {
-  return 0;
+export async function supabasePublishPendingListings(ownerKey: string): Promise<number> {
+  const { data, error } = await getSupabaseAdmin()
+    .from("store_listings")
+    .update({ moderation_status: "approved" })
+    .eq("owner_id", ownerKey)
+    .eq("moderation_status", "pending")
+    .select("id");
+  if (error) throw error;
+  return data?.length ?? 0;
 }
 
 /** Admin: unlock (or re-lock) purchase for a listing. */

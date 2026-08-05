@@ -17,8 +17,10 @@ import {
 import { compressImageBuffer } from "@/lib/uploads/compress-image-server";
 import {
   bufferLooksLikePdf,
+  bufferLooksLikeZip,
   looksLikeCalcDoc,
   looksLikeDwg,
+  looksLikeZip,
   resolveDocumentContentType,
   resolveImageContentType,
 } from "@/lib/uploads/mime";
@@ -54,13 +56,24 @@ function isDocKind(kind: string): boolean {
 
 function docKindError(kind: string): string {
   if (kind === "cad") return "อัปโหลดได้เฉพาะไฟล์ AutoCAD (.dwg)";
-  if (kind === "calc" || kind === "pdf" || kind === "document" || kind === "boq") {
+  if (kind === "pdf" || kind === "document") {
+    return "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf) หรือ ZIP (.zip)";
+  }
+  if (kind === "calc" || kind === "boq") {
     return "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)";
   }
   if (kind === "kyc") {
     return "KYC รับเฉพาะรูปภาพ (JPG, PNG, WEBP, GIF) — ไม่รับไฟล์ PDF";
   }
   return "รูปแบบรูปภาพไม่รองรับ (ใช้ JPG, PNG, WEBP หรือ GIF)";
+}
+
+function isPdfKind(kind: string): boolean {
+  return kind === "boq" || kind === "calc";
+}
+
+function isPdfOrZipKind(kind: string): boolean {
+  return kind === "pdf" || kind === "document";
 }
 
 function resolveContentType(
@@ -149,17 +162,29 @@ async function signUpload(request: NextRequest, ownerKey: string) {
     return NextResponse.json(
       {
         error: `ไฟล์ใหญ่เกินไป (${(sizeBytes / 1024 / 1024).toFixed(1)}MB) — สูงสุด ${formatMb(maxBytes)}MB สำหรับ${
-          isDocKind(kind) ? "เอกสาร PDF" : "รูปภาพ"
+          isDocKind(kind) ? "เอกสาร (PDF/ZIP/DWG)" : "รูปภาพ"
         }`,
       },
       { status: 400 },
     );
   }
 
-  const resolved = resolveContentType(kind, {
-    name: fileName,
-    type: body.contentType,
-  });
+  const fileMeta = { name: fileName, type: body.contentType };
+  if (kind === "cad" && !looksLikeDwg(fileMeta)) {
+    return NextResponse.json({ error: docKindError(kind) }, { status: 400 });
+  }
+  if (isPdfKind(kind) && !looksLikeCalcDoc(fileMeta)) {
+    return NextResponse.json({ error: docKindError(kind) }, { status: 400 });
+  }
+  if (
+    isPdfOrZipKind(kind) &&
+    !looksLikeCalcDoc(fileMeta) &&
+    !looksLikeZip(fileMeta)
+  ) {
+    return NextResponse.json({ error: docKindError(kind) }, { status: 400 });
+  }
+
+  const resolved = resolveContentType(kind, fileMeta);
   if (!resolved) {
     return NextResponse.json(
       {
@@ -230,25 +255,29 @@ async function proxyUpload(request: NextRequest, ownerKey: string) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  // PDF magic-byte check for all PDF-only kinds (blueprint / BOQ / calc).
-  if (
-    (kind === "pdf" || kind === "document" || kind === "boq" || kind === "calc") &&
-    !bufferLooksLikePdf(buffer)
-  ) {
+  // Magic-byte checks for document kinds.
+  if (isPdfKind(kind) && !bufferLooksLikePdf(buffer)) {
     return NextResponse.json(
       { error: "เนื้อหาไฟล์ไม่ใช่ PDF ที่ถูกต้อง — ตรวจว่าเป็นไฟล์ .pdf จริง" },
       { status: 400 },
     );
   }
+  if (isPdfOrZipKind(kind)) {
+    const okPdf = looksLikeCalcDoc(file) && bufferLooksLikePdf(buffer);
+    const okZip = looksLikeZip(file) && bufferLooksLikeZip(buffer);
+    if (!okPdf && !okZip) {
+      return NextResponse.json(
+        {
+          error:
+            "เนื้อหาไฟล์ไม่ใช่ PDF หรือ ZIP ที่ถูกต้อง — ตรวจนามสกุลและชนิดไฟล์อีกครั้ง",
+        },
+        { status: 400 },
+      );
+    }
+  }
   if (kind === "cad" && !looksLikeDwg(file)) {
     return NextResponse.json(
       { error: "อัปโหลดได้เฉพาะไฟล์ AutoCAD (.dwg)" },
-      { status: 400 },
-    );
-  }
-  if (kind === "calc" && !looksLikeCalcDoc(file)) {
-    return NextResponse.json(
-      { error: "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)" },
       { status: 400 },
     );
   }

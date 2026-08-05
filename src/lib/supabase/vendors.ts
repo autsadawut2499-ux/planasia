@@ -342,6 +342,18 @@ export async function reviewVendorKyc(
     .from("vendor_profiles")
     .update({ is_verified: decision === "approved", updated_at: new Date().toISOString() })
     .eq("owner_key", ownerKey);
+
+  // On KYC approval, auto-publish any listings still waiting in pending.
+  if (decision === "approved") {
+    try {
+      const { supabasePublishPendingListings } = await import(
+        "@/lib/supabase/store-listings"
+      );
+      await supabasePublishPendingListings(ownerKey);
+    } catch (err) {
+      console.error("[vendors] publish pending after KYC failed", err);
+    }
+  }
 }
 
 /** True when the vendor has passed KYC and may sell on the marketplace. */

@@ -59,7 +59,7 @@ function CompactUpsellCard({
         >
           <Plus className="h-3 w-3" />
           {!canPurchase
-            ? "รออนุมัติ"
+            ? "ยังไม่เปิดขาย"
             : inCart
               ? translate("store.cartInCart")
               : translate("store.addToCart")}

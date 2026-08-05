@@ -147,7 +147,7 @@ function listingStatusBadge(listing: VendorListing): { label: string; cls: strin
     return { label: "ถูกระงับ", cls: "bg-red-100 text-red-700" };
   }
   if (listing.moderationStatus === "pending") {
-    return { label: "เผยแพร่ · รออนุมัติซื้อ", cls: "bg-amber-100 text-amber-800" };
+    return { label: "รอเผยแพร่", cls: "bg-amber-100 text-amber-800" };
   }
   return { label: "เปิดใช้งาน", cls: "bg-emerald-100 text-emerald-800" };
 }
@@ -248,7 +248,7 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
     if (!form.province) return toast.error("กรุณาเลือกจังหวัดที่ให้บริการ");
     if (form.floorPlanUrls.length < 1) return toast.error("กรุณาอัปโหลดแปลนพื้นอย่างน้อย 1 รูป");
     if (form.blueprintPdfUrls.length !== 1)
-      return toast.error("กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF (1 ไฟล์)");
+      return toast.error("กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF หรือ ZIP (1 ไฟล์)");
     if (!form.contractConsent)
       return toast.error(
         "กรุณายืนยันว่าผลงานเป็นลิขสิทธิ์แท้ของผู้ขาย และยินยอมตามเงื่อนไขของแพลตฟอร์ม",
@@ -298,11 +298,9 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
       });
       if (result.published) {
         toast.success(
-          result.awaitingAdminApproval
-            ? `แสดงบนเว็บแล้ว (รหัส ${result.listing.planId}) — รอแอดมินอนุมัติก่อนเปิดปุ่มซื้อ`
-            : form.id
-              ? `อัปเดตแล้ว — รหัส ${result.listing.planId}`
-              : `เผยแพร่แล้ว — รหัสแบบบ้าน ${result.listing.planId}`,
+          form.id
+            ? `อัปเดตและเผยแพร่แล้ว — รหัส ${result.listing.planId}`
+            : `เผยแพร่แล้วทันที — รหัสแบบบ้าน ${result.listing.planId}`,
         );
         setForm(null);
         setRejectReasons([]);
@@ -712,7 +710,7 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
                 values={form.blueprintPdfUrls}
                 onChange={(urls) => set("blueprintPdfUrls", urls.slice(0, 1))}
                 label="แบบแปลนหลัก (PDF) *"
-                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .pdf (สูงสุด 100MB)"
+                hint="อัปโหลดได้ 1 ไฟล์ · .pdf หรือ .zip (สูงสุด 100MB)"
                 onUpload={uploadFile}
                 onError={(m) => toast.error(m)}
               />
@@ -852,7 +850,9 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
           <p className="text-sm text-text-muted">จัดการผลงาน อัปโหลดแบบใหม่ และแก้ไขราคา</p>
         </div>
         <PrimaryButton
+          disabled={!kycOk}
           onClick={() => {
+            if (!kycOk) return;
             setForm(emptyForm());
             setRejectReasons([]);
           }}
@@ -861,10 +861,13 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
         </PrimaryButton>
       </div>
 
-      {!kycOk && (
+      {!kycOk ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          อัปโหลดผลงานได้เลย — แบบจะแสดงบนเว็บทันทีหลังผ่าน AI และรอแอดมินอนุมัติก่อนเปิดปุ่มซื้อ
-          “ยืนยันตัวตน” ซึ่งเป็นขั้นตอนสุดท้าย
+          กรุณายืนยันตัวตนให้ผ่านก่อนอัปโหลดแบบบ้าน — เมื่อยืนยันแล้วจะเผยแพร่สู่เว็บไซต์ได้ทันทีโดยไม่ต้องรอแอดมินอนุมัติ
+        </div>
+      ) : (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          ยืนยันตัวตนแล้ว — อัปโหลดแบบบ้านผ่านการตรวจ AI แล้วจะเผยแพร่และเปิดขายทันที
         </div>
       )}
 

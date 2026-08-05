@@ -4,13 +4,13 @@ import { useRef, useState } from "react";
 import { FileText, Loader2, Plus, Replace, Trash2 } from "lucide-react";
 import type { UploadKind } from "@/hooks/useVendorDashboard";
 import { SITE_ASSETS_DOC_MAX_BYTES, formatMb } from "@/lib/supabase/site-assets";
-import { looksLikeDwg, looksLikePdf } from "@/lib/uploads/mime";
+import { looksLikeDwg, looksLikePdf, looksLikeZip } from "@/lib/uploads/mime";
 
 type DocVariant = "pdf" | "doc" | "cad" | "calc";
 
 interface MultiFileUploadProps {
   kind: UploadKind;
-  /** pdf/doc/calc = PDF only; cad = DWG only. Exactly 1 file per field. */
+  /** pdf/doc = PDF or ZIP; calc = PDF only; cad = DWG only. Exactly 1 file. */
   variant: DocVariant;
   values: string[];
   onChange: (urls: string[]) => void;
@@ -24,15 +24,15 @@ interface MultiFileUploadProps {
 const MAX_FILES = 1;
 
 const ACCEPT: Record<DocVariant, string> = {
-  pdf: ".pdf,application/pdf",
-  doc: ".pdf,application/pdf",
+  pdf: ".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed",
+  doc: ".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed",
   cad: ".dwg,application/acad,application/x-dwg,application/dwg,image/vnd.dwg",
   calc: ".pdf,application/pdf",
 };
 
 const TYPE_HINT: Record<DocVariant, string> = {
-  pdf: ".pdf เท่านั้น · 1 ไฟล์",
-  doc: ".pdf เท่านั้น · 1 ไฟล์",
+  pdf: ".pdf หรือ .zip · 1 ไฟล์",
+  doc: ".pdf หรือ .zip · 1 ไฟล์",
   cad: ".dwg เท่านั้น · 1 ไฟล์",
   calc: ".pdf เท่านั้น · 1 ไฟล์",
 };
@@ -52,6 +52,10 @@ function validateFile(file: File, variant: DocVariant): void {
   if (variant === "cad") {
     if (!looksLikeDwg(file)) {
       throw new Error("อัปโหลดได้เฉพาะไฟล์ AutoCAD (.dwg)");
+    }
+  } else if (variant === "pdf" || variant === "doc") {
+    if (!looksLikePdf(file) && !looksLikeZip(file)) {
+      throw new Error("อัปโหลดได้เฉพาะไฟล์ PDF (.pdf) หรือ ZIP (.zip)");
     }
   } else if (!looksLikePdf(file)) {
     throw new Error("อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)");

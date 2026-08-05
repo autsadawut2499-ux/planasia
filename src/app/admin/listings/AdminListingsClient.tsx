@@ -464,7 +464,7 @@ export default function AdminListingsClient() {
   ) {
     const labels = {
       approved: "อนุมัติและเปิดขาย",
-      pending: "ล็อกการซื้อ (รออนุมัติ)",
+      pending: "ยังไม่เผยแพร่ (ค้างจากก่อนยืนยันตัวตน)",
       rejected: "ปฏิเสธ / ซ่อนจากร้าน",
     } as const;
     if (!confirm(`${labels[next]} แบบ “${listing.name}” (#${listing.planId}) ?`)) return;
@@ -1035,7 +1035,7 @@ export default function AdminListingsClient() {
     <div>
       <AdminPageHeader
         title="จัดการแบบบ้าน"
-        description="เพิ่ม/แก้ไขแบบบ้าน · อนุมัติเพื่อเปิดปุ่มซื้อ (แบบที่รออนุมัติแสดงบนเว็บได้แต่ยังซื้อไม่ได้)"
+        description="เพิ่ม/แก้ไขแบบบ้าน · ดีไซเนอร์ที่ยืนยันตัวตนแล้วเผยแพร่อัตโนมัติ — แอดมินใช้สำหรับระงับหรือแก้ไขเมื่อจำเป็น"
       />
 
       {status && (
@@ -1110,7 +1110,7 @@ export default function AdminListingsClient() {
                     mod === "approved"
                       ? ["เปิดขาย", "bg-emerald-100 text-emerald-800"]
                       : mod === "pending"
-                        ? ["รออนุมัติ (ดูได้/ซื้อไม่ได้)", "bg-amber-100 text-amber-800"]
+                        ? ["รอเผยแพร่ (ค้าง)", "bg-amber-100 text-amber-800"]
                         : ["ปฏิเสธ / ซ่อน", "bg-red-100 text-red-800"];
                   return (
                     <tr key={l.id} className="border-b border-slate-100 align-middle">
