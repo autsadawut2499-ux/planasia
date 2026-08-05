@@ -19,6 +19,11 @@ export function getAdminPin(): string {
   return DEFAULT_ADMIN_PIN;
 }
 
+/** Whether a usable 6-digit ADMIN_PIN is available (env or local default). */
+export function isAdminPinConfigured(): boolean {
+  return /^\d{6}$/.test(getAdminPin());
+}
+
 /** Constant-time compare for 6-digit PIN strings. */
 export function verifyAdminPin(input: string): boolean {
   const expected = getAdminPin();

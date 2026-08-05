@@ -140,6 +140,13 @@ export const authOptions: NextAuthOptions = {
           const googleSub =
             account.providerAccountId?.trim() || user?.id?.trim();
           if (googleSub) token.sub = googleSub;
+        } else if (
+          // Keep PIN-admin sessions elevated across JWT refreshes.
+          typeof token.sub === "string" &&
+          token.sub.startsWith("admin-pin:")
+        ) {
+          token.isAdmin = true;
+          token.adminRole = token.adminRole === "editor" ? "editor" : "admin";
         } else if (token.isAdmin == null) {
           token.isAdmin = false;
           token.adminRole = null;

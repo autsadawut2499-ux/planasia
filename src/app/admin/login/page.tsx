@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Shield, KeyRound } from "lucide-react";
 import { Suspense, useState } from "react";
@@ -18,17 +18,37 @@ function AdminLoginForm() {
     e.preventDefault();
     setLoading(true);
     setFormError(null);
-    const result = await signIn("admin-pin", {
-      pin: pin.trim(),
-      callbackUrl,
-      redirect: false,
-    });
-    setLoading(false);
-    if (result?.error) {
-      setFormError("รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่");
+
+    const cleanPin = pin.trim();
+    if (!/^\d{6}$/.test(cleanPin)) {
+      setLoading(false);
+      setFormError("กรุณาใส่รหัส PIN ให้ครบ 6 หลัก");
       return;
     }
-    if (result?.url) window.location.href = result.url;
+
+    try {
+      // Drop any buyer/Google session first so the JWT is stamped cleanly as admin.
+      await signOut({ redirect: false });
+
+      const result = await signIn("admin-pin", {
+        pin: cleanPin,
+        callbackUrl,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setFormError(
+          "รหัส PIN ไม่ถูกต้อง หรือเซิร์ฟเวอร์ยังไม่ได้ตั้ง ADMIN_PIN — ลองใหม่หรือตรวจค่า env",
+        );
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = result?.url || callbackUrl || "/admin";
+    } catch {
+      setFormError("เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่");
+      setLoading(false);
+    }
   }
 
   if (status === "loading") {
@@ -90,6 +110,13 @@ function AdminLoginForm() {
             {loading ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบผู้ดูแล"}
           </button>
         </form>
+
+        {process.env.NODE_ENV === "development" && (
+          <p className="mt-4 text-center text-[11px] text-slate-500">
+            โหมดพัฒนา — รหัสเริ่มต้นคือ{" "}
+            <span className="font-mono tracking-wider text-slate-400">501499</span>
+          </p>
+        )}
       </div>
     </div>
   );
