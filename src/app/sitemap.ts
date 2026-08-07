@@ -3,9 +3,19 @@ import { getSiteUrl } from "@/lib/seo/site-url";
 import { listingStorePath } from "@/lib/seo/slug";
 import { getAllPlanPresets } from "@/lib/seo/programmatic";
 import { getAllListingsForSitemap } from "@/lib/store/db";
+import { COLLECTIONS, STYLES } from "@/lib/store/taxonomy";
 import { getDraftsmanDirectory } from "@/lib/vendors/directory";
 import { ABOUT_PAGES } from "@/lib/content/about";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { isListingPubliclyVisible } from "@/lib/store/listing-purchase";
+
+/** Rebuild sitemap periodically so new auto-published plans appear for crawlers. */
+export const revalidate = 3600;
+
+function storeCategoryUrl(base: string, key: "style" | "collection", id: string): string {
+  const params = new URLSearchParams({ [key]: id });
+  return `${base}/store?${params.toString()}`;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
@@ -15,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let draftsmen: Awaited<ReturnType<typeof getDraftsmanDirectory>> = [];
   if (isSupabaseConfigured()) {
     try {
-      listings = await getAllListingsForSitemap();
+      listings = (await getAllListingsForSitemap()).filter(isListingPubliclyVisible);
     } catch {
       listings = [];
     }
@@ -26,9 +36,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  const styleCategories = STYLES.filter((s) => !s.comingSoon).map((style) => ({
+    url: storeCategoryUrl(base, "style", style.id),
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.75,
+  }));
+
+  const collectionCategories = COLLECTIONS.filter((c) => !c.comingSoon).map((collection) => ({
+    url: storeCategoryUrl(base, "collection", collection.id),
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.75,
+  }));
+
+  const productPages = listings.map((listing) => ({
+    url: `${base}${listingStorePath(listing.slug)}`,
+    lastModified: new Date(listing.createdAt),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
+
   return [
     { url: base, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/store`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    ...styleCategories,
+    ...collectionCategories,
     { url: `${base}/draftsmen`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${base}/home-building`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/whats-included`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
@@ -52,13 +85,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
-    // Product detail pages.
-    ...listings.map((listing) => ({
-      url: `${base}${listingStorePath(listing.slug)}`,
-      lastModified: new Date(listing.createdAt),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    })),
+    // Product detail pages (published house plans).
+    ...productPages,
     // Draftsman profiles (E-E-A-T).
     ...draftsmen.map((d) => ({
       url: `${base}/draftsmen/${encodeURIComponent(d.ownerKey)}`,
