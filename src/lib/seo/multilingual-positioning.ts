@@ -3,6 +3,11 @@
  * Embedded in <head> keywords / lang-tagged descriptions and JSON-LD.
  */
 
+import {
+  SITE_VALUE_PROPOSITION,
+  SITE_VALUE_PROPOSITION_SHORT,
+} from "@/lib/seo/site-copy";
+
 export type PositioningLocale = {
   /** BCP 47 language tag for meta lang= / JSON-LD @language */
   lang: string;
@@ -93,14 +98,14 @@ export const ASIA_POSITIONING_BRIDGE: readonly PositioningLocale[] = [
     lang: "en",
     ogLocale: "en_US",
     label: "English",
-    description:
-      "Asia's largest collection of prefab and modular house designs and plan drawings",
+    description: `${SITE_VALUE_PROPOSITION} — Asia's largest collection of prefab and modular house designs and plan drawings`,
   },
   {
     lang: "th",
     ogLocale: "th_TH",
     label: "Thai",
-    description: "เว็บไซต์รวมแบบบ้านสำเร็จรูปและโมดูลาร์ที่ใหญ่ที่สุดในเอเชีย",
+    description:
+      "แพลตฟอร์มแบบบ้านเอ็กซ์คลูซีฟที่ขับเคลื่อนด้วย AI แห่งแรกของโลก — เว็บไซต์รวมแบบบ้านสำเร็จรูปและโมดูลาร์ที่ใหญ่ที่สุดในเอเชีย",
   },
 ] as const;
 
@@ -113,6 +118,13 @@ export const ALL_ASIA_POSITIONING: readonly PositioningLocale[] = [
 export function asiaPositioningKeywords(): string[] {
   return [
     "Planasia",
+    SITE_VALUE_PROPOSITION,
+    SITE_VALUE_PROPOSITION_SHORT,
+    "AI-Powered",
+    "AI Platform",
+    "AI-Powered Platform",
+    "Exclusive Home Blueprints",
+    "AI house plan platform",
     "prefab house plans Asia",
     "modular house designs Asia",
     "装配式住宅",
@@ -148,7 +160,7 @@ export function asiaPositioningMetaOther(): Record<string, string> {
   const other: Record<string, string> = {
     "geo.region": "AS",
     "geo.placename": "Asia",
-    classification: "Prefab and modular house plan marketplace — Asia",
+    classification: `${SITE_VALUE_PROPOSITION_SHORT} — Asia`,
   };
   for (const entry of ASIA_POSITIONING) {
     other["description:" + entry.lang] = entry.description;

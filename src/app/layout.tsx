@@ -43,6 +43,7 @@ import {
   asiaPositioningKeywords,
   asiaPositioningMetaOther,
 } from "@/lib/seo/multilingual-positioning";
+import { SITE_VALUE_PROPOSITION, SITE_VALUE_PROPOSITION_SHORT } from "@/lib/seo/site-copy";
 import { loadSiteConfig } from "@/lib/supabase/site-config";
 import "./globals.css";
 
@@ -83,11 +84,10 @@ const SITE_URL = getSiteUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Planasia — แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI",
+    default: `Planasia — ${SITE_VALUE_PROPOSITION_SHORT}`,
     template: "%s | Planasia",
   },
-  description:
-    "Asia's largest collection of prefab and modular house designs — สร้างแนวคิดแปลนบ้าน จัดโซนห้องเบื้องต้น และนำเสนอไอเดียดีไซน์ด้วย AI",
+  description: `${SITE_VALUE_PROPOSITION}. Asia's largest collection of prefab and modular house designs — สร้างแนวคิดแปลนบ้าน จัดโซนห้องเบื้องต้น และนำเสนอไอเดียดีไซน์ด้วย AI`,
   keywords: asiaPositioningKeywords(),
   applicationName: "Planasia",
   robots: { index: true, follow: true },
@@ -97,15 +97,13 @@ export const metadata: Metadata = {
     locale: "th_TH",
     url: SITE_URL,
     siteName: "Planasia",
-    title: "Planasia",
-    description:
-      "Asia's largest prefab & modular house-plan collection — แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI",
+    title: `Planasia — ${SITE_VALUE_PROPOSITION_SHORT}`,
+    description: `${SITE_VALUE_PROPOSITION}. Asia's largest prefab & modular house-plan collection — แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI`,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Planasia",
-    description:
-      "Asia's largest prefab & modular house-plan collection — แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI",
+    title: `Planasia — ${SITE_VALUE_PROPOSITION_SHORT}`,
+    description: `${SITE_VALUE_PROPOSITION}. Asia's largest prefab & modular house-plan collection — แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI`,
   },
   appleWebApp: {
     capable: true,

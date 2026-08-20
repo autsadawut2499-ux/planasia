@@ -7,6 +7,10 @@ import {
 } from "@/lib/seo/multilingual-positioning";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { listingStorePath } from "@/lib/seo/slug";
+import {
+  SITE_VALUE_PROPOSITION,
+  SITE_VALUE_PROPOSITION_SHORT,
+} from "@/lib/seo/site-copy";
 
 const ORG_NAME = "Planasia";
 
@@ -188,6 +192,7 @@ export function buildOrganizationJsonLd(): Record<string, unknown>[] {
       url: base,
       logo: `${base}/icon.png`,
       description: multilingualDescriptions,
+      slogan: SITE_VALUE_PROPOSITION,
       areaServed: { "@type": "Place", name: "Asia" },
       knowsLanguage: availableLanguages,
     },
@@ -197,13 +202,14 @@ export function buildOrganizationJsonLd(): Record<string, unknown>[] {
       "@id": `${base}#website`,
       url: base,
       name: ORG_NAME,
+      alternateName: SITE_VALUE_PROPOSITION_SHORT,
       publisher: { "@id": `${base}#organization` },
       description: multilingualDescriptions,
       inLanguage: availableLanguages,
       about: {
         "@type": "Thing",
-        name: "Prefab and modular house designs",
-        description: multilingualDescriptions,
+        name: SITE_VALUE_PROPOSITION_SHORT,
+        description: SITE_VALUE_PROPOSITION,
       },
       potentialAction: {
         "@type": "SearchAction",

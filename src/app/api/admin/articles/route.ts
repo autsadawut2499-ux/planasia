@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin/auth";
+import { revalidateArticleSurfaces } from "@/lib/content/revalidate-articles";
 import {
   createArticle,
   deleteArticle,
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
       },
       admin.email,
     );
+    revalidateArticleSurfaces({ slug: article.slug });
     return NextResponse.json({ article });
   } catch (err) {
     const message = err instanceof Error ? err.message : "สร้างบทความไม่สำเร็จ";
@@ -59,6 +61,7 @@ export async function PUT(request: NextRequest) {
     const id = String(body.id ?? "").trim();
     if (!id) return NextResponse.json({ error: "ต้องระบุ id" }, { status: 400 });
 
+    const existing = await getArticleById(id);
     const article = await updateArticle(
       id,
       {
@@ -76,6 +79,10 @@ export async function PUT(request: NextRequest) {
       },
       admin.email,
     );
+    revalidateArticleSurfaces({
+      slug: article.slug,
+      previousSlug: existing?.slug,
+    });
     return NextResponse.json({ article });
   } catch (err) {
     const message = err instanceof Error ? err.message : "บันทึกไม่สำเร็จ";
@@ -99,7 +106,9 @@ export async function DELETE(request: NextRequest) {
       }
     }
     if (!id) return NextResponse.json({ error: "ต้องระบุ id" }, { status: 400 });
+    const existing = await getArticleById(id);
     await deleteArticle(id);
+    revalidateArticleSurfaces({ slug: existing?.slug });
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "ลบไม่สำเร็จ";

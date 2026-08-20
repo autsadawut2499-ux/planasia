@@ -778,10 +778,33 @@
    * Desktop (>768): [brand+Store | nav | tools] — never overlap.
    * Mobile (≤768): [logo | search | hamburger] — desktop chrome hidden.
    */
-  .site-topbar-slogan {
-    white-space: nowrap;
+  /* Announcement strip — compact so sticky header stays usable on mobile */
+  .site-announcement__text {
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 600;
+    letter-spacing: 0.015em;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+  }
+
+  @media (min-width: 640px) {
+    .site-announcement__text {
+      font-size: 0.75rem; /* 12px */
+      display: block;
+      -webkit-line-clamp: unset;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-announcement__text {
+      font-size: 0.8125rem; /* 13px */
+      letter-spacing: 0.03em;
+    }
   }
 
   /* ── Desktop-first base (restored layout) ── */

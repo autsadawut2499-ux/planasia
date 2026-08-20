@@ -10,7 +10,7 @@ import { isListingPubliclyVisible } from "@/lib/store/listing-purchase";
 import { listArticles } from "@/lib/supabase/articles";
 
 /** Rebuild sitemap often so new auto-published plans appear for crawlers quickly.
- *  Also busted on-demand via `revalidateStoreSurfaces` → `/sitemap.xml`. */
+ *  Also busted on-demand via `revalidateStoreSurfaces` / `revalidateArticleSurfaces` → `/sitemap.xml`. */
 export const revalidate = 900;
 
 function storeCategoryUrl(base: string, key: "style" | "collection", id: string): string {

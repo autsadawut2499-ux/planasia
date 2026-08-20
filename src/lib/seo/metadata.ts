@@ -8,6 +8,10 @@ import {
 } from "@/lib/seo/multilingual-positioning";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { listingStorePath } from "@/lib/seo/slug";
+import {
+  SITE_VALUE_PROPOSITION,
+  SITE_VALUE_PROPOSITION_SHORT,
+} from "@/lib/seo/site-copy";
 
 const SITE_NAME = "Planasia";
 /** Fallback when admin hero cover is unset — keep in sync with DEFAULT_SITE_SETTINGS.hero. */
@@ -212,16 +216,13 @@ export type HomeMetadataInput = {
 /**
  * Homepage Open Graph / Twitter cards.
  * Prefer the live admin Hero cover so shared links match what visitors see.
+ * Primary value prop is the AI-powered marketplace slogan (not admin tagline).
  */
 export function buildHomeMetadata(input: HomeMetadataInput = {}): Metadata {
   const brandName = (input.brandName ?? "").trim() || SITE_NAME;
-  const tagline =
-    (input.tagline ?? "").trim() ||
-    DEFAULT_SITE_SETTINGS.brand.tagline ||
-    "แพลตฟอร์มออกแบบคอนเซปต์บ้านด้วย AI";
-  const title = `${brandName} — ${tagline}`;
+  const title = `${brandName} — ${SITE_VALUE_PROPOSITION_SHORT}`;
   const description = truncate(
-    `${tagline} — Asia's largest prefab & modular house-plan collection. สร้างแนวคิดแปลนบ้านและนำเสนอไอเดียดีไซน์ด้วย AI`,
+    `${SITE_VALUE_PROPOSITION}. Asia's largest prefab & modular house-plan collection — สร้างแนวคิดแปลนบ้านและนำเสนอไอเดียดีไซน์ด้วย AI`,
     200,
   );
   const canonical = getSiteUrl();
@@ -242,7 +243,7 @@ export function buildHomeMetadata(input: HomeMetadataInput = {}): Metadata {
       locale: "th_TH",
       url: canonical,
       siteName: brandName,
-      title: brandName,
+      title,
       description,
       images: [
         {
@@ -250,20 +251,20 @@ export function buildHomeMetadata(input: HomeMetadataInput = {}): Metadata {
           secureUrl: heroImage,
           width: 1200,
           height: 630,
-          alt: `${brandName} — ภาพปกหน้าแรก`,
+          alt: `${brandName} — ${SITE_VALUE_PROPOSITION_SHORT}`,
           type: "image/jpeg",
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: brandName,
+      title,
       description,
       images: [heroImage],
     },
     other: {
       "og:image:secure_url": heroImage,
-      "og:image:alt": `${brandName} — ภาพปกหน้าแรก`,
+      "og:image:alt": `${brandName} — ${SITE_VALUE_PROPOSITION_SHORT}`,
       "og:logo": logoImage,
       ...asiaPositioningMetaOther(),
     },

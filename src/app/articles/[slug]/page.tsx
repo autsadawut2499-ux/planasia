@@ -5,6 +5,7 @@ import { getArticleBySlug, listArticles } from "@/lib/supabase/articles";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { excerptFromContent } from "@/lib/content/articles";
 
+/** ISR backup; on-demand bust via `revalidateArticleSurfaces` after admin CMS save. */
 export const revalidate = 1800;
 
 type PageProps = {

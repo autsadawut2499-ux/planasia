@@ -32,6 +32,7 @@ import { useBilingual } from "@/components/landing/useBilingual";
 import { COLLECTIONS } from "@/lib/store/taxonomy";
 import { PUBLIC_SELLER_SELF_LISTING_ENABLED } from "@/lib/features/public-seller";
 import { CollectionsMegaMenuPanel } from "@/components/landing/CollectionsMegaMenu";
+import { SITE_VALUE_PROPOSITION } from "@/lib/seo/site-copy";
 
 interface NavItem {
   href: string;
@@ -115,9 +116,23 @@ export function LandingHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 max-w-full border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
-      {/* 1) Top phone banner */}
-      <div className="bg-[#1A2744] text-white">
+    <header
+      className="sticky top-0 z-50 max-w-full border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md"
+      aria-label={L("Site header", "ส่วนหัวเว็บไซต์")}
+    >
+      {/* 1) Announcement — topmost strip (not an H1; homepage owns the page H1) */}
+      <div
+        role="region"
+        aria-label={L("Site announcement", "ประกาศเว็บไซต์")}
+        className="site-announcement border-b border-[#1A2744]/12 bg-[#f0f3f8] text-[#1A2744]"
+      >
+        <p className="site-announcement__text mx-auto w-full max-w-[1440px] px-3 py-1.5 text-center sm:px-4 md:px-6">
+          {SITE_VALUE_PROPOSITION}
+        </p>
+      </div>
+
+      {/* 2) Phone contact strip */}
+      <div className="bg-[#1A2744] text-white" aria-label={L("Contact phone", "เบอร์ติดต่อ")}>
         <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-end px-3 py-1.5 sm:px-4 md:min-h-10 md:px-6">
           <a
             href={`tel:${phoneTel}`}
@@ -131,7 +146,7 @@ export function LandingHeader() {
       </div>
 
       {/*
-        2) Main header
+        3) Main header
         Desktop (≥1025): row1 [logo | search | tools] · row2 [nav]
         Compact (≤1024): [logo | search | hamburger]
       */}

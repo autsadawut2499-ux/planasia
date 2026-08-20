@@ -7,6 +7,7 @@ import { useSiteConfigOptional } from "@/context/SiteConfigContext";
 import { openAiPlanChat } from "@/components/chat/AiPlanChat";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/admin/defaults";
+import { SITE_VALUE_PROPOSITION } from "@/lib/seo/site-copy";
 
 const FALLBACK_HERO_IMAGE = DEFAULT_SITE_SETTINGS.hero.backgroundImageUrl;
 
@@ -43,12 +44,15 @@ export function HeroSearch() {
   };
 
   return (
-    <section className="relative w-full">
+    <section className="relative w-full" aria-labelledby="home-hero-heading">
       <div className="hero-cover">
         <OptimizedImage
           key={coverImage}
           src={coverImage}
-          alt={L("Featured house cover", "ภาพปกแบบบ้านหน้าแรก")}
+          alt={L(
+            "Featured exclusive home blueprint cover — Planasia AI-powered platform",
+            "ภาพปกแบบบ้านเอ็กซ์คลูซีฟหน้าแรก — แพลตฟอร์มแบบบ้านขับเคลื่อนด้วย AI ของ Planasia",
+          )}
           fill
           sizes="100vw"
           priority
@@ -58,8 +62,15 @@ export function HeroSearch() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
       </div>
 
-      <div className="relative z-10 px-4 py-3 md:absolute md:inset-x-0 md:bottom-[20%] md:px-4 md:py-0">
+      <div className="relative z-10 px-4 py-3 md:absolute md:inset-x-0 md:bottom-[14%] md:px-4 md:py-0">
         <div className="hero-ai-search mx-auto w-full max-w-md md:max-w-[640px] lg:w-[48%] lg:max-w-[640px]">
+          {/* Single homepage H1 — value prop for crawlers; announcement bar is not a heading */}
+          <h1
+            id="home-hero-heading"
+            className="mb-2 text-center font-heading text-[0.95rem] font-bold leading-snug tracking-tight text-[#1A2744] md:mb-2.5 md:text-[1.05rem] md:text-white md:drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)] lg:text-[1.15rem]"
+          >
+            {SITE_VALUE_PROPOSITION}
+          </h1>
           <form
             onSubmit={(e) => {
               e.preventDefault();

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { listArticles } from "@/lib/supabase/articles";
 import { getSiteUrl } from "@/lib/seo/site-url";
 
+/** ISR backup; on-demand bust via `revalidateArticleSurfaces` after admin CMS save. */
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
