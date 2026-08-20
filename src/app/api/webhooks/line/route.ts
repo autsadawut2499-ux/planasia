@@ -12,8 +12,8 @@ export const runtime = "nodejs";
 /**
  * LINE Messaging API webhook.
  *
- * Paste this in LINE Developers → Messaging API → Webhook URL:
- *   https://planasia.net/api/webhooks/line
+ * Paste this in LINE Developers → Messaging API → Webhook URL (no trailing slash):
+ *   https://www.planasia.net/api/webhooks/line
  *
  * Requires env: LINE_CHANNEL_SECRET (and Channel access token elsewhere for push).
  * Enable "Use webhook" and click Verify in the LINE console.
@@ -28,7 +28,7 @@ export async function GET() {
     provider: "line-messaging-api",
     purpose:
       "Receive LINE follow/message events; capture admin U… user IDs for order notifications",
-    webhookUrlProduction: "https://planasia.net/api/webhooks/line",
+    webhookUrlProduction: "https://www.planasia.net/api/webhooks/line",
   });
 }
 

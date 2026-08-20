@@ -48,8 +48,16 @@ function currencyHint(country: string): string {
  * Enforce the canonical host if CANONICAL_HOST is configured. Returns a redirect
  * response (308) when the host differs, otherwise null. Localhost/preview are
  * left untouched so dev never breaks.
+ *
+ * External webhooks (LINE, SMS, etc.) must not 308 — providers often refuse
+ * redirects during Verify. Serve `/api/webhooks/*` on apex and www alike.
  */
 export function canonicalHostRedirect(request: NextRequest): NextResponse | null {
+  const pathname = request.nextUrl.pathname;
+  if (pathname === "/api/webhooks" || pathname.startsWith("/api/webhooks/")) {
+    return null;
+  }
+
   const canonicalHost = process.env.CANONICAL_HOST?.trim();
   if (!canonicalHost) return null;
   const host = request.headers.get("host") ?? "";

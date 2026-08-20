@@ -340,7 +340,7 @@ export default function AdminPaymentSettingsPage() {
             <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
               <span className="font-semibold">Webhook URL ใน LINE Developers:</span>{" "}
               <code className="rounded bg-white px-1.5 py-0.5">
-                https://planasia.net/api/webhooks/line
+                https://www.planasia.net/api/webhooks/line
               </code>
               <br />
               ต้อง deploy ขึ้น production ก่อน แล้วกด Verify ในคอนโซล LINE · ตั้ง{" "}

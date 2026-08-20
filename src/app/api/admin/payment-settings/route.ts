@@ -37,7 +37,7 @@ export async function GET() {
         slipmateConfigured: isSlipmateConfigured(),
         smsConfigured: isSmsConfigured(),
         lineWebhook: {
-          url: "https://planasia.net/api/webhooks/line",
+          url: "https://www.planasia.net/api/webhooks/line",
           secretConfigured: Boolean(getLineChannelSecret()),
         },
         orderNotify: {
