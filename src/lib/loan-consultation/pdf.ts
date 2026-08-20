@@ -1,14 +1,12 @@
 import "server-only";
 
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb } from "pdf-lib";
 import {
   LOAN_BUDGET_PRESETS,
   LOAN_OCCUPATION_OPTIONS,
   type LoanConsultation,
 } from "@/lib/loan-consultation/types";
+import { embedThaiFonts, pdfSafeText } from "@/lib/pdf/thai-fonts";
 
 const PAGE = { width: 595.28, height: 841.89 };
 const MARGIN = 48;
@@ -31,12 +29,6 @@ function budgetLabel(n: number | null | undefined): string {
   return formatMoney(n);
 }
 
-async function loadFontBytes(file: string): Promise<Uint8Array> {
-  const full = path.join(process.cwd(), "src", "assets", "fonts", file);
-  const buf = await readFile(full);
-  return new Uint8Array(buf);
-}
-
 /**
  * Build a one-page Thai/English PDF summary of a loan consultation submission.
  */
@@ -44,21 +36,14 @@ export async function generateLoanConsultationPdf(
   row: LoanConsultation,
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  pdf.registerFontkit(fontkit);
-  const [regularBytes, boldBytes] = await Promise.all([
-    loadFontBytes("NotoSansThai-Regular.ttf"),
-    loadFontBytes("NotoSansThai-Bold.ttf"),
-  ]);
-  const font = await pdf.embedFont(regularBytes);
-  const fontBold = await pdf.embedFont(boldBytes);
+  const { regular: font, bold: fontBold } = await embedThaiFonts(pdf);
 
   const page = pdf.addPage([PAGE.width, PAGE.height]);
   let y = PAGE.height - MARGIN;
 
   const draw = (text: string, size: number, bold = false) => {
     const f = bold ? fontBold : font;
-    const safe = text || "—";
-    page.drawText(safe, {
+    page.drawText(pdfSafeText(text), {
       x: MARGIN,
       y,
       size,
