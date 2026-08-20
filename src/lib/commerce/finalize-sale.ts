@@ -1,8 +1,6 @@
 import "server-only";
 import {
-  claimCartOrderConfirmationEmail,
   markCartOrderPaid,
-  releaseCartOrderConfirmationEmail,
   type CartOrder,
 } from "@/lib/store/cart-orders";
 import {
@@ -16,43 +14,52 @@ import { createRandomId } from "@/lib/random-id";
 import { splitSale } from "@/lib/commerce/commission";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import { notifyVendorsOfSale } from "@/lib/push/notify-sale";
-import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
 import { createAndStoreOrderSummaryPdf } from "@/lib/payments/create-order-summary";
-import { notifyAfterOrderPaid } from "@/lib/payments/order-notify";
+import {
+  notifyAfterOrderPaid,
+  type OrderNotifyResult,
+} from "@/lib/payments/order-notify";
 import {
   runPostPaymentTranslation,
   type PostPaymentTranslationResult,
 } from "@/lib/gemini/post-payment-translation";
 import { THAI_DOMESTIC_MARKET } from "@/lib/market/config";
 
-/** Claim → send Resend receipt+PDFs (+ localized pack) → release claim if send fails. */
-async function deliverBuyerConfirmationEmail(
+/**
+ * Buyer SMS + admin LINE + designer SMS/push.
+ * Start this immediately after marking paid — do not wait for PDF.
+ */
+export async function dispatchPostPaymentNotifications(
   order: CartOrder,
-  grants: DownloadGrant[],
-  translation?: PostPaymentTranslationResult,
-): Promise<boolean> {
-  if (!order.buyerEmail?.trim()) return false;
-  const claimed = await claimCartOrderConfirmationEmail(order.id);
-  if (!claimed) {
-    // Already claimed/sent on a prior fulfillment attempt.
-    return true;
-  }
-  const ok = await sendOrderConfirmationEmail(order, grants, translation);
-  if (!ok) {
-    await releaseCartOrderConfirmationEmail(order.id);
-    return false;
-  }
-  return true;
+): Promise<OrderNotifyResult> {
+  const saleNotifyItems = order.items.map((i) => ({
+    listingId: i.listingId,
+    planId: i.planId,
+    name: i.name,
+    priceThb: i.price,
+  }));
+
+  const [, notify] = await Promise.all([
+    notifyVendorsOfSale(saleNotifyItems, { cartOrderId: order.id }).catch((err) => {
+      console.error("[finalize-sale] designer notify failed", err);
+    }),
+    notifyAfterOrderPaid(order),
+  ]);
+
+  console.info("[finalize-sale] order notifications", {
+    orderId: order.id,
+    ...notify,
+  });
+  return notify;
 }
 
 /**
  * After a cart payment succeeds:
  *  1. Mark the order paid
- *  2. Split each vendor listing 70/30 into the earnings ledger
- *  3. Issue download grants (idempotent when stripeSessionId is present)
- *  4. Notify each listing's designer (SMS / Web Push / email) via contact_phone mapping
- *  5. (International only) OCR → translation — skipped in Thai domestic mode
- *  6. Email buyer confirmation with blueprint PDFs
+ *  2. LINE admin + SMS buyer immediately
+ *  3. Issue download grants
+ *  4. Generate admin order-summary PDF
+ *  Email is disabled — SMS + LINE only.
  */
 export async function finalizePaidCartSale(opts: {
   cartOrderId: string;
@@ -78,35 +85,17 @@ export async function finalizePaidCartSale(opts: {
 
   let grants: DownloadGrant[];
 
-  const paidOrderId = order.id;
-  const saleNotifyItems = order.items.map((i) => ({
-    listingId: i.listingId,
-    planId: i.planId,
-    name: i.name,
-    priceThb: i.price,
-  }));
-
-  /** Fire-and-forget: SMS / Web Push / email to each listing's designer. Idempotent per order. */
-  function wakeDesigners() {
-    void notifyVendorsOfSale(saleNotifyItems, { cartOrderId: paidOrderId }).catch((err) =>
-      console.error("[finalize-sale] designer notify failed", err),
-    );
-  }
+  // LINE + buyer SMS first so PDF generation cannot drop alerts.
+  const notifyDone = dispatchPostPaymentNotifications(order).catch((err) => {
+    console.error("[finalize-sale] order notifications failed", err);
+  });
 
   if (opts.stripeSessionId) {
     const existing = await findGrantsByStripeSession(opts.stripeSessionId);
     if (existing.length > 0) {
       grants = existing;
-      // Retry path: still attempt designer notify (deduped by vendor_sale_notifications).
-      wakeDesigners();
       const translation = await runPostPayTranslationSafe(order);
       const enriched = applyTranslationToOrder(order, translation);
-      let emailSent = false;
-      try {
-        emailSent = await deliverBuyerConfirmationEmail(enriched, grants, translation);
-      } catch (err) {
-        console.error("[finalize-sale] buyer email failed", err);
-      }
       let orderSummaryPdfPath = enriched.orderSummaryPdfPath ?? null;
       if (!orderSummaryPdfPath) {
         try {
@@ -115,24 +104,13 @@ export async function finalizePaidCartSale(opts: {
           console.error("[finalize-sale] order summary PDF failed", err);
         }
       }
-      try {
-        const notify = await notifyAfterOrderPaid({
-          ...enriched,
-          orderSummaryPdfPath: orderSummaryPdfPath ?? undefined,
-        });
-        console.info("[finalize-sale] order notifications (retry path)", {
-          orderId: enriched.id,
-          ...notify,
-        });
-      } catch (err) {
-        console.error("[finalize-sale] order notifications failed", err);
-      }
+      await notifyDone;
       return {
         order: enriched,
         grants,
         planIds: Array.from(new Set(existing.map((g) => g.planId))),
         translation,
-        emailSent,
+        emailSent: false,
         orderSummaryPdfPath: orderSummaryPdfPath ?? undefined,
       };
     }
@@ -152,20 +130,9 @@ export async function finalizePaidCartSale(opts: {
     order.addons,
   );
 
-  wakeDesigners();
-
-  // Auto pipeline: text-layer check → Vision OCR if scanned → Translation → email.
   const translation = await runPostPayTranslationSafe(order);
   const enriched = applyTranslationToOrder(order, translation);
 
-  let emailSent = false;
-  try {
-    emailSent = await deliverBuyerConfirmationEmail(enriched, grants, translation);
-  } catch (err) {
-    console.error("[finalize-sale] buyer email failed", err);
-  }
-
-  // Admin fulfilment PDF: Customer Name, Phone, House Plan ID, Supplier Name.
   let orderSummaryPdfPath: string | null = null;
   try {
     orderSummaryPdfPath = await createAndStoreOrderSummaryPdf(enriched);
@@ -173,26 +140,14 @@ export async function finalizePaidCartSale(opts: {
     console.error("[finalize-sale] order summary PDF failed", err);
   }
 
-  // Buyer SMS + admin LINE OA push (never block fulfilment).
-  try {
-    const notify = await notifyAfterOrderPaid({
-      ...enriched,
-      orderSummaryPdfPath: orderSummaryPdfPath ?? enriched.orderSummaryPdfPath,
-    });
-    console.info("[finalize-sale] order notifications", {
-      orderId: enriched.id,
-      ...notify,
-    });
-  } catch (err) {
-    console.error("[finalize-sale] order notifications failed", err);
-  }
+  await notifyDone;
 
   return {
     order: enriched,
     grants,
     planIds: Array.from(new Set(order.items.map((i) => i.planId))),
     translation,
-    emailSent,
+    emailSent: false,
     orderSummaryPdfPath: orderSummaryPdfPath ?? undefined,
   };
 }

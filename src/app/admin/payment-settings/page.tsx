@@ -30,6 +30,8 @@ interface FormState {
   lineTokenSource: string;
   adminLineUserIdValid: boolean;
   adminLineUserIdLooksLikeUrl: boolean;
+  adminLineDestinationSource: string;
+  recentLineUserIds: { userId: string; eventType?: string; seenAt?: string }[];
 }
 
 const EMPTY: FormState = {
@@ -49,6 +51,8 @@ const EMPTY: FormState = {
   lineTokenSource: "none",
   adminLineUserIdValid: false,
   adminLineUserIdLooksLikeUrl: false,
+  adminLineDestinationSource: "none",
+  recentLineUserIds: [],
 };
 
 export default function AdminPaymentSettingsPage() {
@@ -86,6 +90,10 @@ export default function AdminPaymentSettingsPage() {
           lineTokenSource: n.lineTokenSource ?? "none",
           adminLineUserIdValid: Boolean(n.adminLineUserIdValid),
           adminLineUserIdLooksLikeUrl: Boolean(n.adminLineUserIdLooksLikeUrl),
+          adminLineDestinationSource: n.adminLineDestinationSource ?? "none",
+          recentLineUserIds: Array.isArray(n.recentLineUserIds)
+            ? n.recentLineUserIds
+            : [],
         });
       })
       .catch((err) =>
@@ -147,6 +155,7 @@ export default function AdminPaymentSettingsPage() {
         lineTokenSource: n.lineTokenSource ?? "none",
         adminLineUserIdValid: Boolean(n.adminLineUserIdValid),
         adminLineUserIdLooksLikeUrl: Boolean(n.adminLineUserIdLooksLikeUrl),
+        adminLineDestinationSource: n.adminLineDestinationSource ?? prev.adminLineDestinationSource,
       }));
       setStatus({ type: "success", message: "บันทึกการตั้งค่าการชำระเงินแล้ว" });
     } catch (err) {
@@ -309,6 +318,40 @@ export default function AdminPaymentSettingsPage() {
                 แต่<strong> ส่งแจ้งเตือนอัตโนมัติไม่ได้</strong> กรุณาใส่ LINE User ID (U…) ของบัญชีที่แอด
                 OA bot เป็นเพื่อนแล้ว
               </p>
+            ) : null}
+
+            {!form.adminLineUserIdValid && form.adminLineDestinationSource === "webhook" ? (
+              <p className="text-sm text-emerald-800">
+                ยังไม่ได้บันทึก User ID ในช่องด้านบน แต่ระบบจะใช้รหัสที่บอทเห็นจาก webhook
+                เป็นปลายทางชั่วคราว — กดรหัสด้านล่างแล้วบันทึกเพื่อล็อกค่า
+              </p>
+            ) : null}
+
+            {form.recentLineUserIds.length > 0 ? (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-slate-600">
+                  User ID ที่บอทเห็นล่าสุด (กดเพื่อใส่ในช่องด้านบน)
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {form.recentLineUserIds.map((s) => (
+                    <button
+                      key={s.userId}
+                      type="button"
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          adminLineUserId: s.userId,
+                          adminLineUserIdValid: true,
+                          adminLineUserIdLooksLikeUrl: false,
+                        }))
+                      }
+                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-mono text-[11px] text-slate-700 hover:border-blue-400 hover:text-blue-800"
+                    >
+                      {s.userId}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : null}
 
             <AdminField

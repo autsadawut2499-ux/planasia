@@ -9,7 +9,7 @@ import {
   listPushSubscriptions,
 } from "@/lib/push/subscriptions";
 import { vendorNetPreview } from "@/lib/commerce/commission";
-import { getVendorByOwnerKey } from "@/lib/supabase/vendors";
+import { getVendorForSaleNotify } from "@/lib/supabase/vendors";
 import { toE164Phone } from "@/lib/sms/phone";
 import { isSmsConfigured, sendSms } from "@/lib/sms/send";
 import {
@@ -21,7 +21,6 @@ import {
   updateSaleNotificationChannels,
   type NotifyChannelStatus,
 } from "@/lib/notifications/sale-notify-log";
-import { sendDesignerSaleEmail } from "@/lib/email/designer-sale";
 
 /** Alias kept for call sites — same shape as designer sale notification lines. */
 export type SalePushItem = DesignerSaleLine;
@@ -31,7 +30,8 @@ export type SalePushItem = DesignerSaleLine;
  *  1. Map each listing → designer (store_listings.owner_id → vendor_profiles)
  *  2. Web Push to registered devices
  *  3. SMS to contact_phone (ThaiBulkSMS preferred, Twilio fallback)
- *  4. Email fallback to contact_email (Resend)
+ *
+ * Email is disabled — post-payment alerts are SMS + LINE only.
  *
  * Never throws — sale unlock must not fail because a phone was offline.
  */
@@ -77,7 +77,7 @@ async function notifyOwnerOfSale(
   items: SalePushItem[],
   cartOrderId: string,
 ): Promise<void> {
-  const vendor = await getVendorByOwnerKey(ownerKey).catch(() => null);
+  const vendor = await getVendorForSaleNotify(ownerKey).catch(() => null);
   const phoneE164 = toE164Phone(vendor?.contactPhone);
 
   const claim = await claimSaleNotification({
@@ -94,10 +94,9 @@ async function notifyOwnerOfSale(
     return;
   }
 
-  const [pushStatus, smsOutcome, emailStatus] = await Promise.all([
+  const [pushStatus, smsOutcome] = await Promise.all([
     sendSalePushToOwner(ownerKey, items),
     sendSaleSmsToOwner(phoneE164, items, cartOrderId),
-    sendSaleEmailToOwner(vendor?.contactEmail, vendor?.displayName ?? "", items, cartOrderId),
   ]);
 
   await updateSaleNotificationChannels(claim.id, {
@@ -107,7 +106,7 @@ async function notifyOwnerOfSale(
     smsError: smsOutcome.error ?? null,
     smsMessageId: smsOutcome.messageId ?? null,
     smsProvider: smsOutcome.provider ?? null,
-    emailStatus,
+    emailStatus: "skipped",
   });
 }
 
@@ -142,22 +141,6 @@ async function sendSaleSmsToOwner(
     messageId: result.messageId,
     provider: result.provider,
   };
-}
-
-async function sendSaleEmailToOwner(
-  email: string | undefined,
-  displayName: string,
-  items: SalePushItem[],
-  cartOrderId: string,
-): Promise<NotifyChannelStatus> {
-  if (!email?.trim()) return "skipped";
-  const ok = await sendDesignerSaleEmail({
-    to: email,
-    displayName,
-    items,
-    cartOrderId,
-  });
-  return ok ? "sent" : "failed";
 }
 
 async function sendSalePushToOwner(

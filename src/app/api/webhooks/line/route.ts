@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordLineUserSightings } from "@/lib/line/sightings";
+import { isValidLineUserId } from "@/lib/line/push-text";
 import {
   getLineChannelSecret,
   type LineWebhookBody,
   verifyLineWebhookSignature,
 } from "@/lib/line/webhook";
+import { adoptAdminLineUserIdIfEmpty } from "@/lib/supabase/order-notify-settings";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -67,6 +69,13 @@ export async function POST(request: NextRequest) {
 
   if (events.length) {
     await recordLineUserSightings(events);
+    for (const ev of events) {
+      const userId = ev.source?.userId?.trim();
+      if (userId && isValidLineUserId(userId)) {
+        const adopted = await adoptAdminLineUserIdIfEmpty(userId);
+        if (adopted) break;
+      }
+    }
   }
 
   // LINE requires a quick 200 OK.

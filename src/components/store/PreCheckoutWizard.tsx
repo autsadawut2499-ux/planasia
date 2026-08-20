@@ -104,12 +104,10 @@ export function isPreCheckoutValid(
   opts?: PreCheckoutValidOptions,
 ): boolean {
   if (!s.targetCountry) return false;
-  // Contact fields are optional (no pre-checkout form). Validate format only if present
-  // e.g. silently prefilled from Google session.
   const email = s.buyerEmail.trim();
-  const phone = s.buyerPhone.trim();
+  const phone = s.buyerPhone.trim() || s.shippingAddress?.phone?.trim() || "";
+  if (!validPhone(phone)) return false;
   if (email && !validEmail(email)) return false;
-  if (phone && !validPhone(phone)) return false;
   if (opts?.requiresShipping && !isShippingAddressComplete(s.shippingAddress)) {
     return false;
   }
@@ -149,9 +147,8 @@ export function defaultPreCheckoutSelections(
 /**
  * Shared pre-payment steps:
  * (international) target country →
+ * buyer phone (required for SMS) →
  * (physical only) shipping address → terms → total.
- * Buyer name/email/phone are not collected in this UI; Google session may
- * still prefill them silently for receipts.
  */
 export function PreCheckoutWizard({
   thai,
@@ -279,13 +276,19 @@ export function PreCheckoutWizard({
       boqAddon: false,
     });
 
-  const setShip = (patch: Partial<ShippingAddress>) =>
+  const setShip = (patch: Partial<ShippingAddress>) => {
+    const nextShip = {
+      ...(selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS),
+      ...patch,
+    };
     set({
-      shippingAddress: {
-        ...(selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS),
-        ...patch,
-      },
+      shippingAddress: nextShip,
+      buyerPhone:
+        patch.phone !== undefined && patch.phone.trim()
+          ? patch.phone
+          : selections.buyerPhone,
     });
+  };
 
   const setSitePlan = (patch: Partial<SitePlanInfo>) =>
     set({
@@ -380,6 +383,39 @@ export function PreCheckoutWizard({
         )}
       </section>
       )}
+
+      <section className="rounded-xl border border-[#1e40af]/20 bg-white p-3.5">
+        <h3 className="text-sm font-bold text-text-primary">
+          {thai ? "เบอร์โทรสำหรับ SMS ยืนยัน *" : "Phone for SMS confirmation *"}
+        </h3>
+        <p className="mt-0.5 text-xs text-text-secondary">
+          {thai
+            ? "ระบบจะส่ง SMS ยืนยันคำสั่งซื้อไปยังเบอร์นี้ทันทีหลังชำระเงินสำเร็จ"
+            : "We SMS this number immediately after payment succeeds"}
+        </p>
+        <label className="mt-3 block">
+          <span className="sr-only">
+            {thai ? "เบอร์โทรศัพท์" : "Phone number"}
+          </span>
+          <input
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            value={selections.buyerPhone}
+            onChange={(e) => set({ buyerPhone: e.target.value })}
+            className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+            placeholder="08x-xxx-xxxx"
+            required
+          />
+        </label>
+        {!validPhone(selections.buyerPhone.trim() || ship.phone.trim()) && (
+          <p className="mt-2 text-[11px] font-medium text-amber-800">
+            {thai
+              ? "กรุณากรอกเบอร์โทรศัพท์ก่อนชำระเงิน"
+              : "Please enter a phone number before paying"}
+          </p>
+        )}
+      </section>
 
       {requiresShipping && (
         <section

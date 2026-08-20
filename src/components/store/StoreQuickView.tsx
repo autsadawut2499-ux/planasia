@@ -385,7 +385,10 @@ export function StoreCheckoutModal({
           addons,
           buyerName: selections.buyerName.trim() || sessionPrefill?.name?.trim() || undefined,
           buyerEmail: selections.buyerEmail.trim() || sessionPrefill?.email?.trim() || undefined,
-          buyerPhone: selections.buyerPhone.trim(),
+          buyerPhone:
+            selections.buyerPhone.trim() ||
+            selections.shippingAddress?.phone?.trim() ||
+            "",
           shippingAddress: requiresShipping
             ? selections.shippingAddress
             : undefined,

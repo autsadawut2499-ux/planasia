@@ -14,6 +14,7 @@ import {
 } from "@/lib/supabase/payment-settings";
 import {
   loadOrderNotifySettings,
+  resolveAdminLineDestinations,
   resolveOrderNotifyLineToken,
   saveOrderNotifySettings,
 } from "@/lib/supabase/order-notify-settings";
@@ -31,6 +32,7 @@ export async function GET() {
       listLineUserSightings(),
     ]);
     const lineToken = await resolveOrderNotifyLineToken(orderNotify);
+    const lineDest = await resolveAdminLineDestinations(orderNotify);
     return NextResponse.json({
       settings: {
         bank: settings.bank,
@@ -55,6 +57,7 @@ export async function GET() {
           adminLineUserIdLooksLikeUrl: looksLikeLineChatUrl(
             orderNotify.adminLineUserId,
           ),
+          adminLineDestinationSource: lineDest.source,
           recentLineUserIds: lineSightings.slice(0, 10),
         },
       },
@@ -94,6 +97,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const lineToken = await resolveOrderNotifyLineToken(orderNotify);
+    const lineDest = await resolveAdminLineDestinations(orderNotify);
     return NextResponse.json({
       settings: {
         bank: saved.bank,
@@ -113,6 +117,7 @@ export async function PUT(request: NextRequest) {
           adminLineUserIdLooksLikeUrl: looksLikeLineChatUrl(
             orderNotify.adminLineUserId,
           ),
+          adminLineDestinationSource: lineDest.source,
         },
       },
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Mail, X } from "lucide-react";
+import { Download, MessageSquare, X } from "lucide-react";
 
 export type PaymentSuccessDownload = {
   token: string;
@@ -21,8 +21,6 @@ export type PaymentSuccessDownload = {
  */
 export function PaymentSuccessPanel({
   locale,
-  buyerEmail,
-  emailSent,
   downloads,
   onClose,
 }: {
@@ -63,19 +61,11 @@ export function PaymentSuccessPanel({
         </div>
 
         <div className="mt-3 flex items-start gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs text-[#1e3a8a]">
-          <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            {emailSent
-              ? thai
-                ? `ส่งใบยืนยันและไฟล์ไปที่ ${buyerEmail || "อีเมลของคุณ"} แล้ว`
-                : `Receipt and files were emailed to ${buyerEmail || "your inbox"}`
-              : thai
-                ? buyerEmail
-                  ? `กำลังส่งอีเมลไปที่ ${buyerEmail}`
-                  : "หากระบุอีเมลตอนชำระเงิน ระบบจะส่งใบยืนยันทางอีเมล"
-                : buyerEmail
-                  ? `Emailing receipt to ${buyerEmail}`
-                  : "If you entered an email at checkout, a receipt is sent automatically"}
+            {thai
+              ? "ระบบส่ง SMS ยืนยันไปยังเบอร์ที่กรอกตอนชำระเงินแล้ว — เจ้าหน้าที่จะติดต่อกลับภายใน 24 ชั่วโมง"
+              : "A confirmation SMS was sent to the phone number you entered at checkout."}
           </span>
         </div>
 

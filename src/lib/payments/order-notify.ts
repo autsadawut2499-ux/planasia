@@ -1,11 +1,14 @@
 import "server-only";
 
-import type { CartOrder } from "@/lib/store/cart-orders";
+import type { CartOrder, CartOrderItem } from "@/lib/store/cart-orders";
+import { getListingById } from "@/lib/store/db";
+import { listingSupplierName } from "@/lib/store/listing-supplier";
 import { pushLineTextMessage } from "@/lib/line/push-text";
 import { toE164Phone } from "@/lib/sms/phone";
 import { isSmsConfigured, sendSms } from "@/lib/sms/send";
 import {
   loadOrderNotifySettings,
+  resolveAdminLineDestinations,
   resolveOrderNotifyLineToken,
 } from "@/lib/supabase/order-notify-settings";
 
@@ -29,10 +32,43 @@ function buildBuyerSms(order: CartOrder): string {
     .join("\n");
 }
 
-function buildAdminLineText(order: CartOrder): string {
-  const lines = order.items
-    .map((i) => `• ${i.planId} — ${i.name} (฿${Math.round(i.price).toLocaleString("th-TH")})`)
-    .join("\n");
+function baht(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return `฿${Math.round(n).toLocaleString("th-TH")}`;
+}
+
+function listingSaleNote(listing: Awaited<ReturnType<typeof getListingById>>): string {
+  const text =
+    listing?.tagline?.trim() ||
+    listing?.pitch?.trim() ||
+    listing?.description?.trim() ||
+    "";
+  if (!text) return "—";
+  return text.replace(/\s+/g, " ").slice(0, 240);
+}
+
+async function formatOrderLine(item: CartOrderItem, index: number): Promise<string> {
+  const listing = await getListingById(item.listingId).catch(() => null);
+  const supplier = listingSupplierName(listing) || listing?.supplierName?.trim() || "—";
+  const originalCode = listing?.sourcePlanCode?.trim() || "—";
+  const cost = listing?.costPrice != null ? baht(listing.costPrice) : "—";
+  const note = listingSaleNote(listing);
+
+  return [
+    `รายการ ${index + 1}`,
+    `แบบบ้าน: ${item.planId} — ${item.name}`,
+    `ราคาขาย: ${baht(item.price)}`,
+    `ซัพพลายเออร์: ${supplier}`,
+    `รหัสบ้านต้นทาง: ${originalCode}`,
+    `ราคาต้นทุน: ${cost}`,
+    `โน้ต: ${note}`,
+  ].join("\n");
+}
+
+async function buildAdminLineText(order: CartOrder): Promise<string> {
+  const itemBlocks = await Promise.all(
+    order.items.map((item, i) => formatOrderLine(item, i)),
+  );
   const sitePlan = order.sitePlanInfo
     ? [
         "",
@@ -42,6 +78,7 @@ function buildAdminLineText(order: CartOrder): string {
         `โฉนด ${order.sitePlanInfo.landTitleDeedNumber}`,
       ].join("\n")
     : "";
+  const orderNote = order.shippingAddress?.notes?.trim() || "";
 
   return [
     "✅ มีการชำระเงินสำเร็จ (SlipMate)",
@@ -50,12 +87,12 @@ function buildAdminLineText(order: CartOrder): string {
     `ลูกค้า: ${order.buyerName?.trim() || "—"}`,
     `โทร: ${order.buyerPhone?.trim() || "—"}`,
     order.buyerEmail ? `อีเมล: ${order.buyerEmail.trim()}` : null,
-    `ยอด: ฿${Math.round(order.total).toLocaleString("th-TH")}`,
+    `ยอดชำระ: ${baht(order.total)}`,
     "",
-    "รายการ:",
-    lines || "—",
+    itemBlocks.join("\n\n") || "รายการ: —",
     sitePlan,
     "",
+    `หมายเหตุออเดอร์: ${orderNote || "—"}`,
     `แอดมิน: /admin/orders`,
   ]
     .filter((x) => x != null)
@@ -80,7 +117,7 @@ export async function notifyAfterOrderPaid(
 
   // ── Buyer SMS ───────────────────────────────────────────────────────────
   if (settings.notifyBuyerSms) {
-    const phone = toE164Phone(order.buyerPhone);
+    const phone = toE164Phone(order.buyerPhone) ?? toE164Phone(order.shippingAddress?.phone);
     if (!phone) {
       result.buyerSms = "skipped";
       result.buyerSmsError = "no_buyer_phone";
@@ -112,7 +149,8 @@ export async function notifyAfterOrderPaid(
   // ── Admin LINE ──────────────────────────────────────────────────────────
   if (settings.notifyAdminLine) {
     const token = await resolveOrderNotifyLineToken(settings);
-    const to = settings.adminLineUserId.trim();
+    const dest = await resolveAdminLineDestinations(settings);
+    const to = dest.ids[0] ?? "";
     if (!to) {
       result.adminLine = "skipped";
       result.adminLineError =
@@ -122,11 +160,14 @@ export async function notifyAfterOrderPaid(
       const line = await pushLineTextMessage({
         channelAccessToken: token,
         toUserId: to,
-        text: buildAdminLineText(order),
+        text: await buildAdminLineText(order),
       });
       if (line.ok) {
         result.adminLine = "sent";
-        console.info("[order-notify] admin LINE sent", { orderId: order.id });
+        console.info("[order-notify] admin LINE sent", {
+          orderId: order.id,
+          source: dest.source,
+        });
       } else if (line.skipped) {
         result.adminLine = "skipped";
         result.adminLineError = line.error;

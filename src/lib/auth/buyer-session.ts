@@ -49,7 +49,13 @@ export function resolveBuyerCheckoutIdentity(
   body: Record<string, unknown>,
   fallbackUserId = "",
 ): BuyerCheckoutIdentity {
-  const phoneRaw = String(body.buyerPhone ?? "").trim();
+  const shipping =
+    body.shippingAddress && typeof body.shippingAddress === "object"
+      ? (body.shippingAddress as Record<string, unknown>)
+      : null;
+  const phoneRaw = String(
+    body.buyerPhone ?? shipping?.phone ?? "",
+  ).trim();
   const phoneDigits = phoneRaw.replace(/\D/g, "");
   const formName = String(body.buyerName ?? "").trim();
   const formEmail = String(body.buyerEmail ?? "").trim().toLowerCase();
@@ -73,7 +79,7 @@ export function resolveBuyerCheckoutIdentity(
   };
 }
 
-/** Validate optional buyer contact fields used by purchase + cart checkout. */
+/** Validate buyer contact fields used by purchase + cart checkout. Phone is required for SMS. */
 export function validateBuyerCheckoutIdentity(
   buyer: BuyerCheckoutIdentity,
 ): NextResponse | null {
@@ -84,9 +90,9 @@ export function validateBuyerCheckoutIdentity(
     );
   }
   const digits = buyer.phoneRaw.replace(/\D/g, "");
-  if (buyer.phoneRaw && (digits.length < 8 || digits.length > 15)) {
+  if (!digits || digits.length < 8 || digits.length > 15) {
     return NextResponse.json(
-      { error: "Invalid phone number" },
+      { error: "กรุณากรอกเบอร์โทรศัพท์ก่อนชำระเงิน" },
       { status: 400 },
     );
   }

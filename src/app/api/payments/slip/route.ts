@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { finalizePaidCartSale } from "@/lib/commerce/finalize-sale";
+import { finalizePaidCartSale, dispatchPostPaymentNotifications } from "@/lib/commerce/finalize-sale";
 import { verifyBankSlip } from "@/lib/payments/slip-verify";
 import { isSlipmateConfigured } from "@/lib/payments/slipmate-config";
 import {
@@ -19,6 +19,7 @@ const MANUAL_REVIEW_EN =
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /** Phone camera slips are often larger than desktop screenshots. */
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -93,6 +94,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
     if (order.status === "paid") {
+      try {
+        await dispatchPostPaymentNotifications(order);
+      } catch (err) {
+        console.error("[payments/slip] already-paid notify retry failed", err);
+      }
       return NextResponse.json({
         ok: true,
         alreadyPaid: true,

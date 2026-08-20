@@ -97,6 +97,22 @@ export async function getPublishedVendors(): Promise<VendorProfile[]> {
   return (data as VendorRow[]).map(rowToVendor);
 }
 
+/**
+ * Admin PIN login uses `admin-pin:email` while listings saved from the admin
+ * panel use `admin:email`. Sale SMS must resolve either key to the same studio.
+ */
+export function ownerKeyAliases(ownerKey: string): string[] {
+  const key = ownerKey.trim();
+  if (!key) return [];
+  const keys = [key];
+  if (key.startsWith("admin-pin:")) {
+    keys.push(`admin:${key.slice("admin-pin:".length)}`);
+  } else if (key.startsWith("admin:")) {
+    keys.push(`admin-pin:${key.slice("admin:".length)}`);
+  }
+  return Array.from(new Set(keys));
+}
+
 export async function getVendorByOwnerKey(ownerKey: string): Promise<VendorProfile | null> {
   if (!isSupabaseConfigured() || !ownerKey) return null;
   const { data, error } = await getSupabaseAdmin()
@@ -106,6 +122,20 @@ export async function getVendorByOwnerKey(ownerKey: string): Promise<VendorProfi
     .maybeSingle();
   if (error) throw error;
   return data ? rowToVendor(data as VendorRow) : null;
+}
+
+/** Prefer a profile that has a phone when admin / admin-pin keys diverge. */
+export async function getVendorForSaleNotify(
+  ownerKey: string,
+): Promise<VendorProfile | null> {
+  const aliases = ownerKeyAliases(ownerKey);
+  const profiles = (
+    await Promise.all(aliases.map((key) => getVendorByOwnerKey(key).catch(() => null)))
+  ).filter((v): v is VendorProfile => Boolean(v));
+  if (!profiles.length) return null;
+  return (
+    profiles.find((v) => Boolean(v.contactPhone?.trim())) ?? profiles[0]
+  );
 }
 
 // ---------------------------------------------------------------------------

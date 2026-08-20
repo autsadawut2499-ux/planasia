@@ -65,6 +65,32 @@ export async function claimSaleNotification(input: {
   const code = String((error as { code?: string }).code ?? "");
   // Unique violation → already claimed on a prior fulfill attempt.
   if (code === "23505" || msg.includes("duplicate") || msg.includes("unique")) {
+    const { data: existing } = await getSupabaseAdmin()
+      .from("vendor_sale_notifications")
+      .select("id, cart_order_id, owner_key, listing_ids, plan_codes, phone_e164, sms_status, push_status, email_status")
+      .eq("cart_order_id", input.cartOrderId)
+      .eq("owner_key", input.ownerKey)
+      .maybeSingle();
+    const smsStatus = String(existing?.sms_status ?? "");
+    // Retry when the previous attempt never actually delivered SMS
+    // (e.g. missing vendor phone that has since been resolved).
+    if (existing && smsStatus !== "sent") {
+      return {
+        id: String(existing.id),
+        cartOrderId: String(existing.cart_order_id),
+        ownerKey: String(existing.owner_key),
+        listingIds: Array.isArray(existing.listing_ids)
+          ? existing.listing_ids.map(String)
+          : input.listingIds,
+        planCodes: Array.isArray(existing.plan_codes)
+          ? existing.plan_codes.map(String)
+          : input.planCodes,
+        phoneE164: existing.phone_e164 ? String(existing.phone_e164) : input.phoneE164,
+        smsStatus: (existing.sms_status as NotifyChannelStatus) ?? "pending",
+        pushStatus: (existing.push_status as NotifyChannelStatus) ?? "pending",
+        emailStatus: (existing.email_status as NotifyChannelStatus) ?? "pending",
+      };
+    }
     return null;
   }
 

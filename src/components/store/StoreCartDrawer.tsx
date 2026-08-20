@@ -293,7 +293,10 @@ export function StoreCartDrawer({
           documentLanguage: preCheckout.documentLanguage,
           buyerName: preCheckout.buyerName.trim() || sessionPrefill?.name?.trim() || undefined,
           buyerEmail: preCheckout.buyerEmail.trim() || sessionPrefill?.email?.trim() || undefined,
-          buyerPhone: preCheckout.buyerPhone.trim(),
+          buyerPhone:
+            preCheckout.buyerPhone.trim() ||
+            preCheckout.shippingAddress?.phone?.trim() ||
+            "",
           shippingAddress: requiresShipping
             ? preCheckout.shippingAddress
             : undefined,
