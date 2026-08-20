@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
-  ExternalLink,
   Loader2,
   MapPin,
   Pencil,
@@ -416,15 +414,6 @@ export function VendorProfileTab({ dash }: { dash: Dashboard }) {
                   />
                 ))}
               </div>
-            )}
-            {data?.ownerKey && (
-              <Link
-                href={`/draftsmen/${encodeURIComponent(data.ownerKey)}`}
-                target="_blank"
-                className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1e40af] hover:underline"
-              >
-                เปิดหน้าโปรไฟล์จริง <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
             )}
           </div>
         </div>

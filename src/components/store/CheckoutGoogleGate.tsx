@@ -5,8 +5,8 @@ import { signIn, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
 /**
- * Checkout entry gate — Google Login as the primary low-friction identity step.
- * Captures real name/email for receipts and long-term re-downloads.
+ * Optional Google sign-in for checkout — speeds up prefilling name/email.
+ * Guest checkout with manual contact details is always allowed.
  */
 export function CheckoutGoogleGate({
   thai,
@@ -27,24 +27,26 @@ export function CheckoutGoogleGate({
     callbackUrlProp ||
     (typeof window !== "undefined"
       ? `${pathname}${window.location.search || ""}`
-      : pathname || "/store");
+      : pathname || "/");
 
   return (
-    <div className="rounded-xl border border-[#1e40af]/25 bg-gradient-to-br from-blue-50/90 to-white p-4">
-      <h3 className="text-sm font-bold text-[#1e3a5f]">
+    <div className="rounded-xl border border-[#1e40af]/20 bg-gradient-to-br from-blue-50/70 to-white p-3.5">
+      <h3 className="text-sm font-semibold text-[#1e3a5f]">
         {title ??
-          (thai ? "เข้าสู่ระบบเพื่อชำระเงิน" : "Sign in to checkout")}
+          (thai
+            ? "เข้าสู่ระบบด้วย Google (ไม่บังคับ)"
+            : "Sign in with Google (optional)")}
       </h3>
-      <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
+      <p className="mt-1 text-xs leading-relaxed text-text-secondary">
         {thai
-          ? "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร — ระบบจะใช้ชื่อและอีเมลของคุณอัตโนมัติสำหรับใบเสร็จและลิงก์ดาวน์โหลด"
-          : "Sign in with Google to download files and receive documents. We’ll use your name and email automatically for receipts and download links."}
+          ? "เข้าสู่ระบบเพื่อกรอกชื่อและอีเมลอัตโนมัติ — หรือกรอกข้อมูลติดต่อด้านล่างแล้วสร้างคำสั่งซื้อได้เลย"
+          : "Sign in to autofill your name and email — or enter contact details below and place your order as a guest."}
       </p>
       <button
         type="button"
         disabled={status === "loading"}
         onClick={() => signIn("google", { callbackUrl })}
-        className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1e40af] px-4 text-sm font-semibold text-white transition hover:bg-[#1e3a8a] disabled:opacity-60"
+        className="mt-2.5 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#1e40af]/30 bg-white px-4 text-sm font-semibold text-[#1e40af] transition hover:bg-blue-50 disabled:opacity-60"
       >
         <LogIn className="h-4 w-4" />
         {status === "loading"

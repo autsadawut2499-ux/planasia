@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/admin/auth";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
@@ -9,6 +10,8 @@ export const metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await getAdminSession();
 
+  // `/admin/login` renders without the dashboard chrome.
+  // Middleware redirects unauthenticated visitors; PIN session unlocks the shell.
   if (!admin) {
     return <>{children}</>;
   }

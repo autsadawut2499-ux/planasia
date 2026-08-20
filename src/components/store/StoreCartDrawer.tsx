@@ -75,7 +75,7 @@ export function StoreCartDrawer({
 }: StoreCartDrawerProps) {
   const { country, currency, geoCountryCode, uiLocale, unitSystem, translate } = useApp();
   const { success: toastSuccess } = useToast();
-  const { authReady, sessionPrefill } = useCheckoutBuyer();
+  const { sessionPrefill } = useCheckoutBuyer();
   const {
     items,
     addons,
@@ -264,7 +264,6 @@ export function StoreCartDrawer({
   const requiresSitePlan = addons.includes("site-plan");
 
   const canPay =
-    authReady &&
     !previewLoading &&
     !!preview?.readyForCheckout &&
     reviewConfirmed &&
@@ -274,7 +273,7 @@ export function StoreCartDrawer({
   if (!drawerOpen) return null;
 
   const handleCheckout = async () => {
-    if (items.length === 0 || !canPay || !authReady) return;
+    if (items.length === 0 || !canPay) return;
     setLoading(true);
     setError(null);
     try {
@@ -392,38 +391,34 @@ export function StoreCartDrawer({
             <div className="space-y-4 border-t border-border px-5 py-4">
               <CheckoutGoogleGate thai={thai} />
 
-              {authReady && (
-                <>
-                  <PreCheckoutWizard
-                    thai={thai}
-                    formatMoney={formatCheckoutMoney}
-                    selections={preCheckout}
-                    visitorCountryCode={geoCountryCode}
-                    onChange={setPreCheckout}
-                    requiresShipping={requiresShipping}
-                    requiresSitePlan={requiresSitePlan}
-                    sessionPrefill={sessionPrefill}
-                    basePlanLabel={
-                      items.length === 1
-                        ? items[0].name
-                        : thai
-                          ? `แบบบ้าน ${items.length} รายการ`
-                          : `${items.length} house plans`
-                    }
-                    basePlanPrice={checkoutPricing.subtotal}
-                    extraLines={checkoutExtraLines}
-                  />
+              <PreCheckoutWizard
+                thai={thai}
+                formatMoney={formatCheckoutMoney}
+                selections={preCheckout}
+                visitorCountryCode={geoCountryCode}
+                onChange={setPreCheckout}
+                requiresShipping={requiresShipping}
+                requiresSitePlan={requiresSitePlan}
+                sessionPrefill={sessionPrefill}
+                basePlanLabel={
+                  items.length === 1
+                    ? items[0].name
+                    : thai
+                      ? `แบบบ้าน ${items.length} รายการ`
+                      : `${items.length} house plans`
+                }
+                basePlanPrice={checkoutPricing.subtotal}
+                extraLines={checkoutExtraLines}
+              />
 
-                  <PreCheckoutReview
-                    preview={preview}
-                    loading={previewLoading}
-                    error={previewError}
-                    confirmed={reviewConfirmed}
-                    onConfirmChange={setReviewConfirmed}
-                    L={L}
-                  />
-                </>
-              )}
+              <PreCheckoutReview
+                preview={preview}
+                loading={previewLoading}
+                error={previewError}
+                confirmed={reviewConfirmed}
+                onConfirmChange={setReviewConfirmed}
+                L={L}
+              />
 
               {error && <p className="text-sm text-red-600">{error}</p>}
             </div>
@@ -469,22 +464,15 @@ export function StoreCartDrawer({
                       : "Pay by bank transfer + slip upload (auto-verified)"}
                   </span>
                 </div>
-                {!authReady ? (
-                  <p className="mb-2 text-center text-[11px] text-text-muted">
-                    {L(
-                      "Sign in with Google to download files and receive documents.",
-                      "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร",
-                    )}
-                  </p>
-                ) : !canPay && !previewLoading ? (
+                {!canPay && !previewLoading ? (
                   <p className="mb-2 text-center text-[11px] text-text-muted">
                 {L(
                   requiresShipping || requiresSitePlan
-                    ? "Complete required fields (shipping / site plan), accept the Terms & Refund Policy, and confirm the review"
-                    : "Accept the Terms & Refund Policy and confirm the review to enable payment",
+                    ? "Complete contact details, required fields (shipping / site plan), accept the Terms & Refund Policy, and confirm the review"
+                    : "Complete contact details, accept the Terms & Refund Policy, and confirm the review to enable payment",
                   requiresShipping || requiresSitePlan
-                    ? "กรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน"
-                    : "ยอมรับข้อกำหนดและยืนยันการตรวจสอบด้านบน จึงจะชำระเงินได้",
+                    ? "กรอกข้อมูลติดต่อ ข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน"
+                    : "กรอกข้อมูลติดต่อ ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน จึงจะชำระเงินได้",
                 )}
                   </p>
                 ) : null}

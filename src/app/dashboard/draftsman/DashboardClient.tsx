@@ -141,21 +141,10 @@ export default function DashboardClient() {
         )}
 
         <p className="mt-8 text-center text-xs text-text-muted">
-          ต้องการดูหน้าร้านสาธารณะ?{" "}
-          <Link href="/draftsmen" className="text-[#1e40af] hover:underline">
-            ไดเรกทอรีสถาปนิกและนักออกแบบ
+          แบบบ้านที่เผยแพร่จะแสดงใน{" "}
+          <Link href="/store" className="text-[#1e40af] hover:underline">
+            ร้านแบบบ้าน
           </Link>
-          {dash.data?.ownerKey ? (
-            <>
-              {" · "}
-              <Link
-                href={`/draftsmen/${encodeURIComponent(dash.data.ownerKey)}`}
-                className="text-[#1e40af] hover:underline"
-              >
-                โปรไฟล์ของฉัน
-              </Link>
-            </>
-          ) : null}
         </p>
       </main>
     </div>

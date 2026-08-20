@@ -104,9 +104,12 @@ export function isPreCheckoutValid(
   opts?: PreCheckoutValidOptions,
 ): boolean {
   if (!s.targetCountry) return false;
-  // Buyer name/email come from Google sign-in (no buyer form UI).
+  // Guest or signed-in: require name + at least one contact method.
+  const name = s.buyerName.trim();
   const email = s.buyerEmail.trim();
   const phone = s.buyerPhone.trim();
+  if (name.length < 2) return false;
+  if (!email && !phone) return false;
   if (email && !validEmail(email)) return false;
   if (phone && !validPhone(phone)) return false;
   if (opts?.requiresShipping && !isShippingAddressComplete(s.shippingAddress)) {
@@ -147,9 +150,9 @@ export function defaultPreCheckoutSelections(
 
 /**
  * Shared pre-payment steps:
+ * contact details (guest or prefilled from Google) →
  * (international) target country →
  * (physical only) shipping address → terms → total.
- * Buyer identity comes from Google sign-in (no buyer form).
  */
 export function PreCheckoutWizard({
   thai,
@@ -293,23 +296,98 @@ export function PreCheckoutWizard({
       },
     });
 
-  const stepShip = THAI_DOMESTIC_MARKET ? "1" : "2";
+  const stepContact = "1";
+  const stepCountry = "2";
+  const stepShip = THAI_DOMESTIC_MARKET ? "2" : "3";
   const stepSitePlan = THAI_DOMESTIC_MARKET
     ? requiresShipping
-      ? "2"
-      : "1"
-    : requiresShipping
       ? "3"
-      : "2";
+      : "2"
+    : requiresShipping
+      ? "4"
+      : "3";
   const ship = selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS;
   const sitePlan = selections.sitePlanInfo ?? EMPTY_SITE_PLAN_INFO;
+  const contactOk =
+    selections.buyerName.trim().length >= 2 &&
+    (!!selections.buyerEmail.trim() || !!selections.buyerPhone.trim()) &&
+    (!selections.buyerEmail.trim() || validEmail(selections.buyerEmail)) &&
+    (!selections.buyerPhone.trim() || validPhone(selections.buyerPhone));
 
   return (
     <div className="space-y-5">
+      <section
+        className="rounded-xl border border-[#1e40af]/25 bg-[#1e40af]/[0.04] p-3.5"
+        aria-labelledby="buyer-contact-heading"
+      >
+        <h3
+          id="buyer-contact-heading"
+          className="text-sm font-bold text-text-primary"
+        >
+          {thai
+            ? `${stepContact}. ข้อมูลติดต่อ`
+            : `${stepContact}. Contact details`}
+        </h3>
+        <p className="mt-0.5 text-xs text-text-secondary">
+          {thai
+            ? "กรอกชื่อและอีเมลหรือเบอร์โทร เพื่อรับใบเสร็จและลิงก์ดาวน์โหลด — ไม่บังคับเข้าสู่ระบบ"
+            : "Enter your name and email or phone for the receipt and download links — sign-in is optional"}
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
+            <span className="text-xs font-medium text-text-secondary">
+              {thai ? "ชื่อ-นามสกุล *" : "Full name *"}
+            </span>
+            <input
+              type="text"
+              autoComplete="name"
+              value={selections.buyerName}
+              onChange={(e) => set({ buyerName: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-text-secondary">
+              {thai ? "อีเมล" : "Email"}
+            </span>
+            <input
+              type="email"
+              autoComplete="email"
+              value={selections.buyerEmail}
+              onChange={(e) => set({ buyerEmail: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+              placeholder="you@example.com"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-text-secondary">
+              {thai ? "เบอร์โทร" : "Phone"}
+            </span>
+            <input
+              type="tel"
+              autoComplete="tel"
+              value={selections.buyerPhone}
+              onChange={(e) => set({ buyerPhone: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+              placeholder="08x-xxx-xxxx"
+            />
+          </label>
+        </div>
+        {!contactOk && (
+          <p className="mt-2 text-[11px] font-medium text-amber-800">
+            {thai
+              ? "กรุณากรอกชื่อ และอีเมลหรือเบอร์โทรอย่างน้อยหนึ่งอย่าง"
+              : "Please enter your name and at least an email or phone number"}
+          </p>
+        )}
+      </section>
+
       {!THAI_DOMESTIC_MARKET && (
       <section>
         <h3 className="text-sm font-bold text-text-primary">
-          {thai ? "1. เลือกประเทศเป้าหมาย (หน่วยวัด / แปลภาษา)" : "1. Target country (units & translation)"}
+          {thai
+            ? `${stepCountry}. เลือกประเทศเป้าหมาย (หน่วยวัด / แปลภาษา)`
+            : `${stepCountry}. Target country (units & translation)`}
         </h3>
         <p className="mt-0.5 text-xs text-text-secondary">
           {thai

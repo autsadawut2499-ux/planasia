@@ -35,7 +35,8 @@ function buildProviders() {
     );
   }
 
-  // Primary admin access: 6-digit PIN (default 501499, override via ADMIN_PIN).
+  // Primary admin access: 6-digit PIN only (default 501499, override via ADMIN_PIN).
+  // Google buyer sessions never receive isAdmin — see jwt callback.
   providers.push(
     CredentialsProvider({
       id: "admin-pin",

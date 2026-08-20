@@ -44,9 +44,10 @@ export async function middleware(request: NextRequest) {
         (process.env.NODE_ENV === "development" ? "planasia-dev-only-secret-do-not-use-in-production" : undefined),
     });
 
+    // PIN gate only — isAdmin is stamped solely by the admin-pin credentials provider.
     if (!token?.isAdmin) {
       const loginUrl = new URL("/admin/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
+      loginUrl.searchParams.set("callbackUrl", pathname + (request.nextUrl.search || ""));
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -64,7 +65,7 @@ export async function middleware(request: NextRequest) {
     });
 
     if (!token?.isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized — admin PIN required" }, { status: 401 });
     }
   }
 

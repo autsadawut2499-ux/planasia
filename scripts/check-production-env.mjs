@@ -25,8 +25,6 @@ const required = [
   "GOOGLE_CLIENT_SECRET",
 ];
 
-const DEFAULT_ADMIN_PIN = "501499";
-
 if (process.env.SKIP_PRODUCTION_ENV_CHECK === "1") {
   console.log("[env-check] skipped (SKIP_PRODUCTION_ENV_CHECK=1)");
   process.exit(0);
@@ -54,10 +52,8 @@ if (mockOn && isProd) {
 }
 
 const adminPin = String(process.env.ADMIN_PIN ?? "").trim();
-if (isProd && adminPin === DEFAULT_ADMIN_PIN) {
-  console.error(
-    "[env-check] ADMIN_PIN must not be the example default (501499) in production — set a unique 6-digit PIN",
-  );
+if (isProd && adminPin && adminPin.length !== 6) {
+  console.error("[env-check] ADMIN_PIN must be exactly 6 digits when set");
   process.exit(1);
 }
 

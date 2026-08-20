@@ -31,7 +31,6 @@ import {
   normalizeSitePlanInfo,
 } from "@/lib/store/site-plan-info";
 import {
-  googleLoginRequiredResponse,
   requireBuyerSession,
   resolveBuyerCheckoutIdentity,
   validateBuyerCheckoutIdentity,
@@ -44,12 +43,15 @@ export async function POST(request: NextRequest) {
   const countryCode = THAI_DOMESTIC_MARKET
     ? "TH"
     : String(body.countryCode ?? "TH").toUpperCase();
+  const viewerEarly = getViewerFromRequest(request);
   const buyerSession = await requireBuyerSession();
-  if (!buyerSession) {
-    return NextResponse.json(googleLoginRequiredResponse(), { status: 401 });
-  }
-  const buyer = resolveBuyerCheckoutIdentity(buyerSession, body);
-  const buyerUserId = buyer.userId;
+  const buyer = resolveBuyerCheckoutIdentity(
+    buyerSession,
+    body,
+    viewerEarly.sessionUserId || viewerEarly.browserId || viewerEarly.primaryId || "",
+  );
+  // Persist account id only for signed-in buyers; guests use contact fields + orderId.
+  const buyerUserId = buyerSession?.userId || undefined;
   const buyerName = buyer.name;
   const buyerEmail = buyer.email;
   const buyerPhone = buyer.phone;
@@ -103,7 +105,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const viewer = getViewerFromRequest(request);
+  const viewer = viewerEarly;
   const visible = await getListings(viewer);
   const listing = await getListingById(listingId);
 

@@ -4,14 +4,12 @@ import { DEFAULT_CMS_BY_LOCALE, DEFAULT_SITE_SETTINGS } from "@/lib/admin/defaul
 import { DEFAULT_CURATED_STYLES } from "@/lib/admin/curated-styles";
 import { DEFAULT_MEGA_MENU_COLLECTIONS } from "@/lib/admin/mega-menu-collections";
 import { DEFAULT_MEGA_MENU_STYLES } from "@/lib/admin/mega-menu-styles";
-import { DEFAULT_CUSTOMER_SERVICE_ARTICLES } from "@/lib/content/customer-service";
 import type { Locale } from "@/lib/geo/countries";
 import type { SiteConfigPayload } from "@/lib/site/site-config-types";
 import { loadAiImageTools } from "@/lib/supabase/ai-image-tools";
 import { loadAiRenderGuide } from "@/lib/supabase/ai-render-guide";
 import { loadAllCmsForLocale } from "@/lib/supabase/cms-sections";
 import { loadCuratedStyles } from "@/lib/supabase/curated-styles";
-import { loadCustomerServiceArticles } from "@/lib/supabase/customer-service";
 import { loadMegaMenuCollections } from "@/lib/supabase/mega-menu-collections";
 import { loadMegaMenuStyles } from "@/lib/supabase/mega-menu-styles";
 import { loadSiteSettings } from "@/lib/supabase/site-settings";
@@ -27,7 +25,6 @@ export function defaultSiteConfig(locale: Locale = "th"): SiteConfigPayload {
     curatedStyles: DEFAULT_CURATED_STYLES,
     megaMenuStyles: DEFAULT_MEGA_MENU_STYLES,
     megaMenuCollections: DEFAULT_MEGA_MENU_COLLECTIONS,
-    customerServiceArticles: DEFAULT_CUSTOMER_SERVICE_ARTICLES,
     aiImageTools: AI_IMAGE_TOOLS,
     aiRenderGuide: defaultAiRenderGuide(),
     locale,
@@ -43,7 +40,6 @@ export async function loadSiteConfig(locale: Locale = "th"): Promise<SiteConfigP
       curatedStyles,
       megaMenuStyles,
       megaMenuCollections,
-      customerServiceArticles,
       aiImageTools,
       aiRenderGuide,
     ] = await Promise.all([
@@ -52,7 +48,6 @@ export async function loadSiteConfig(locale: Locale = "th"): Promise<SiteConfigP
       loadCuratedStyles(),
       loadMegaMenuStyles(),
       loadMegaMenuCollections(),
-      loadCustomerServiceArticles(),
       loadAiImageTools(),
       loadAiRenderGuide(),
     ]);
@@ -63,7 +58,6 @@ export async function loadSiteConfig(locale: Locale = "th"): Promise<SiteConfigP
       curatedStyles,
       megaMenuStyles,
       megaMenuCollections,
-      customerServiceArticles,
       aiImageTools,
       aiRenderGuide,
       locale,

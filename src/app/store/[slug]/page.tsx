@@ -8,7 +8,6 @@ import { buildListingFaqs } from "@/lib/seo/faqs";
 import { getAllListingsForSitemap, getListingBySlug } from "@/lib/store/db";
 import { isListingPubliclyVisible } from "@/lib/store/listing-purchase";
 import { getReviewsForListing, aggregateRating } from "@/lib/supabase/reviews";
-import { getDraftsmanByKey } from "@/lib/vendors/directory";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import StoreListingPageClient from "./StoreListingPageClient";
 
@@ -45,7 +44,6 @@ export default async function StoreListingPage({ params }: PageProps) {
 
   const reviews = await getReviewsForListing(listing.id);
   const rating = aggregateRating(reviews);
-  const architect = await getDraftsmanByKey(listing.ownerId).catch(() => null);
 
   return (
     <>
@@ -54,7 +52,6 @@ export default async function StoreListingPage({ params }: PageProps) {
           listing,
           rating,
           reviews,
-          architect: architect?.card ?? null,
           breadcrumb: listingBreadcrumbItems(listing),
           faqs: buildListingFaqs(listing),
         })}

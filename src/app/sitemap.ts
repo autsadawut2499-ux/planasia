@@ -4,7 +4,6 @@ import { listingStorePath } from "@/lib/seo/slug";
 import { getAllPlanPresets } from "@/lib/seo/programmatic";
 import { getAllListingsForSitemap } from "@/lib/store/db";
 import { COLLECTIONS, STYLES } from "@/lib/store/taxonomy";
-import { getDraftsmanDirectory } from "@/lib/vendors/directory";
 import { ABOUT_PAGES } from "@/lib/content/about";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isListingPubliclyVisible } from "@/lib/store/listing-purchase";
@@ -24,18 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   let listings: Awaited<ReturnType<typeof getAllListingsForSitemap>> = [];
-  let draftsmen: Awaited<ReturnType<typeof getDraftsmanDirectory>> = [];
   let articles: Awaited<ReturnType<typeof listArticles>> = [];
   if (isSupabaseConfigured()) {
     try {
       listings = (await getAllListingsForSitemap()).filter(isListingPubliclyVisible);
     } catch {
       listings = [];
-    }
-    try {
-      draftsmen = await getDraftsmanDirectory();
-    } catch {
-      draftsmen = [];
     }
     try {
       articles = await listArticles({ publishedOnly: true });
@@ -60,9 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const productPages = listings.map((listing) => ({
     url: `${base}${listingStorePath(listing.slug)}`,
-    lastModified: new Date(
-      listing.seoGeneratedAt || listing.createdAt || Date.now(),
-    ),
+    lastModified: new Date(listing.seoGeneratedAt || listing.createdAt || Date.now()),
     changeFrequency: "daily" as const,
     priority: 0.85,
   }));
@@ -72,7 +63,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/store`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     ...styleCategories,
     ...collectionCategories,
-    { url: `${base}/draftsmen`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${base}/home-building`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/whats-included`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/loan-consultation`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
@@ -96,21 +86,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/refund`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     { url: `${base}/construction`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     { url: `${base}/shipping`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
-    // Programmatic keyword landing pages.
     ...getAllPlanPresets().map((preset) => ({
       url: `${base}/plans/${preset.slug}`,
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
-    // Product detail pages (published house plans).
     ...productPages,
-    // Draftsman profiles (E-E-A-T).
-    ...draftsmen.map((d) => ({
-      url: `${base}/draftsmen/${encodeURIComponent(d.ownerKey)}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    })),
   ];
 }

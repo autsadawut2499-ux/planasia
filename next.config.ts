@@ -50,6 +50,9 @@ const nextConfig: NextConfig = {
       { source: "/shop", destination: "/store", permanent: true },
       // Detail: /store/[slug] already resolves id|planCode|slug — keep path segment.
       { source: "/shop/:id", destination: "/store/:id", permanent: true },
+      // Public architects directory removed — send crawlers/users to the marketplace.
+      { source: "/draftsmen", destination: "/store", permanent: true },
+      { source: "/draftsmen/:path*", destination: "/store", permanent: true },
     ];
   },
   webpack: (config, { isServer }) => {

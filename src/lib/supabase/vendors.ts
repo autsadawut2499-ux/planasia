@@ -383,7 +383,7 @@ export interface VendorProfileInput {
   isPublished?: boolean;
 }
 
-/** Upsert a vendor profile (auto-publishes into the /draftsmen directory). */
+/** Upsert a vendor profile (seller account used for KYC, payouts, and listing ownership). */
 export async function upsertVendorProfile(input: VendorProfileInput): Promise<VendorProfile> {
   const { data, error } = await getSupabaseAdmin()
     .from("vendor_profiles")

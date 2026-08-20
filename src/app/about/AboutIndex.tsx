@@ -1,26 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { useBilingual } from "@/components/landing/useBilingual";
-import { useSiteConfigOptional } from "@/context/SiteConfigContext";
-import {
-  customerServiceTopicCatalog,
-  type CustomerServiceTopicCatalogItem,
-} from "@/lib/content/customer-service";
+import { customerServiceTopicCatalog } from "@/lib/content/customer-service";
 
 export function AboutIndex() {
   const L = useBilingual();
-  const siteConfig = useSiteConfigOptional();
-  const [topics, setTopics] = useState<CustomerServiceTopicCatalogItem[]>(() =>
-    customerServiceTopicCatalog(siteConfig?.customerServiceArticles),
-  );
-
-  useEffect(() => {
-    setTopics(customerServiceTopicCatalog(siteConfig?.customerServiceArticles));
-  }, [siteConfig?.customerServiceArticles]);
+  const topics = customerServiceTopicCatalog();
 
   return (
     <div className="page-canvas">

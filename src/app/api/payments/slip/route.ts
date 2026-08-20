@@ -6,10 +6,7 @@ import {
   updateCartOrderSlip,
 } from "@/lib/store/cart-orders";
 import { uploadPrivateBytesDetailed } from "@/lib/supabase/private-assets";
-import {
-  googleLoginRequiredResponse,
-  requireBuyerSession,
-} from "@/lib/auth/buyer-session";
+import { requireBuyerSession } from "@/lib/auth/buyer-session";
 import { getListingById } from "@/lib/store/db";
 import { listingSupplierName } from "@/lib/store/listing-supplier";
 
@@ -44,13 +41,11 @@ function storageExtForSlip(file: File, contentType: string): string {
 /**
  * Upload slip → SlipMate verify → on Success: paid + confirm email + order PDF.
  * On failure: return SlipMate error and do NOT change order status.
+ * Guest checkouts (no Google session) are allowed when the caller knows the orderId.
  */
 export async function POST(request: NextRequest) {
   try {
     const buyer = await requireBuyerSession();
-    if (!buyer) {
-      return NextResponse.json(googleLoginRequiredResponse(), { status: 401 });
-    }
 
     const form = await request.formData();
     const orderId = String(form.get("orderId") ?? "").trim();
@@ -82,7 +77,12 @@ export async function POST(request: NextRequest) {
     if (!order) {
       return NextResponse.json({ error: "ไม่พบคำสั่งซื้อ" }, { status: 404 });
     }
-    if (order.buyerUserId && order.buyerUserId !== buyer.userId) {
+    // Only enforce ownership when a signed-in buyer mismatches a known account-bound order.
+    if (
+      buyer &&
+      order.buyerUserId &&
+      order.buyerUserId !== buyer.userId
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
     if (order.status === "paid") {
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
     const result = await finalizePaidCartSale({
       cartOrderId: orderId,
       stripeSessionId: paymentRef,
-      buyerUserId: buyer.userId,
+      buyerUserId: buyer?.userId ?? order.buyerUserId,
     });
 
     const paidOrder = result?.order ?? (await getCartOrder(orderId));

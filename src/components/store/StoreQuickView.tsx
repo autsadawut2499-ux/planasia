@@ -240,7 +240,7 @@ export function StoreCheckoutModal({
   basePlanPrice,
 }: StoreCheckoutModalProps) {
   const { country, currency, geoCountryCode, translate, uiLocale } = useApp();
-  const { authReady, sessionPrefill } = useCheckoutBuyer();
+  const { sessionPrefill } = useCheckoutBuyer();
   const localized = useStoreListingCopy(listing);
   const thai = uiLocale === "th";
   const [loading, setLoading] = useState(false);
@@ -338,35 +338,29 @@ export function StoreCheckoutModal({
 
   const requiresShipping = hardcopy;
   const requiresSitePlan = sitePlan;
-  const canPay =
-    authReady && isPreCheckoutValid(selections, { requiresShipping, requiresSitePlan });
-  // Shipping / site-plan (when selected) then payment — buyer identity from Google sign-in.
+  const canPay = isPreCheckoutValid(selections, {
+    requiresShipping,
+    requiresSitePlan,
+  });
+  // Contact → shipping / site-plan (when selected) → payment
   const payStep = THAI_DOMESTIC_MARKET
     ? requiresShipping || requiresSitePlan
-      ? "2"
-      : "1"
+      ? String(2 + (requiresShipping ? 1 : 0) + (requiresSitePlan ? 1 : 0))
+      : "2"
     : requiresShipping || requiresSitePlan
-      ? "3"
-      : "2";
+      ? String(3 + (requiresShipping ? 1 : 0) + (requiresSitePlan ? 1 : 0))
+      : "3";
 
   const handlePay = async () => {
-    if (!authReady) {
-      setError(
-        thai
-          ? "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร"
-          : "Sign in with Google to download files and receive documents.",
-      );
-      return;
-    }
     if (!canPay) {
       setError(
         thai
           ? requiresShipping || requiresSitePlan
-            ? "กรุณากรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) และยอมรับข้อกำหนด/นโยบายคืนเงิน"
-            : "กรุณายอมรับข้อกำหนด/นโยบายคืนเงิน"
+            ? "กรุณากรอกข้อมูลที่จำเป็น (ติดต่อ / ที่อยู่จัดส่ง / แผนผังบริเวณ) และยอมรับข้อกำหนด/นโยบายคืนเงิน"
+            : "กรุณากรอกข้อมูลติดต่อและยอมรับข้อกำหนด/นโยบายคืนเงิน"
           : requiresShipping || requiresSitePlan
-            ? "Please complete required fields (shipping / site plan) and accept the Terms & Refund Policy"
-            : "Please accept the Terms & Refund Policy",
+            ? "Please complete required fields (contact / shipping / site plan) and accept the Terms & Refund Policy"
+            : "Please complete contact details and accept the Terms & Refund Policy",
       );
       return;
     }
@@ -469,25 +463,23 @@ export function StoreCheckoutModal({
         <div className="space-y-4 p-4 sm:p-5">
           <CheckoutGoogleGate thai={thai} />
 
-          {authReady && (
-            <PreCheckoutWizard
-              thai={thai}
-              formatMoney={formatCheckoutMoney}
-              selections={selections}
-              visitorCountryCode={geoCountryCode}
-              onChange={setSelections}
-              requiresShipping={requiresShipping}
-              requiresSitePlan={requiresSitePlan}
-              sessionPrefill={sessionPrefill}
-              basePlanLabel={
-                format === "cad"
-                  ? `${localized.name} (AutoCAD / DWG)`
-                  : localized.name
-              }
-              basePlanPrice={basePlanPrice ?? listing.price}
-              extraLines={checkoutExtraLines}
-            />
-          )}
+          <PreCheckoutWizard
+            thai={thai}
+            formatMoney={formatCheckoutMoney}
+            selections={selections}
+            visitorCountryCode={geoCountryCode}
+            onChange={setSelections}
+            requiresShipping={requiresShipping}
+            requiresSitePlan={requiresSitePlan}
+            sessionPrefill={sessionPrefill}
+            basePlanLabel={
+              format === "cad"
+                ? `${localized.name} (AutoCAD / DWG)`
+                : localized.name
+            }
+            basePlanPrice={basePlanPrice ?? listing.price}
+            extraLines={checkoutExtraLines}
+          />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
@@ -534,21 +526,15 @@ export function StoreCheckoutModal({
                     : "Place order, transfer the amount — slip is verified automatically"}
                 </span>
               </div>
-              {!authReady ? (
-                <p className="mt-2 text-center text-[11px] text-text-muted">
-                  {thai
-                    ? "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร"
-                    : "Sign in with Google to download files and receive documents."}
-                </p>
-              ) : !canPay ? (
+              {!canPay ? (
                 <p className="mt-2 text-center text-[11px] text-text-muted">
               {thai
                 ? requiresShipping || requiresSitePlan
-                  ? "กรอกข้อมูลที่จำเป็นและยอมรับข้อกำหนด จึงจะกดชำระเงินได้"
-                  : "ยอมรับข้อกำหนดด้านบน จึงจะกดชำระเงินได้"
+                  ? "กรอกข้อมูลติดต่อ ที่จำเป็น และยอมรับข้อกำหนด จึงจะกดชำระเงินได้"
+                  : "กรอกข้อมูลติดต่อและยอมรับข้อกำหนดด้านบน จึงจะกดชำระเงินได้"
                 : requiresShipping || requiresSitePlan
-                  ? "Complete required fields and accept the terms to enable payment"
-                  : "Accept the terms above to enable payment"}
+                  ? "Complete contact details, required fields, and accept the terms to enable payment"
+                  : "Complete contact details and accept the terms above to enable payment"}
                 </p>
               ) : null}
               <div className="mt-3 flex gap-2 sm:gap-3">

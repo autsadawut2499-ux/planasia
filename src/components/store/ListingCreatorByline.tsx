@@ -1,4 +1,5 @@
-import Link from "next/link";
+"use client";
+
 import { BadgeCheck } from "lucide-react";
 import type { ListingCreator } from "@/lib/store/listing-types";
 
@@ -6,7 +7,7 @@ interface ListingCreatorBylineProps {
   creator?: ListingCreator;
   /** sm = compact cards; md = detail; minimal = 32px avatar + text-sm gray name */
   size?: "sm" | "md" | "minimal";
-  /** Renders as a plain row instead of a link (inside another <a>). */
+  /** Kept for call-site compatibility (byline is always non-linking). */
   static?: boolean;
   className?: string;
 }
@@ -40,20 +41,18 @@ function initials(name: string): string {
 }
 
 /**
- * Draftsman portrait + name — used under listing images so every plan is
- * visibly attributed to its designer.
+ * Seller attribution under listing images — name + avatar only (no public profile route).
  */
 export function ListingCreatorByline({
   creator,
   size = "sm",
-  static: isStatic = false,
   className = "",
 }: ListingCreatorBylineProps) {
   if (!creator) return null;
   const s = SIZES[size];
 
-  const inner = (
-    <>
+  return (
+    <span className={`flex items-center ${s.gap} ${className}`}>
       {creator.avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -77,22 +76,6 @@ export function ListingCreatorByline({
       {creator.isVerified && (
         <BadgeCheck className={`${s.badge} shrink-0 text-[#1e40af]`} aria-label="ยืนยันตัวตนแล้ว" />
       )}
-    </>
-  );
-
-  const base = `flex items-center ${s.gap} ${className}`;
-
-  if (isStatic || !creator.hasProfile) {
-    return <span className={base}>{inner}</span>;
-  }
-
-  return (
-    <Link
-      href={`/draftsmen/${encodeURIComponent(creator.ownerKey)}`}
-      className={`${base} transition-colors hover:opacity-90`}
-      title={`ดูโปรไฟล์ ${creator.displayName}`}
-    >
-      {inner}
-    </Link>
+    </span>
   );
 }

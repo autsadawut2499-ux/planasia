@@ -11,7 +11,6 @@ export type TranslationKey =
   | "nav.closeMenu"
   | "nav.housePlans"
   | "nav.collections"
-  | "nav.findDraftsman"
   | "nav.aboutPlans"
   | "nav.signIn"
   | "nav.searchByPlan"
@@ -622,7 +621,6 @@ const translations: Translations = {
     "nav.closeMenu": "Close menu",
     "nav.housePlans": "House Plans",
     "nav.collections": "Collections",
-    "nav.findDraftsman": "Architects & Designers",
     "nav.aboutPlans": "Home loan consultation",
     "nav.signIn": "Sign In",
     "nav.searchByPlan": "Search by Plan #",
@@ -1233,7 +1231,6 @@ const translations: Translations = {
     "nav.closeMenu": "ปิดเมนู",
     "nav.housePlans": "แบบบ้าน",
     "nav.collections": "คอลเลกชัน",
-    "nav.findDraftsman": "สถาปนิกและนักออกแบบ",
     "nav.aboutPlans": "ปรึกษาสินเชื่อบ้าน",
     "nav.signIn": "เข้าสู่ระบบ",
     "nav.searchByPlan": "ค้นหาด้วยรหัสแบบบ้าน",
@@ -1844,7 +1841,6 @@ const translations: Translations = {
     "nav.closeMenu": "Close menu",
     "nav.housePlans": "House Plans",
     "nav.collections": "Collections",
-    "nav.findDraftsman": "Architects & Designers",
     "nav.aboutPlans": "Home loan consultation",
     "nav.signIn": "Sign In",
     "nav.searchByPlan": "Search by Plan #",
@@ -2450,7 +2446,6 @@ const translations: Translations = {
     "nav.closeMenu": "Close menu",
     "nav.housePlans": "House Plans",
     "nav.collections": "Collections",
-    "nav.findDraftsman": "Architects & Designers",
     "nav.aboutPlans": "Home loan consultation",
     "nav.signIn": "Sign In",
     "nav.searchByPlan": "Search by Plan #",

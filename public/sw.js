@@ -1,4 +1,4 @@
-const CACHE_NAME = "planasia-pwa-v3";
+const CACHE_NAME = "planasia-pwa-v4";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/icons/icon.svg", "/manifest.webmanifest"];
 

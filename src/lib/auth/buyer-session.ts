@@ -15,8 +15,8 @@ export interface BuyerCheckoutIdentity extends BuyerSession {
 }
 
 /**
- * Require a signed-in Google (or authenticated) buyer for checkout.
- * Returns null when unauthenticated / missing email.
+ * Optional signed-in Google (or authenticated) buyer.
+ * Returns null when unauthenticated / missing email — guest checkout is allowed.
  */
 export async function requireBuyerSession(): Promise<BuyerSession | null> {
   const session = await getServerSession(authOptions);
@@ -40,20 +40,34 @@ export function googleLoginRequiredResponse() {
 }
 
 /**
- * Resolve buyer identity from the signed-in session, with optional form overrides.
- * Phone stays optional; name/email fall back to the Google profile.
+ * Resolve buyer identity from optional session + form fields.
+ * Guests must supply name and email/phone via the body; signed-in buyers
+ * fall back to Google profile when form fields are empty.
  */
 export function resolveBuyerCheckoutIdentity(
-  session: BuyerSession,
+  session: BuyerSession | null,
   body: Record<string, unknown>,
+  fallbackUserId = "",
 ): BuyerCheckoutIdentity {
   const phoneRaw = String(body.buyerPhone ?? "").trim();
   const phoneDigits = phoneRaw.replace(/\D/g, "");
+  const formName = String(body.buyerName ?? "").trim();
+  const formEmail = String(body.buyerEmail ?? "").trim().toLowerCase();
+
+  if (session) {
+    return {
+      userId: session.userId,
+      name: formName || session.name,
+      email: formEmail || session.email,
+      phoneRaw,
+      phone: phoneDigits || undefined,
+    };
+  }
+
   return {
-    userId: session.userId,
-    name: String(body.buyerName ?? "").trim() || session.name,
-    email:
-      String(body.buyerEmail ?? "").trim().toLowerCase() || session.email,
+    userId: fallbackUserId,
+    name: formName,
+    email: formEmail,
     phoneRaw,
     phone: phoneDigits || undefined,
   };
@@ -66,6 +80,12 @@ export function validateBuyerCheckoutIdentity(
   if (buyer.name.length < 2) {
     return NextResponse.json(
       { error: "Buyer name is required" },
+      { status: 400 },
+    );
+  }
+  if (!buyer.email && !buyer.phone) {
+    return NextResponse.json(
+      { error: "Email or phone is required" },
       { status: 400 },
     );
   }

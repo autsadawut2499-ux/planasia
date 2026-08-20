@@ -67,8 +67,8 @@ export const ABOUT_PAGES: AboutPage[] = [
       {
         heading: { en: "How we can help", th: "เราช่วยได้อย่างไร" },
         body: {
-          en: "Use Find a Draftsman to connect with professionals who can revise floor levels, foundations, and site plans for your plot.",
-          th: "ใช้เมนูค้นหาสถาปนิกและนักออกแบบเพื่อเชื่อมต่อผู้เชี่ยวชาญที่ปรับระดับพื้น ฐานราก และผังที่ดินให้เข้ากับแปลงของคุณได้",
+          en: "Browse house plans in the Planasia store and share your chosen design with your builder or engineer for site-specific adaptations.",
+          th: "เลือกชมแบบบ้านในร้าน Planasia แล้วส่งแบบที่เลือกให้ผู้รับเหมาหรือวิศวกรปรับให้เข้ากับสภาพที่ดินของคุณ",
         },
       },
     ],

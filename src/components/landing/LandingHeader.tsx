@@ -40,7 +40,7 @@ interface NavItem {
   external?: boolean;
 }
 
-/** Shared site header — identical chrome on home, store, about, draftsmen, etc. */
+/** Shared site header — identical chrome on home, store, about, etc. */
 export function LandingHeader() {
   const { translate } = useApp();
   const L = useBilingual();
@@ -73,7 +73,6 @@ export function LandingHeader() {
   const loanConsultLabel = L("Home loan consultation", "ปรึกษาสินเชื่อบ้าน");
   const articlesLabel = L("Articles", "บทความ");
   const homeBuildingLabel = L("Home Building", "รับสร้างบ้าน");
-  const draftsmenLabel = translate("nav.findDraftsman");
 
   const mobileLinks: MobileNavLink[] = [
     { href: "/", label: translate("nav.home") },
@@ -88,7 +87,6 @@ export function LandingHeader() {
     { href: "/whats-included", label: planIncludesLabel },
     { href: "/articles", label: articlesLabel },
     { href: "/loan-consultation", label: loanConsultLabel },
-    { href: "/draftsmen", label: draftsmenLabel },
     { href: "/home-building", label: homeBuildingLabel },
   ];
 
@@ -133,23 +131,15 @@ export function LandingHeader() {
       </div>
 
       {/*
-        2) Main header row
-        Desktop (>768): [brand+Store | nav | tools] — CSS grid, no overlap
-        Mobile (≤768): [logo | search | hamburger] — isolated media query
+        2) Main header
+        Desktop (≥1025): row1 [logo | search | tools] · row2 [nav]
+        Compact (≤1024): [logo | search | hamburger]
       */}
       <div className="site-header-bar mx-auto w-full max-w-[1440px] px-3 sm:px-5 md:px-6 lg:px-8">
-        {/* LEFT — logo (+ Store on desktop) */}
         <div className="site-header-brand">
           <BrandLogo variant="light" className="site-header-logo" />
-          <Link
-            href="/store"
-            className="header-control header-desktop-only text-black transition-colors hover:bg-[#f4f5f8] hover:text-black"
-          >
-            {storeLabel}
-          </Link>
         </div>
 
-        {/* Mobile search — hidden on desktop via .site-header-mobile-search */}
         <form onSubmit={submitPlanSearch} className="site-header-mobile-search">
           <div className="flex h-9 w-full min-w-0 items-stretch overflow-hidden rounded-md border border-[#d5d9e0] bg-white focus-within:border-[#1e40af] focus-within:ring-1 focus-within:ring-[#1e40af]/25">
             <input
@@ -172,48 +162,35 @@ export function LandingHeader() {
           </div>
         </form>
 
-        {/* Desktop nav — hidden on ≤768px via .site-header-nav */}
-        <nav aria-label={L("Main navigation", "เมนูหลัก")} className="site-header-nav">
-          <NavDropdown label={L("Collections", "คอลเลคชั่น")} items={collectionItems} mega="collections" />
-          <NavLink href="/whats-included" label={planIncludesLabel} />
-          <NavLink href="/articles" label={articlesLabel} />
-          <NavLink href="/loan-consultation" label={loanConsultLabel} />
-          <NavLink href="/draftsmen" label={draftsmenLabel} />
-          <NavLink href="/home-building" label={homeBuildingLabel} />
-        </nav>
+        <form onSubmit={submitPlanSearch} className="site-header-search header-desktop-only">
+          <div className="header-search border border-[#d5d9e0] bg-white focus-within:border-[#1e40af] focus-within:ring-1 focus-within:ring-[#1e40af]/20">
+            <span
+              className="flex shrink-0 items-center pl-3 text-[13px] font-semibold text-slate-400"
+              aria-hidden
+            >
+              #
+            </span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={translate("nav.searchByPlan")}
+              aria-label={translate("nav.searchByPlan")}
+              inputMode="search"
+              autoComplete="off"
+              className="min-w-0 flex-1 border-none bg-transparent px-2 text-black outline-none placeholder:text-slate-400"
+            />
+            <button
+              type="submit"
+              aria-label={translate("nav.searchByPlan")}
+              className="flex shrink-0 items-center justify-center bg-[#1A2744] px-3 text-white transition-colors hover:bg-[#243556]"
+            >
+              <Search className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+          </div>
+        </form>
 
-        {/* RIGHT — desktop tools · mobile hamburger only */}
         <div className="site-header-tools">
-          <form onSubmit={submitPlanSearch} className="header-desktop-only">
-            <div className="header-search border border-border bg-white shadow-sm focus-within:border-[#1e40af]/50 focus-within:ring-1 focus-within:ring-[#1e40af]/20">
-              <span
-                className="flex shrink-0 items-center pl-2 text-[11px] font-semibold text-black"
-                aria-hidden
-              >
-                #
-              </span>
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={translate("nav.searchByPlan")}
-                aria-label={translate("nav.searchByPlan")}
-                inputMode="search"
-                autoComplete="off"
-                className="min-w-0 flex-1 border-none bg-transparent px-1 text-black outline-none placeholder:text-slate-500"
-              />
-              <button
-                type="submit"
-                aria-label={translate("nav.searchByPlan")}
-                className="flex shrink-0 items-center justify-center bg-[#1e40af] px-2 text-white transition-colors hover:bg-[#1e3a8a]"
-              >
-                <Search className="h-3 w-3" strokeWidth={2.25} />
-              </button>
-            </div>
-          </form>
-
-          <span className="site-header-tools__divider header-desktop-only" aria-hidden />
-
           <div className="site-header-tools__cluster header-desktop-only">
             <LanguageToggle variant="light" />
 
@@ -231,23 +208,19 @@ export function LandingHeader() {
                 type="button"
                 onClick={() => signIn("google")}
                 aria-label={translate("nav.signIn")}
-                className="header-control text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+                className="header-control text-[#1e3a5f] transition-colors hover:bg-[#f4f5f8] hover:text-[#1e40af]"
               >
-                <CircleUser className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden />
+                <CircleUser className="h-4 w-4" strokeWidth={1.6} aria-hidden />
                 <span className="hidden xl:inline">{translate("nav.signIn")}</span>
               </button>
             )}
-          </div>
 
-          <span className="site-header-tools__divider header-desktop-only" aria-hidden />
-
-          <div className="site-header-tools__cluster header-desktop-only">
             <button
               type="button"
               onClick={openWishlist}
               aria-label={translate("nav.wishlist")}
               title={translate("nav.wishlist")}
-              className="header-action-icon relative flex shrink-0 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+              className="header-action-icon relative flex shrink-0 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-[#f4f5f8] hover:text-[#1e40af]"
             >
               <Heart
                 className={`h-[18px] w-[18px] ${favoriteCount > 0 ? "fill-[#1e40af] text-[#1e40af]" : ""}`}
@@ -264,7 +237,7 @@ export function LandingHeader() {
               onClick={openCart}
               aria-label={translate("nav.cart")}
               title={translate("nav.cart")}
-              className="header-action-icon relative flex shrink-0 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+              className="header-action-icon relative flex shrink-0 items-center justify-center rounded-md text-[#1e3a5f] transition-colors hover:bg-[#f4f5f8] hover:text-[#1e40af]"
             >
               <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.75} />
               {cartCount > 0 && (
@@ -273,19 +246,28 @@ export function LandingHeader() {
                 </span>
               )}
             </button>
-          </div>
 
-          <SellerEntryButton className="header-desktop-only" />
+            <SellerEntryButton />
+          </div>
 
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="header-mobile-only header-control-icon h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#1e3a5f] hover:bg-surface-raised hover:text-[#1e40af]"
+            className="header-mobile-only header-control-icon h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#1e3a5f] hover:bg-[#f4f5f8] hover:text-[#1e40af]"
             aria-label={translate("nav.menu")}
           >
             <Menu className="h-5 w-5" strokeWidth={2} />
           </button>
         </div>
+
+        <nav aria-label={L("Main navigation", "เมนูหลัก")} className="site-header-nav">
+          <NavLink href="/store" label={storeLabel} />
+          <NavDropdown label={L("Collections", "คอลเลคชั่น")} items={collectionItems} mega="collections" />
+          <NavLink href="/whats-included" label={planIncludesLabel} />
+          <NavLink href="/articles" label={articlesLabel} />
+          <NavLink href="/loan-consultation" label={loanConsultLabel} />
+          <NavLink href="/home-building" label={homeBuildingLabel} />
+        </nav>
       </div>
 
       <MobileNavDrawer
@@ -294,7 +276,7 @@ export function LandingHeader() {
         links={mobileLinks}
         variant="light"
         footer={
-          <div className="flex flex-col gap-2.5 md:hidden">
+          <div className="flex flex-col gap-2.5">
             <div className="w-full [&_button.header-control]:flex [&_button.header-control]:h-11 [&_button.header-control]:min-h-11 [&_button.header-control]:w-full [&_button.header-control]:justify-center [&_button.header-control]:rounded-lg [&_button.header-control]:text-sm">
               <LanguageToggle variant="light" className="block w-full" />
             </div>

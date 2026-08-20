@@ -6,8 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Planasia — ร้านแบบบ้าน",
     short_name: "Planasia",
     description:
-      "เลือกซื้อและดาวน์โหลดแบบบ้านที่สร้างร่วมกับ AI ติดตั้งแอปเพื่อเข้าถึงร้านและประวัติการซื้อได้ทันที",
-    start_url: "/store",
+      "เลือกซื้อและดาวน์โหลดแบบบ้านที่สร้างร่วมกับ AI ติดตั้งแอปเพื่อเข้าถึงหน้าแรก ร้าน และประวัติการซื้อได้ทันที",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait-primary",
@@ -42,15 +42,15 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "ร้านแบบบ้าน",
-        short_name: "ร้าน",
-        url: "/store",
-        icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
-      },
-      {
         name: "หน้าแรก",
         short_name: "หน้าแรก",
         url: "/",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+      },
+      {
+        name: "ร้านแบบบ้าน",
+        short_name: "ร้าน",
+        url: "/store",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
       },
     ],

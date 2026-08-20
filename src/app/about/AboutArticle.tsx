@@ -1,42 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { RichText } from "@/components/content/RichText";
 import { useBilingual } from "@/components/landing/useBilingual";
-import {
-  DEFAULT_CUSTOMER_SERVICE_ARTICLES,
-  type CustomerServiceArticle,
-} from "@/lib/content/customer-service";
+import { DEFAULT_CUSTOMER_SERVICE_ARTICLES } from "@/lib/content/customer-service";
 
-/**
- * Public Customer Service article — text only.
- */
+/** Public Customer Service article — static content from ABOUT_PAGES. */
 export function AboutArticle({ slug }: { slug: string }) {
   const L = useBilingual();
-  const fallback = DEFAULT_CUSTOMER_SERVICE_ARTICLES[slug];
-  const [article, setArticle] = useState<CustomerServiceArticle | null>(fallback ?? null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    fetch(`/api/customer-service?slug=${encodeURIComponent(slug)}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data: { article?: CustomerServiceArticle }) => {
-        if (active && data.article) setArticle(data.article);
-      })
-      .catch(() => {
-        /* keep fallback */
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [slug]);
+  const article = DEFAULT_CUSTOMER_SERVICE_ARTICLES[slug] ?? null;
 
   if (!article) {
     return (
@@ -69,37 +43,27 @@ export function AboutArticle({ slug }: { slug: string }) {
           <span className="text-text-secondary">{title}</span>
         </nav>
 
-        {loading ? (
-          <div className="space-y-3">
-            <div className="h-9 max-w-md animate-pulse rounded-lg bg-surface-raised" />
-            <div className="h-5 max-w-xl animate-pulse rounded bg-surface-raised" />
+        <article>
+          <h1 className="text-3xl font-bold text-[#1e3a5f] md:text-4xl">{title}</h1>
+          {summary && (
+            <p className="mt-4 text-lg leading-relaxed text-text-secondary">{summary}</p>
+          )}
+          <div className="mt-10">
+            <RichText html={body} />
           </div>
-        ) : (
-          <>
-            <article>
-              <h1 className="text-3xl font-bold text-[#1e3a5f] md:text-4xl">{title}</h1>
-              {summary && (
-                <p className="mt-4 text-lg leading-relaxed text-text-secondary">{summary}</p>
-              )}
+        </article>
 
-              <div className="mt-10">
-                <RichText html={body} />
-              </div>
-            </article>
-
-            <div className="mt-12 rounded-2xl border border-border bg-surface-raised/80 p-6 text-center md:p-8">
-              <p className="text-text-secondary">
-                {L("Ready to find your plan?", "พร้อมจะเลือกแบบบ้านของคุณแล้วหรือยัง?")}
-              </p>
-              <Link
-                href="/store"
-                className="mt-3 inline-block rounded-md bg-[#1e40af] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1e3a8a]"
-              >
-                {L("Browse House Plans", "ดูแบบบ้านทั้งหมด")}
-              </Link>
-            </div>
-          </>
-        )}
+        <div className="mt-12 rounded-2xl border border-border bg-surface-raised/80 p-6 text-center md:p-8">
+          <p className="text-text-secondary">
+            {L("Ready to find your plan?", "พร้อมจะเลือกแบบบ้านของคุณแล้วหรือยัง?")}
+          </p>
+          <Link
+            href="/store"
+            className="mt-3 inline-block rounded-md bg-[#1e40af] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1e3a8a]"
+          >
+            {L("Browse House Plans", "ดูแบบบ้านทั้งหมด")}
+          </Link>
+        </div>
       </main>
     </div>
   );

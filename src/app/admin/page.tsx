@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/admin/auth";
 import { loadSiteSettings } from "@/lib/supabase/site-settings";
 import { AdminPageHeader, AdminCard } from "@/components/admin/AdminForm";
@@ -17,7 +18,6 @@ import {
   ImageIcon,
   LayoutGrid,
   FolderKanban,
-  Headphones,
   HardHat,
   Sparkles,
   Wand2,
@@ -29,7 +29,7 @@ import {
 
 export default async function AdminDashboardPage() {
   const admin = await getAdminSession();
-  if (!admin) return null;
+  if (!admin) redirect("/admin/login?callbackUrl=/admin");
 
   const settings = await loadSiteSettings();
 
@@ -99,12 +99,6 @@ export default async function AdminDashboardPage() {
       label: "คอลเลกชันในเมนู",
       desc: "จัดการการ์ดคอลเลกชันในเมนูและส่วนแนะนำบนหน้าแรก",
       icon: FolderKanban,
-    },
-    {
-      href: "/admin/customer-service",
-      label: "บริการลูกค้า (บทความ)",
-      desc: "จัดการข้อความทั้ง 9 หัวข้อในเมนูบริการลูกค้า — แก้ไขแยกอิสระ ไม่มีอัปโหลดรูป",
-      icon: Headphones,
     },
     {
       href: "/admin/kyc",

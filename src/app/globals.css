@@ -785,16 +785,22 @@
   }
 
   /* ── Desktop-first base (restored layout) ── */
+  /*
+   * Site header — desktop two-tier:
+   * Row 1: [logo] [search] [tools]
+   * Row 2: [centered nav]
+   * Compact ≤1024: single row [logo | search | hamburger]
+   */
   .site-header-bar {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 60px auto;
     align-items: center;
-    height: 58px;
-    column-gap: 0.75rem;
+    column-gap: 1.5rem;
+    row-gap: 0;
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    /* Keep dropdowns (Collection mega menu) visible below the bar */
     overflow: visible;
   }
 
@@ -802,43 +808,34 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.625rem;
     flex-shrink: 0;
     min-width: 0;
-    justify-self: start;
+    grid-column: 1;
+    grid-row: 1;
   }
 
-  /* Keep wordmark from eating the nav column on mid-width desktops */
   .site-header-logo .font-brand {
-    font-size: 15px;
-    letter-spacing: 0.12em;
+    font-size: 17px;
+    letter-spacing: 0.14em;
   }
 
   @media (min-width: 1280px) {
     .site-header-logo .font-brand {
-      font-size: 17px;
+      font-size: 19px;
       letter-spacing: 0.16em;
     }
   }
 
-  @media (min-width: 1536px) {
-    .site-header-logo .font-brand {
-      font-size: 19px;
-      letter-spacing: 0.18em;
-    }
-  }
-
-  .site-header-nav {
+  .site-header-search {
+    grid-column: 2;
+    grid-row: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-wrap: nowrap;
-    gap: 0.2rem;
+    width: 100%;
+    max-width: 520px;
+    margin-inline: auto;
     min-width: 0;
-    max-width: 100%;
-    /* Do NOT use overflow:hidden — it clips Collection / dropdown panels */
-    overflow: visible;
-    justify-self: center;
   }
 
   .site-header-tools {
@@ -848,7 +845,8 @@
     flex-shrink: 0;
     gap: 0.5rem;
     min-width: 0;
-    justify-self: end;
+    grid-column: 3;
+    grid-row: 1;
   }
 
   .site-header-tools__cluster {
@@ -860,52 +858,56 @@
 
   .site-header-tools__divider {
     display: none;
-    width: 1px;
-    height: 18px;
-    flex-shrink: 0;
-    background-color: #e6e8ee;
+  }
+
+  .site-header-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+    height: 44px;
+    border-top: 1px solid #eef0f4;
+  }
+
+  .site-header-nav .header-control {
+    height: 34px;
+    padding-inline: 0.7rem;
+    font-size: 13.5px;
   }
 
   .site-header-mobile-search {
     display: none;
   }
 
-  /* Hidden on desktop; revealed only inside @media (max-width: 768px) below */
   .header-mobile-only {
     display: none !important;
   }
 
-  @media (min-width: 1024px) {
-    .site-header-bar {
-      height: 58px;
-      column-gap: 0.875rem;
-    }
-
-    .site-header-nav {
-      gap: 0.3rem;
-    }
-
-    .site-header-tools {
-      gap: 0.625rem;
-    }
-
-    .site-header-tools__divider {
-      display: block;
-    }
-  }
-
   @media (min-width: 1280px) {
     .site-header-bar {
-      height: 60px;
-      column-gap: 1rem;
+      grid-template-rows: 64px auto;
+      column-gap: 1.75rem;
     }
 
     .site-header-nav {
-      gap: 0.4rem;
+      height: 46px;
+      gap: 0.5rem;
     }
 
-    .site-header-tools {
-      gap: 0.75rem;
+    .site-header-nav .header-control {
+      height: 36px;
+      padding-inline: 0.85rem;
+      font-size: 14px;
+    }
+
+    .site-header-search {
+      max-width: 560px;
     }
 
     .site-header-tools__cluster {
@@ -915,29 +917,33 @@
 
   @media (min-width: 1536px) {
     .site-header-nav {
-      gap: 0.5rem;
+      gap: 0.65rem;
+    }
+
+    .site-header-search {
+      max-width: 600px;
     }
   }
 
   /*
-   * Mobile only (≤768px) — must not change desktop rules above.
-   * [logo | flexible search | hamburger]
+   * Compact layout (≤1024px): [logo | search | hamburger]
    */
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     .site-header-bar {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      height: 52px;
-      column-gap: 0.5rem;
+      height: 56px;
+      grid-template-rows: none;
+      column-gap: 0.625rem;
     }
 
     .site-header-brand {
       flex: 0 0 auto;
-      gap: 0.5rem;
     }
 
-    .site-header-nav {
+    .site-header-nav,
+    .site-header-search {
       display: none !important;
     }
 
@@ -966,21 +972,17 @@
     }
   }
 
-  /*
-   * Header control scale — Store button is the reference.
-   * Shared height / padding / type for seller CTA, search, language, etc.
-   */
   .header-control {
     display: inline-flex;
-    height: 26px;
+    height: 36px;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 0.3rem;
     white-space: nowrap;
     border-radius: 0.375rem;
-    padding-inline: 0.4rem;
-    font-size: 11px;
+    padding-inline: 0.75rem;
+    font-size: 13.5px;
     font-weight: 600;
     letter-spacing: 0.01em;
     line-height: 1;
@@ -988,64 +990,54 @@
 
   @media (min-width: 1280px) {
     .header-control {
-      padding-inline: 0.5rem;
-    }
-  }
-
-  @media (min-width: 1536px) {
-    .header-control {
-      padding-inline: 0.625rem;
-      font-size: 12px;
+      height: 38px;
+      padding-inline: 0.875rem;
+      font-size: 14px;
     }
   }
 
   .header-control-icon {
-    width: 26px;
-    height: 26px;
+    width: 36px;
+    height: 36px;
   }
 
-  /* Wishlist / cart — aligned with compact control height */
   .header-action-icon {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
+  }
+
+  @media (min-width: 1280px) {
+    .header-control-icon,
+    .header-action-icon {
+      width: 38px;
+      height: 38px;
+    }
   }
 
   .header-search {
     display: flex;
-    width: 120px;
-    height: 26px;
+    width: 100%;
+    height: 40px;
     align-items: stretch;
     overflow: hidden;
-    border-radius: 0.375rem;
-    flex-shrink: 0;
+    border-radius: 0.5rem;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   @media (min-width: 1280px) {
     .header-search {
-      width: 148px;
-    }
-  }
-
-  @media (min-width: 1536px) {
-    .header-search {
-      width: 168px;
+      height: 42px;
     }
   }
 
   .header-search input {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 500;
     letter-spacing: 0.01em;
     line-height: 1;
   }
 
-  @media (min-width: 1536px) {
-    .header-search input {
-      font-size: 12px;
-    }
-  }
-
-  /* Store nav link — solid black text (matches other menu items) */
   .nav-store-btn {
     background-color: transparent;
     background-image: none;
@@ -1058,15 +1050,6 @@
     background-color: #f4f5f8;
     color: #000000;
     box-shadow: none;
-  }
-
-  /* Mid-desktop: slightly tighter nav type so Thai labels fit without overlap */
-  @media (min-width: 769px) and (max-width: 1279.98px) {
-    .site-header-nav .header-control {
-      padding-inline: 0.28rem;
-      font-size: 10px;
-      letter-spacing: 0;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {

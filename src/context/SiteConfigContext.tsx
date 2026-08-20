@@ -15,7 +15,6 @@ import type { CmsSectionContent, CmsSectionKey, SiteSettingsBundle } from "@/lib
 import type { CuratedStyleItem } from "@/lib/admin/curated-styles";
 import type { MegaMenuCollectionCard } from "@/lib/admin/mega-menu-collections";
 import type { MegaMenuStyleCard } from "@/lib/admin/mega-menu-styles";
-import type { CustomerServiceArticlesMap } from "@/lib/content/customer-service";
 import type { Locale } from "@/lib/geo/countries";
 import type { SiteConfigPayload } from "@/lib/site/site-config-types";
 import type { AiImageTool } from "@/lib/vendor/ai-image-tools";
@@ -28,7 +27,6 @@ interface SiteConfigContextValue {
   curatedStyles: CuratedStyleItem[];
   megaMenuStyles: MegaMenuStyleCard[];
   megaMenuCollections: MegaMenuCollectionCard[];
-  customerServiceArticles: CustomerServiceArticlesMap;
   aiImageTools: AiImageTool[];
   aiRenderGuide: AiRenderGuide;
   loading: boolean;
@@ -46,7 +44,6 @@ function applyPayload(
     setCuratedStyles: (v: CuratedStyleItem[]) => void;
     setMegaMenuStyles: (v: MegaMenuStyleCard[]) => void;
     setMegaMenuCollections: (v: MegaMenuCollectionCard[]) => void;
-    setCustomerServiceArticles: (v: CustomerServiceArticlesMap) => void;
     setAiImageTools: (v: AiImageTool[]) => void;
     setAiRenderGuide: (v: AiRenderGuide) => void;
   },
@@ -56,7 +53,6 @@ function applyPayload(
   setters.setCuratedStyles(data.curatedStyles);
   setters.setMegaMenuStyles(data.megaMenuStyles);
   setters.setMegaMenuCollections(data.megaMenuCollections);
-  setters.setCustomerServiceArticles(data.customerServiceArticles);
   setters.setAiImageTools(data.aiImageTools);
   setters.setAiRenderGuide(data.aiRenderGuide ?? defaultAiRenderGuide());
 }
@@ -84,9 +80,6 @@ export function SiteConfigProvider({
   const [megaMenuCollections, setMegaMenuCollections] = useState(
     initialConfig.megaMenuCollections,
   );
-  const [customerServiceArticles, setCustomerServiceArticles] = useState(
-    initialConfig.customerServiceArticles,
-  );
   const [aiImageTools, setAiImageTools] = useState(initialConfig.aiImageTools);
   const [aiRenderGuide, setAiRenderGuide] = useState(
     () => initialConfig.aiRenderGuide ?? defaultAiRenderGuide(),
@@ -100,7 +93,6 @@ export function SiteConfigProvider({
       setCuratedStyles,
       setMegaMenuStyles,
       setMegaMenuCollections,
-      setCustomerServiceArticles,
       setAiImageTools,
       setAiRenderGuide,
     }),
@@ -124,14 +116,12 @@ export function SiteConfigProvider({
     [setters],
   );
 
-  // Content-locale change only (e.g. th ↔ en) — skip identical first paint.
   useEffect(() => {
     if (locale === seededLocale.current) return;
     setLoading(true);
     void fetchConfig(locale).finally(() => setLoading(false));
   }, [locale, fetchConfig]);
 
-  // After admin replaces hero/gallery images, pick up new URLs on return to storefront.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
@@ -148,7 +138,6 @@ export function SiteConfigProvider({
     };
   }, [locale, fetchConfig]);
 
-  // Navigating home from /admin/* keeps the provider mounted — refresh config there.
   useEffect(() => {
     if (pathname !== "/") return;
     const now = Date.now();
@@ -177,7 +166,6 @@ export function SiteConfigProvider({
       curatedStyles,
       megaMenuStyles,
       megaMenuCollections,
-      customerServiceArticles,
       aiImageTools,
       aiRenderGuide,
       loading,
@@ -190,7 +178,6 @@ export function SiteConfigProvider({
       curatedStyles,
       megaMenuStyles,
       megaMenuCollections,
-      customerServiceArticles,
       aiImageTools,
       aiRenderGuide,
       loading,

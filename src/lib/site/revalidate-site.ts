@@ -11,7 +11,6 @@ export function revalidateSiteSurfaces() {
     revalidatePath("/", "layout");
     revalidatePath("/");
     revalidatePath("/store");
-    revalidatePath("/draftsmen");
     revalidatePath("/api/site/config");
   } catch {
     // revalidatePath throws outside a Next request context.

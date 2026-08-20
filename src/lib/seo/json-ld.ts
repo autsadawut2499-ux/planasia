@@ -1,6 +1,5 @@
 import type { StoreListing } from "@/lib/store/db";
 import type { PlanReview, RatingAggregate } from "@/lib/supabase/reviews";
-import type { DraftsmanCard } from "@/lib/vendors/directory";
 import { buildRealEstateListingJsonLd } from "@/lib/seo/listing-seo-generate";
 import {
   asiaPositioningJsonLdDescriptions,
@@ -234,40 +233,6 @@ export function buildItemListJsonLd(
   };
 }
 
-/** Stable @id for an architect/draftsman node (used to link the graph). */
-export function draftsmanNodeId(ownerKey: string): string {
-  return `${absolute(`/draftsmen/${encodeURIComponent(ownerKey)}`)}#draftsman`;
-}
-
-/** Person + ProfessionalService for a draftsman/architect profile (E-E-A-T). */
-export function buildDraftsmanJsonLd(card: DraftsmanCard): Record<string, unknown> {
-  const url = absolute(`/draftsmen/${encodeURIComponent(card.ownerKey)}`);
-  const sameAs = [card.website, ...(card.socials ?? [])].filter(Boolean);
-  const schema: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    "@id": draftsmanNodeId(card.ownerKey),
-    name: card.displayName,
-    url,
-    image: card.avatarUrl,
-    description: card.headline,
-    areaServed: card.location ?? "Thailand",
-    knowsAbout: card.specialties,
-    provider: { "@type": "Person", name: card.displayName },
-  };
-  if (sameAs.length > 0) schema.sameAs = sameAs;
-  if (card.rating && card.reviewCount > 0) {
-    schema.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: card.rating,
-      reviewCount: card.reviewCount,
-      bestRating: 5,
-      worstRating: 1,
-    };
-  }
-  return schema;
-}
-
 /** FAQPage schema for programmatic landing / detail pages. */
 export function buildFaqJsonLd(
   faqs: Array<{ question: string; answer: string }>,
@@ -331,15 +296,13 @@ export function buildListingRealEstateJsonLd(listing: StoreListing): Record<stri
 }
 
 /**
- * Advanced linked @graph for a listing detail page — connects
- * RealEstateListing + Product ↔ Architect ↔ Reviews ↔ FAQ ↔ Breadcrumb ↔ Organization
- * so Googlebot can crawl a single authoritative knowledge graph.
+ * Advanced linked @graph for a listing detail page — Product + RealEstateListing
+ * ↔ FAQ ↔ Breadcrumb ↔ Organization for Google rich results.
  */
 export function buildListingGraph(input: {
   listing: StoreListing;
   rating?: RatingAggregate | null;
   reviews?: PlanReview[];
-  architect?: DraftsmanCard | null;
   breadcrumb: Array<{ name: string; path: string }>;
   faqs?: Array<{ question: string; answer: string }>;
 }): Record<string, unknown> {
@@ -353,13 +316,6 @@ export function buildListingGraph(input: {
   const realEstate = buildListingRealEstateJsonLd(input.listing);
   delete (realEstate as Record<string, unknown>)["@context"];
 
-  // Link commerce + real-estate nodes to architect + publisher.
-  if (input.architect) {
-    const architectRef = { "@id": draftsmanNodeId(input.architect.ownerKey) };
-    (product as Record<string, unknown>).author = architectRef;
-    (product as Record<string, unknown>).manufacturer = architectRef;
-    (realEstate as Record<string, unknown>).seller = architectRef;
-  }
   (product as Record<string, unknown>).isRelatedTo = { "@id": `${base}#organization` };
   (realEstate as Record<string, unknown>).isRelatedTo = { "@id": `${base}#organization` };
   (realEstate as Record<string, unknown>).mainEntity = { "@id": product["@id"] };
@@ -369,12 +325,6 @@ export function buildListingGraph(input: {
     realEstate,
     product,
   ];
-
-  if (input.architect) {
-    const architect = buildDraftsmanJsonLd(input.architect);
-    delete (architect as Record<string, unknown>)["@context"];
-    graph.push(architect);
-  }
 
   const breadcrumb = buildBreadcrumbJsonLd(input.breadcrumb);
   delete (breadcrumb as Record<string, unknown>)["@context"];
