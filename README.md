@@ -2,7 +2,7 @@
 
 Thai-first house-plan marketplace: browse and buy concept drawing sets from draftsmen and architects. Local licensed professionals should review plans before construction.
 
-**Live:** [https://planasia.vercel.app](https://planasia.vercel.app) · **Repo:** [autsadawut2499-ux/planasia](https://github.com/autsadawut2499-ux/planasia)
+**Live:** [https://www.planasia.net](https://www.planasia.net) · **Repo:** [autsadawut2499-ux/planasia](https://github.com/autsadawut2499-ux/planasia)
 
 ## Stack
 
@@ -11,7 +11,7 @@ Thai-first house-plan marketplace: browse and buy concept drawing sets from draf
 | App | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 4 |
 | Auth | NextAuth (Google OAuth) + admin PIN |
 | Data | Supabase (Postgres, Storage, RLS) |
-| Payments | Stripe Checkout (PromptPay for THB + Thailand; card for local currencies) |
+| Payments | Bank transfer + SlipMate slip verification |
 | AI | Google Gemini (`GEMINI_API_KEY`) — listing assist, KYC helpers, plan-finder chat, SEO copy |
 | Hosting | Vercel (`vercel.json` cron for smart ranking) |
 
@@ -28,7 +28,7 @@ Prices in the database stay in **THB**; conversion uses fixed reference rates in
 
 ## Features
 
-- **Storefront** — Catalog, filters, favorites, cart, pre-checkout review, Stripe purchase + download grants
+- **Storefront** — Catalog, filters, favorites, cart, bank-transfer checkout + download grants
 - **Vendor dashboard** — Listings, KYC, earnings / payouts, private blueprint uploads
 - **Admin** — CMS, listings moderation, KYC, commissions, payouts, ranking, mega-menu, hero/gallery/brand
 - **Geo-IP** — `/api/geo` sets suggested language + local currency from edge headers or ipapi
@@ -65,11 +65,9 @@ See [`.env.example`](.env.example) for the full list.
 
 **Required on Vercel Production** (enforced by `scripts/check-production-env.mjs` when `VERCEL_ENV=production`):
 
-`NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `NEXT_PUBLIC_SITE_URL`, Supabase URL/anon/service role, Stripe secret/webhook/publishable, `ADMIN_PIN` (not the example `501499`), `CRON_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+`NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `NEXT_PUBLIC_SITE_URL`, Supabase URL/anon/service role, `ADMIN_PIN` (not the example `501499`), `CRON_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 
-Optional but recommended: `GEMINI_API_KEY`, `RESEND_API_KEY` / `EMAIL_FROM` for receipts.
-
-Never set `ALLOW_MOCK_PAYMENTS` in production (ignored even if set).
+Optional but recommended: `SLIPMATE_API_KEY`, `GEMINI_API_KEY`, `RESEND_API_KEY` / `EMAIL_FROM`, `LINE_CHANNEL_ID` / `LINE_CHANNEL_SECRET` for order notifications.
 
 ## Project structure
 
@@ -85,7 +83,7 @@ src/
 │       ├── geo/              # Geo-IP → country, uiLocale, currency
 │       ├── store/            # Listings, cart checkout, purchase
 │       ├── gemini/           # Chat, status, translate helpers
-│       ├── vendor/, admin/, webhooks/stripe/, cron/ranking/
+│       ├── vendor/, admin/, webhooks/line/, payments/slip/, cron/ranking/
 │       └── …
 ├── components/               # landing, store, vendor, admin, chat, UI
 ├── context/AppContext.tsx    # Locale, geo country, display currency

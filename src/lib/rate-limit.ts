@@ -32,7 +32,11 @@ export function rateLimitConfigForPath(pathname: string): RateLimitConfig {
   ) {
     return { limit: 20, windowMs: 60_000 };
   }
-  if (pathname.startsWith("/api/payment") || pathname.startsWith("/api/store/cart/checkout")) {
+  if (
+    pathname.startsWith("/api/payments/slip") ||
+    pathname.startsWith("/api/store/cart/checkout") ||
+    pathname.startsWith("/api/store/purchase")
+  ) {
     return { limit: 30, windowMs: 60_000 };
   }
   return { limit: 80, windowMs: 60_000 };

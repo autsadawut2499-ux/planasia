@@ -6,7 +6,7 @@
 |------|--------|
 | GitHub | `https://github.com/autsadawut2499-ux/planasia` |
 | Default branch | `main` |
-| Production URL | `https://planasia.vercel.app` |
+| Production URL | `https://www.planasia.net` |
 | Vercel project | **`planasia`** (keep a single project) |
 
 `vercel.json` configures the ranking cron (`/api/cron/ranking`) once daily (`0 17 * * *` UTC ≈ midnight ICT) — Hobby plans disallow more frequent crons. Framework settings use Next.js defaults and `npm run build`.
@@ -38,7 +38,8 @@ See the top of [`.env.example`](../.env.example). For a full go-live set:
 - Auth: `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - Site: `NEXT_PUBLIC_SITE_URL`
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- Payments: `SLIPMATE_API_KEY` (bank transfer + slip verify; configure bank/QR in Admin)
+- LINE: `LINE_CHANNEL_ID`, `LINE_CHANNEL_SECRET` (Messaging API webhook + admin push)
 - Ops: `ADMIN_PIN` (not `501499`), `CRON_SECRET`
 
 Recommended: `GEMINI_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`.
