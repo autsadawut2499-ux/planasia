@@ -57,11 +57,12 @@ export function ContractorProfileCard({ builder }: ContractorProfileCardProps) {
           <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              key={`${builder.id}-${index}-${main}`}
               src={main}
               alt={`${builder.companyName} portfolio ${index + 1}`}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5">
+            <div className="absolute bottom-2.5 left-2.5 z-[1] flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={prev}
@@ -100,17 +101,19 @@ export function ContractorProfileCard({ builder }: ContractorProfileCardProps) {
             <div className="relative overflow-hidden rounded-xl bg-slate-200">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                key={`side-a-${builder.id}-${index}-${sideA}`}
                 src={sideA}
                 alt=""
-                className="h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-cover"
               />
             </div>
             <div className="relative overflow-hidden rounded-xl bg-slate-200">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                key={`side-b-${builder.id}-${index}-${sideB}`}
                 src={sideB}
                 alt=""
-                className="h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-cover"
               />
               {total > 1 && (
                 <button

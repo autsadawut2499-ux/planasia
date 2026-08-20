@@ -7,6 +7,7 @@ import { useStoreCart } from "@/context/StoreCartContext";
 import { useToast } from "@/context/ToastContext";
 import { useStoreListingCopy } from "@/hooks/useStoreListingCopy";
 import { HousePlanCard } from "@/components/store/HousePlanCard";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import {
   BUNDLE_DISCOUNT_2,
   BUNDLE_DISCOUNT_3_PLUS,
@@ -38,12 +39,16 @@ function CompactUpsellCard({
 
   return (
     <article className="flex gap-3 overflow-hidden rounded-lg border border-border bg-[var(--color-card,#fff)] p-3">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={listing.image}
-        alt={copy.name}
-        className="h-14 w-16 shrink-0 rounded object-cover"
-      />
+      <div className="relative h-14 w-16 shrink-0 overflow-hidden rounded bg-slate-100">
+        <OptimizedImage
+          src={listing.image}
+          alt={copy.name}
+          fill
+          sizes="64px"
+          quality={65}
+          className="object-cover"
+        />
+      </div>
       <div className="min-w-0 flex-1">
         <p className="line-clamp-1 text-xs font-semibold text-text-primary">#{listing.planId}</p>
         <p className="font-price mt-0.5 text-xs font-bold text-[#1e40af]">{formatMoney(listing.price)}</p>

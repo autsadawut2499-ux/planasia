@@ -237,18 +237,38 @@ async function proxyUpload(request: NextRequest, adminEmail: string) {
     return NextResponse.json({ error: "อัปโหลดได้เฉพาะไฟล์ PDF (.pdf)" }, { status: 400 });
   }
 
+  let uploadBuffer: Buffer = buffer;
+  let uploadType = contentType;
+  let uploadName = file.name;
+
+  // Images → resize + WebP before storage (faster storefront LCP).
+  if (!doc) {
+    try {
+      const { compressImageBuffer } = await import("@/lib/uploads/compress-image-server");
+      const compressed = await compressImageBuffer(buffer, file.name, {
+        maxEdge: 1600,
+        quality: 78,
+      });
+      uploadBuffer = Buffer.from(compressed.buffer);
+      uploadType = compressed.contentType;
+      uploadName = compressed.fileName;
+    } catch (err) {
+      console.warn("[admin/upload] image compress skipped", err);
+    }
+  }
+
   const safeAdmin = adminEmail.replace(/[^a-zA-Z0-9_-]/g, "_") || "admin";
   const storagePath = doc
-    ? siteAssetPath(`admin/${safeAdmin}/${kind}`, file.name)
-    : siteAssetPath(category, file.name);
+    ? siteAssetPath(`admin/${safeAdmin}/${kind}`, uploadName)
+    : siteAssetPath(category, uploadName);
   const bucket = doc && isSensitiveUploadKind(kind) ? VENDOR_PRIVATE_BUCKET : SITE_ASSETS_BUCKET;
 
   const { error } = await getSupabaseAdmin()
     .storage.from(bucket)
-    .upload(storagePath, buffer, {
-      contentType,
+    .upload(storagePath, uploadBuffer, {
+      contentType: uploadType,
       upsert: true,
-      cacheControl: doc ? "3600" : "60",
+      cacheControl: doc ? "3600" : "31536000",
     });
 
   if (error) {
@@ -262,21 +282,13 @@ async function proxyUpload(request: NextRequest, adminEmail: string) {
 
   const publicUrl = clientFacingUrl(doc ? kind : "image", storagePath);
 
-  console.info("[admin/upload] OK", {
-    storagePath,
-    bucket,
-    kind: doc ? kind : "image",
-    mimeType: contentType,
-    sizeBytes: file.size,
-  });
-
   return NextResponse.json({
     ok: true,
     storagePath,
     publicUrl,
     persistUrl: publicUrl,
-    mimeType: contentType,
-    sizeBytes: file.size,
+    mimeType: uploadType,
+    sizeBytes: uploadBuffer.byteLength,
     private: Boolean(doc && isSensitiveUploadKind(kind)),
     kind: doc ? kind : "image",
   });

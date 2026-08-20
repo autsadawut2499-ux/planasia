@@ -5,11 +5,11 @@ import { getArticleBySlug, listArticles } from "@/lib/supabase/articles";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { excerptFromContent } from "@/lib/content/articles";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
-interface PageProps {
+type PageProps = {
   params: Promise<{ slug: string }>;
-}
+};
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

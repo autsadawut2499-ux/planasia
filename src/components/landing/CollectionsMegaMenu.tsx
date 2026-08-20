@@ -8,6 +8,7 @@ import {
   DEFAULT_MEGA_MENU_COLLECTIONS,
   visibleMegaMenuCollections,
 } from "@/lib/admin/mega-menu-collections";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 interface CollectionsMegaMenuPanelProps {
   onNavigate?: () => void;
@@ -48,18 +49,14 @@ export function CollectionsMegaMenuPanel({ onNavigate }: CollectionsMegaMenuPane
               onClick={onNavigate}
               className="group flex flex-col items-center text-center"
             >
-              <span className="aspect-[4/3] w-full overflow-hidden rounded-md bg-surface-raised ring-1 ring-black/5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <span className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-surface-raised ring-1 ring-black/5">
+                <OptimizedImage
                   src={tile.imageUrl || fallbackImg}
                   alt={L(tile.titleEn, tile.titleTh)}
-                  loading="lazy"
-                  decoding="async"
-                  className="media-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                  onError={(e) => {
-                    const el = e.currentTarget;
-                    if (el.src !== fallbackImg) el.src = fallbackImg;
-                  }}
+                  fill
+                  sizes="(max-width: 640px) 45vw, 200px"
+                  quality={70}
+                  className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
                 />
               </span>
               <span className="mt-2 text-[11px] font-medium tracking-wide text-[#1e3a5f] group-hover:text-[#1e40af] md:text-xs">

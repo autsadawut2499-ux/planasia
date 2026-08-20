@@ -137,6 +137,22 @@ export default async function RootLayout({
     <html lang="th" suppressHydrationWarning>
       <head>
         <MultilingualSeoHead />
+        {/* Faster LCP: warm DNS/TLS for remote hero & listing images */}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        {process.env.NEXT_PUBLIC_SUPABASE_URL ? (
+          <>
+            <link
+              rel="preconnect"
+              href={new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin}
+              crossOrigin="anonymous"
+            />
+            <link
+              rel="dns-prefetch"
+              href={new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin}
+            />
+          </>
+        ) : null}
       </head>
       <body
         className={`${prompt.variable} ${ibmPlexSansThai.variable} ${sarabun.variable} ${poppins.variable} min-h-screen font-sans font-normal antialiased`}

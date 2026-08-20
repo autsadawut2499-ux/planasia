@@ -10,8 +10,9 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isListingPubliclyVisible } from "@/lib/store/listing-purchase";
 import { listArticles } from "@/lib/supabase/articles";
 
-/** Rebuild sitemap periodically so new auto-published plans appear for crawlers. */
-export const revalidate = 3600;
+/** Rebuild sitemap often so new auto-published plans appear for crawlers quickly.
+ *  Also busted on-demand via `revalidateStoreSurfaces` → `/sitemap.xml`. */
+export const revalidate = 900;
 
 function storeCategoryUrl(base: string, key: "style" | "collection", id: string): string {
   const params = new URLSearchParams({ [key]: id });
@@ -59,9 +60,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const productPages = listings.map((listing) => ({
     url: `${base}${listingStorePath(listing.slug)}`,
-    lastModified: new Date(listing.createdAt),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
+    lastModified: new Date(
+      listing.seoGeneratedAt || listing.createdAt || Date.now(),
+    ),
+    changeFrequency: "daily" as const,
+    priority: 0.85,
   }));
 
   return [

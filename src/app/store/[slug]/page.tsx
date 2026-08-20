@@ -13,9 +13,11 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import StoreListingPageClient from "./StoreListingPageClient";
 
 export const dynamicParams = true;
-/** Fresh listing payload (images + moderation / purchase lock) on every request. */
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+/**
+ * ISR: prebuild known slugs, serve cached HTML, refresh every 30 minutes.
+ * Publish / moderate / vendor edit calls `revalidateStoreSurfaces` for instant bust.
+ */
+export const revalidate = 1800;
 
 type PageProps = {
   params: Promise<{ slug: string }>;

@@ -15,65 +15,56 @@ type BrandMark = {
   parts?: { text: string; className?: string }[];
 };
 
+/** Major Thai construction / materials / home-improvement brands. */
 const BRANDS: BrandMark[] = [
+  { id: "scg", name: "SCG", className: "brand-mark brand-mark--bold" },
+  { id: "cpac", name: "CPAC", className: "brand-mark brand-mark--bold" },
+  { id: "cotto", name: "COTTO", className: "brand-mark brand-mark--wide" },
+  { id: "hafele", name: "HAFELE", className: "brand-mark brand-mark--sans" },
+  { id: "toa", name: "TOA", className: "brand-mark brand-mark--bold" },
+  { id: "jotun", name: "JOTUN", className: "brand-mark brand-mark--sans" },
+  { id: "tostem", name: "TOSTEM", className: "brand-mark brand-mark--wide" },
   {
-    id: "aura-living",
-    name: "AURA LIVING",
-    className: "brand-mark brand-mark--aura",
-  },
-  {
-    id: "kronos-steel",
-    name: "KRONOS STEEL",
-    className: "brand-mark brand-mark--kronos",
-  },
-  {
-    id: "lumina-glass",
-    name: "LUMINA GLASS",
-    className: "brand-mark brand-mark--lumina",
-  },
-  {
-    id: "vanguard",
-    name: "VANGUARD",
-    className: "brand-mark brand-mark--vanguard",
-  },
-  {
-    id: "terracraft",
-    name: "TERRACRAFT",
-    className: "brand-mark brand-mark--terracraft",
+    id: "bangkok-glass",
+    name: "Bangkok Glass (BG)",
+    className: "brand-mark brand-mark--split",
     parts: [
-      { text: "TERRA", className: "brand-mark__terra" },
-      { text: "CRAFT", className: "brand-mark__craft" },
+      { text: "BG", className: "brand-mark__lead" },
+      { text: "BANGKOK GLASS", className: "brand-mark__sub" },
     ],
   },
+  { id: "panasonic", name: "Panasonic", className: "brand-mark brand-mark--title" },
+  { id: "homepro", name: "HomePro", className: "brand-mark brand-mark--title" },
+  { id: "global-house", name: "Global House", className: "brand-mark brand-mark--title" },
+  { id: "shera", name: "Shera", className: "brand-mark brand-mark--sans" },
   {
-    id: "zenith-spatial",
-    name: "ZENITH SPATIAL",
-    className: "brand-mark brand-mark--zenith",
+    id: "diamond",
+    name: "Diamond (ตราเพชร)",
+    className: "brand-mark brand-mark--split",
+    parts: [
+      { text: "DIAMOND", className: "brand-mark__lead" },
+      { text: "ตราเพชร", className: "brand-mark__thai" },
+    ],
+  },
+  { id: "q-con", name: "Q-Con", className: "brand-mark brand-mark--bold" },
+  { id: "dos", name: "DOS", className: "brand-mark brand-mark--bold" },
+  { id: "beger", name: "Beger", className: "brand-mark brand-mark--title" },
+  { id: "mitsubishi", name: "Mitsubishi", className: "brand-mark brand-mark--title" },
+  {
+    id: "american-standard",
+    name: "American Standard",
+    className: "brand-mark brand-mark--wide",
   },
   {
-    id: "nox-acoustics",
-    name: "NOX ACOUSTICS",
-    className: "brand-mark brand-mark--nox",
+    id: "scg-smart-living",
+    name: "SCG Smart Living",
+    className: "brand-mark brand-mark--title",
   },
-  {
-    id: "solaria-energy",
-    name: "SOLARIA ENERGY",
-    className: "brand-mark brand-mark--solaria",
-  },
-  {
-    id: "atrium-green",
-    name: "ATRIUM GREEN",
-    className: "brand-mark brand-mark--atrium",
-  },
-  {
-    id: "apex-timber",
-    name: "APEX TIMBER",
-    className: "brand-mark brand-mark--apex",
-  },
+  { id: "wha", name: "WHA", className: "brand-mark brand-mark--bold" },
 ];
 
-/** Pixels per second — steady, readable cruise. */
-const SPEED_PX_PER_SEC = 42;
+/** Pixels per second — slow enough to read brand names comfortably. */
+const SPEED_PX_PER_SEC = 26;
 
 function BrandLabel({ brand }: { brand: BrandMark }) {
   if (brand.parts?.length) {

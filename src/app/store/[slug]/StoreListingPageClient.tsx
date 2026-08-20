@@ -24,6 +24,7 @@ import {
   buildListingGalleryUrls,
 } from "@/components/store/ListingImageCarousel";
 import { ListingCreatorByline } from "@/components/store/ListingCreatorByline";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import {
   ListingPurchasePanel,
   type ListingPurchaseSelection,
@@ -529,14 +530,21 @@ export default function StoreListingPageClient({
                     ))}
                   </div>
 
-                  <div className="flex min-h-[240px] items-center justify-center bg-[#f8fafc] p-3 sm:min-h-[420px] sm:p-8">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={activeFloorUrl}
-                      alt={L(`Floor plan ${floorIndex + 1}`, `แปลนชั้นที่ ${floorIndex + 1}`)}
-                      className="max-h-[70vh] w-full max-w-4xl object-contain transition-transform duration-300 sm:max-h-[560px]"
+                  <div className="relative flex min-h-[240px] items-center justify-center overflow-hidden bg-[#f8fafc] p-3 sm:min-h-[420px] sm:p-8">
+                    <div
+                      className="relative h-[min(70vh,560px)] w-full max-w-4xl"
                       style={{ transform: flipped ? "scaleX(-1)" : undefined }}
-                    />
+                    >
+                      <OptimizedImage
+                        key={activeFloorUrl}
+                        src={activeFloorUrl}
+                        alt={L(`Floor plan ${floorIndex + 1}`, `แปลนชั้นที่ ${floorIndex + 1}`)}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 896px"
+                        quality={80}
+                        className="object-contain"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 border-t border-slate-100 p-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-4 sm:px-4 sm:py-3">

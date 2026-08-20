@@ -20,7 +20,14 @@ function isStandalone(): boolean {
 
 function isMobileDevice(): boolean {
   if (typeof navigator === "undefined") return false;
-  return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+  const uaMobile = /android|iphone|ipad|ipod|mobile|webos|blackberry|opera mini/i.test(
+    navigator.userAgent,
+  );
+  // Also treat narrow touch viewports as mobile (responsive desktop UA).
+  const narrowTouch =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px) and (pointer: coarse)").matches;
+  return uaMobile || narrowTouch;
 }
 
 function isIos(): boolean {
@@ -43,11 +50,13 @@ export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
-  const [ios] = useState(isIos);
-  const [mobile] = useState(isMobileDevice);
+  const [ios, setIos] = useState(false);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
     setInstalled(isStandalone());
+    setIos(isIos());
+    setMobile(isMobileDevice());
 
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
@@ -111,6 +120,7 @@ export function usePwaInstall() {
     installed,
     installing,
     ios,
+    mobile,
     hasNativePrompt: Boolean(deferredPrompt),
     install,
     dismiss,

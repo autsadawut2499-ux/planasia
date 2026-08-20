@@ -5,6 +5,7 @@ import { useBilingual } from "@/components/landing/useBilingual";
 import { useSiteConfigOptional } from "@/context/SiteConfigContext";
 import { DEFAULT_CURATED_STYLES, captionForStyle } from "@/lib/admin/curated-styles";
 import { useApp } from "@/context/AppContext";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 /** Map curated / HOUSE_STYLES ids → store taxonomy `?style=` filters. */
 const STYLE_FILTER_ALIAS: Record<string, string> = {
@@ -38,14 +39,14 @@ export function FeaturedStyles() {
                 href={`/store?style=${encodeURIComponent(styleParam)}`}
                 className="group relative aspect-[3/4] w-full shrink-0 overflow-hidden rounded-lg shadow-sm ring-1 ring-black/5"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <OptimizedImage
                   key={tile.imageUrl}
                   src={tile.imageUrl}
                   alt={label}
-                  loading="lazy"
-                  decoding="async"
-                  className="media-cover transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  quality={70}
+                  className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <span className="absolute bottom-3 left-3 rounded bg-[#1e3a5f] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white">

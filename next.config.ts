@@ -19,7 +19,9 @@ const nextConfig: NextConfig = {
     deviceSizes: [360, 480, 640, 768, 1024, 1280, 1536, 1920],
     imageSizes: [64, 96, 128, 256, 384],
     // Short TTL so replaced listing/vendor images via next/image update quickly.
+    // Prefer small responsive widths for cards; Next serves AVIF/WebP automatically.
     minimumCacheTTL: 60,
+    dangerouslyAllowSVG: false,
     remotePatterns: [
       {
         protocol: "https",

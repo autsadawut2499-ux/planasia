@@ -7,6 +7,7 @@ import { useApp } from "@/context/AppContext";
 import { useStoreBrowse } from "@/context/StoreBrowseContext";
 import { useStoreViewer } from "@/hooks/useStoreViewer";
 import { ListingCreatorByline } from "@/components/store/ListingCreatorByline";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { listingStorePath } from "@/lib/seo/slug";
 import type { StoreListing } from "@/lib/store/db";
 
@@ -68,8 +69,19 @@ export function StoreFavoritesDrawer() {
             <ul className="divide-y divide-border px-5">
               {favoriteListings.map((item) => (
                 <li key={item.id} className="flex gap-3 py-4">
-                  <Link href={listingStorePath(item.slug)} onClick={() => setFavoritesDrawerOpen(false)}>
-                    <img src={item.image} alt={item.name} className="h-16 w-20 rounded-lg object-cover" />
+                  <Link
+                    href={listingStorePath(item.slug)}
+                    onClick={() => setFavoritesDrawerOpen(false)}
+                    className="relative block h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100"
+                  >
+                    <OptimizedImage
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      sizes="80px"
+                      quality={65}
+                      className="object-cover"
+                    />
                   </Link>
                   <div className="min-w-0 flex-1">
                     <Link

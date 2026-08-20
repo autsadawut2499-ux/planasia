@@ -32,6 +32,23 @@ function listingSeoDescription(listing: StoreListing): string {
   );
 }
 
+/** Absolute image URLs for Product rich results (relative paths fail Google validation). */
+function listingProductImages(listing: StoreListing): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of [
+    listing.image,
+    ...(listing.renderUrls ?? []),
+    ...(listing.floorPlanUrls ?? []),
+  ]) {
+    const u = String(raw ?? "").trim();
+    if (!u || seen.has(u)) continue;
+    seen.add(u);
+    out.push(absolute(u));
+  }
+  return out.slice(0, 10);
+}
+
 /** Product schema with price, availability, and (when present) AggregateRating + reviews. */
 export function buildListingProductJsonLd(
   listing: StoreListing,
@@ -39,6 +56,13 @@ export function buildListingProductJsonLd(
 ): Record<string, unknown> {
   const currency = listing.priceBreakdown?.currency ?? "THB";
   const url = absolute(listingStorePath(listing.slug));
+  const images = listingProductImages(listing);
+  if (images.length === 0) {
+    images.push(`${getSiteUrl()}/icon.png`);
+  }
+  // Google Merchant / Product snippets prefer a far-future priceValidUntil for evergreen digital goods.
+  const priceValidUntil = new Date();
+  priceValidUntil.setFullYear(priceValidUntil.getFullYear() + 1);
 
   const additionalProperty = [
     { "@type": "PropertyValue", name: "Bedrooms", value: listing.beds },
@@ -61,21 +85,52 @@ export function buildListingProductJsonLd(
     "@id": `${url}#product`,
     name: listingSeoName(listing),
     description: listingSeoDescription(listing),
-    image: [listing.image, ...listing.floorPlanUrls].filter(Boolean),
+    url,
+    image: images,
     sku: listing.planId,
     mpn: listing.planId,
     category: listing.collection ?? listing.style,
     brand: { "@type": "Brand", name: ORG_NAME },
     offers: {
       "@type": "Offer",
+      "@id": `${url}#offer`,
       url,
       priceCurrency: currency,
-      price: listing.price,
+      price: Number(listing.price).toFixed(2),
+      priceValidUntil: priceValidUntil.toISOString().slice(0, 10),
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
-      // Digital PDF delivery.
+      // Digital PDF house-plan delivery (instant download).
       category: "https://schema.org/DigitalDocument",
-      seller: { "@type": "Organization", name: ORG_NAME, url: getSiteUrl() },
+      seller: { "@type": "Organization", "@id": `${getSiteUrl()}#organization`, name: ORG_NAME, url: getSiteUrl() },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: { "@type": "MonetaryAmount", value: "0", currency },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 0,
+            maxValue: 0,
+            unitCode: "DAY",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 0,
+            maxValue: 0,
+            unitCode: "DAY",
+          },
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "TH",
+        },
+      },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "TH",
+        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      },
     },
     additionalProperty,
   };
@@ -243,6 +298,12 @@ export function buildListingRealEstateJsonLd(listing: StoreListing): Record<stri
     listing.seoJsonLd && typeof listing.seoJsonLd === "object" ? listing.seoJsonLd : {};
 
   const currency = listing.priceBreakdown?.currency ?? "THB";
+  const images = listingProductImages(listing);
+  const storedImages = Array.isArray((stored as { image?: unknown }).image)
+    ? ((stored as { image: unknown[] }).image as unknown[])
+        .map((u) => absolute(String(u ?? "").trim()))
+        .filter(Boolean)
+    : [];
   return {
     ...fallback,
     ...stored,
@@ -252,14 +313,14 @@ export function buildListingRealEstateJsonLd(listing: StoreListing): Record<stri
     mainEntityOfPage: url,
     name: String(stored.name || listingSeoName(listing)),
     description: String(stored.description || listingSeoDescription(listing)),
-    image: fallback.image,
+    image: images.length > 0 ? images : storedImages.length > 0 ? storedImages : fallback.image,
     datePosted: listing.createdAt,
     numberOfBedrooms: listing.beds,
     numberOfBathroomsTotal: listing.baths,
     offers: {
       "@type": "Offer",
       url,
-      price: listing.price,
+      price: Number(listing.price).toFixed(2),
       priceCurrency: currency,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",

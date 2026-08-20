@@ -14,9 +14,9 @@ import { getSiteUrl } from "@/lib/seo/site-url";
 import { withMediaCacheBust } from "@/lib/media/cache-bust";
 import { getDraftsmanByKey } from "@/lib/vendors/directory";
 
-export const dynamic = "force-dynamic";
 export const dynamicParams = true;
-export const revalidate = 0;
+/** ISR profile pages — bust via revalidatePath when vendor profile updates. */
+export const revalidate = 1800;
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -30,7 +30,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description:
       data.card.headline ??
       `ผลงานแบบบ้านและแปลนพิมพ์เขียวโดย ${data.card.displayName} — ${data.card.planCount} แบบบน Planasia`,
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      languages: {
+        "th-TH": canonical,
+        "en-US": `${canonical}?lang=en`,
+        "x-default": canonical,
+      },
+    },
+    openGraph: {
+      type: "profile",
+      url: canonical,
+      siteName: "Planasia",
+      title: data.card.displayName,
+      description: data.card.headline ?? undefined,
+      images: data.card.avatarUrl ? [{ url: data.card.avatarUrl }] : undefined,
+    },
   };
 }
 

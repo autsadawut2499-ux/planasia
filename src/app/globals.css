@@ -457,6 +457,7 @@
 
   .store-card__media {
     position: relative;
+    isolation: isolate;
     width: 100%;
     flex-shrink: 0;
     overflow: hidden;
@@ -464,15 +465,22 @@
     background-color: var(--color-surface-raised, #f1f5f9);
   }
 
-  .store-card__media > img {
-    position: absolute;
+  /* Native <img> fallback + Next.js Image fill wrapper */
+  .store-card__media > img,
+  .store-card__media > span {
+    position: absolute !important;
     inset: 0;
+    z-index: 0;
     display: block;
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
     max-width: none;
+  }
+
+  .store-card__media img {
     object-fit: cover;
     object-position: center;
+    background-color: var(--color-surface-raised, #f1f5f9);
   }
 
   .store-card__body {
@@ -705,12 +713,16 @@
     }
   }
 
-  .hero-cover > img {
-    position: absolute;
+  .hero-cover > img,
+  .hero-cover > span {
+    position: absolute !important;
     inset: 0;
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
     max-width: none;
+  }
+
+  .hero-cover img {
     object-fit: cover;
     object-position: center;
   }
@@ -1551,138 +1563,95 @@
   display: inline-flex;
   flex-flow: row nowrap;
   align-items: baseline;
+  gap: 0.35em;
   color: inherit;
   user-select: none;
   white-space: nowrap;
 }
 
-/* 1. AURA LIVING — light sans, wide tracking, luxury furniture */
-.brand-mark--aura {
-  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 300;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  padding-right: 0.2em;
-}
-
-/* 2. KRONOS STEEL — bold geometric, sharp / structural */
-.brand-mark--kronos {
-  font-family: var(--font-montserrat), var(--font-brand), system-ui, sans-serif;
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-stretch: condensed;
-}
-
-/* 3. LUMINA GLASS — sleek serif, slight italic */
-.brand-mark--lumina {
-  font-family: "Times New Roman", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  font-size: 1.12rem;
-  font-weight: 500;
-  font-style: italic;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-/* 4. VANGUARD — futuristic tech / smart-home AI */
-.brand-mark--vanguard {
-  font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-}
-
-/* 5. TERRACRAFT — classic serif + modern sans mix */
-.brand-mark--terracraft {
-  gap: 0.05em;
-  font-size: 1.05rem;
-  text-transform: uppercase;
-}
-
-.brand-mark__terra {
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.brand-mark__craft {
-  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-}
-
-/* 6. ZENITH SPATIAL — clean minimalist architectural studio */
-.brand-mark--zenith {
-  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
-  font-size: 0.92rem;
-  font-weight: 400;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-}
-
-/* 7. NOX ACOUSTICS — heavy bold solid soundproofing */
-.brand-mark--nox {
+.brand-mark--bold {
   font-family: var(--font-montserrat), var(--font-brand), system-ui, sans-serif;
   font-size: 1.08rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-}
-
-/* 8. SOLARIA ENERGY — soft rounded clean energy */
-.brand-mark--solaria {
-  font-family: var(--font-prompt), var(--font-sans), system-ui, sans-serif;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border-radius: 999px;
-}
-
-/* 9. ATRIUM GREEN — clean natural line / green architecture */
-.brand-mark--atrium {
-  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 300;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.28em;
-  text-decoration-color: currentColor;
-}
-
-/* 10. APEX TIMBER — tall bold premium engineered wood */
-.brand-mark--apex {
-  font-family: var(--font-montserrat), var(--font-brand), system-ui, sans-serif;
-  font-size: 1.28rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  line-height: 1;
+}
+
+.brand-mark--sans {
+  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brand-mark--wide {
+  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  padding-right: 0.15em;
+}
+
+.brand-mark--title {
+  font-family: var(--font-prompt), var(--font-sans), system-ui, sans-serif;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.brand-mark--split {
+  align-items: center;
+  gap: 0.45em;
+}
+
+.brand-mark__lead {
+  font-family: var(--font-montserrat), var(--font-brand), system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand-mark__sub {
+  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.brand-mark__thai {
+  font-family: var(--font-sarabun), var(--font-sans), system-ui, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 @media (max-width: 640px) {
   .partner-brand-marquee {
-    --partner-brand-gap: 2.75rem;
+    --partner-brand-gap: 2.5rem;
     padding: 1.1rem 0;
   }
 
-  .partner-brand-marquee__track {
-    animation-duration: 34s;
+  .brand-mark--bold {
+    font-size: 0.95rem;
   }
 
-  .brand-mark--aura,
-  .brand-mark--zenith,
-  .brand-mark--atrium {
+  .brand-mark--sans,
+  .brand-mark--title {
+    font-size: 0.9rem;
+  }
+
+  .brand-mark--wide {
     font-size: 0.82rem;
+    letter-spacing: 0.2em;
   }
 
-  .brand-mark--apex {
-    font-size: 1.05rem;
+  .brand-mark__sub {
+    font-size: 0.65rem;
   }
 }
 

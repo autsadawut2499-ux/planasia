@@ -5,6 +5,7 @@ import { useBilingual } from "@/components/landing/useBilingual";
 import { useApp } from "@/context/AppContext";
 import { useSiteConfigOptional } from "@/context/SiteConfigContext";
 import { openAiPlanChat } from "@/components/chat/AiPlanChat";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/admin/defaults";
 
 const FALLBACK_HERO_IMAGE = DEFAULT_SITE_SETTINGS.hero.backgroundImageUrl;
@@ -44,11 +45,15 @@ export function HeroSearch() {
   return (
     <section className="relative w-full">
       <div className="hero-cover">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <OptimizedImage
           key={coverImage}
           src={coverImage}
           alt={L("Featured house cover", "ภาพปกแบบบ้านหน้าแรก")}
+          fill
+          sizes="100vw"
+          priority
+          quality={78}
+          className="object-cover"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
       </div>

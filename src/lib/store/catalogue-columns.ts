@@ -50,6 +50,7 @@ export const STORE_LISTING_CATALOGUE_SELECT = [
   "is_published",
   "seo_title",
   "seo_description",
+  "seo_generated_at",
   // Needed only to derive hasCadFiles / hasCalcSheets / hasBoqFiles flags.
   "cad_file_urls",
   "calc_sheet_urls",

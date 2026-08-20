@@ -9,6 +9,8 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { nextOptimizedImageSrc } from "@/lib/media/can-optimize-image";
 
 /** Primary cover + extra renders, deduped, stable order. */
 export function buildListingGalleryUrls(listing: {
@@ -35,12 +37,24 @@ interface ListingImageCarouselProps {
   imgClassName?: string;
 }
 
+/** Warm browser cache with Next-optimized (WebP/AVIF) URLs, not raw originals. */
+function preloadUrl(src: string): void {
+  if (!src || typeof window === "undefined") return;
+  const img = new window.Image();
+  img.decoding = "async";
+  img.src = nextOptimizedImageSrc(src, 1200, 75);
+}
+
+/**
+ * Instant single-image carousel using OptimizedImage (WebP/AVIF via Next).
+ * One image node at a time — keyed so the previous unmounts immediately.
+ */
 export function ListingImageCarousel({
   images,
   alt,
   className = "",
   frameClassName = "relative aspect-[4/3] touch-pan-y bg-slate-50 p-2 sm:aspect-[16/10] sm:p-5 lg:aspect-[4/3]",
-  imgClassName = "h-full w-full select-none rounded-lg object-contain sm:rounded-xl",
+  imgClassName = "object-contain",
 }: ListingImageCarouselProps) {
   const urls = useMemo(
     () => images.map((u) => String(u ?? "").trim()).filter(Boolean),
@@ -51,13 +65,23 @@ export function ListingImageCarousel({
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
+  const total = urls.length;
+  const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
+  const current = urls[safeIndex] ?? "";
+
   useEffect(() => {
     setIndex(0);
   }, [galleryKey]);
 
-  const total = urls.length;
-  const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
-  const current = urls[safeIndex] ?? "";
+  useEffect(() => {
+    for (const src of urls) preloadUrl(src);
+  }, [urls]);
+
+  useEffect(() => {
+    if (total <= 1) return;
+    preloadUrl(urls[(safeIndex + 1) % total] ?? "");
+    preloadUrl(urls[(safeIndex - 1 + total) % total] ?? "");
+  }, [safeIndex, total, urls]);
 
   const go = useCallback(
     (delta: number) => {
@@ -109,18 +133,22 @@ export function ListingImageCarousel({
         const endY = e.changedTouches[0]?.clientY ?? startY ?? 0;
         const dx = endX - startX;
         const dy = endY - (startY ?? endY);
-        // Prefer horizontal swipe; ignore mostly-vertical scrolls.
         if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy)) return;
         go(dx < 0 ? 1 : -1);
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={current}
-        alt={total > 1 ? `${alt} (${safeIndex + 1}/${total})` : alt}
-        className={imgClassName}
-        draggable={false}
-      />
+      <div className="relative isolate h-full w-full overflow-hidden rounded-lg bg-slate-100 sm:rounded-xl">
+        <OptimizedImage
+          key={`${safeIndex}-${current}`}
+          src={current}
+          alt={total > 1 ? `${alt} (${safeIndex + 1}/${total})` : alt}
+          fill
+          sizes="(max-width: 1024px) 100vw, 60vw"
+          priority={safeIndex === 0}
+          quality={75}
+          className={imgClassName}
+        />
+      </div>
 
       {total > 1 && (
         <>
@@ -152,7 +180,7 @@ export function ListingImageCarousel({
                 className="flex h-8 w-8 items-center justify-center sm:h-7 sm:w-7"
               >
                 <span
-                  className={`block rounded-full transition-all ${
+                  className={`block rounded-full ${
                     i === safeIndex
                       ? "h-2 w-5 bg-white sm:h-1.5 sm:w-4"
                       : "h-2 w-2 bg-white/55 sm:h-1.5 sm:w-1.5"

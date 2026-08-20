@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { PwaLoginInstallWatcher } from "@/components/pwa/PwaLoginInstallWatcher";
+import { PwaMobileInstallWatcher } from "@/components/pwa/PwaMobileInstallWatcher";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 
 export function PwaProvider({ children }: { children: ReactNode }) {
   return (
     <>
       <ServiceWorkerRegister />
-      <PwaLoginInstallWatcher />
+      <PwaMobileInstallWatcher />
       {children}
     </>
   );

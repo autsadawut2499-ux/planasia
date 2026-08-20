@@ -20,7 +20,10 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { SellerEntryButton } from "@/components/layout/SellerEntryButton";
-import { MobileNavDrawer } from "@/components/ui/MobileNavDrawer";
+import {
+  MobileNavDrawer,
+  type MobileNavLink,
+} from "@/components/ui/MobileNavDrawer";
 import { useApp } from "@/context/AppContext";
 import { useStoreBrowseOptional } from "@/context/StoreBrowseContext";
 import { useStoreCartOptional } from "@/context/StoreCartContext";
@@ -72,10 +75,16 @@ export function LandingHeader() {
   const homeBuildingLabel = L("Home Building", "รับสร้างบ้าน");
   const draftsmenLabel = translate("nav.findDraftsman");
 
-  const mobileLinks: NavItem[] = [
+  const mobileLinks: MobileNavLink[] = [
     { href: "/", label: translate("nav.home") },
-    { href: "/store", label: storeLabel },
-    ...collectionItems,
+    {
+      href: "/store",
+      label: storeLabel,
+      children: [
+        { href: "/store", label: L("All house plans", "แบบบ้านทั้งหมด") },
+        ...collectionItems,
+      ],
+    },
     { href: "/whats-included", label: planIncludesLabel },
     { href: "/articles", label: articlesLabel },
     { href: "/loan-consultation", label: loanConsultLabel },
@@ -285,93 +294,20 @@ export function LandingHeader() {
         links={mobileLinks}
         variant="light"
         footer={
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2 md:hidden">
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  openWishlist();
-                }}
-                className="relative flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
-              >
-                <Heart className="h-4 w-4" />
-                {translate("nav.wishlist")}
-                {favoriteCount > 0 && (
-                  <span className="absolute right-2 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1e40af] px-1 text-[10px] font-semibold text-white">
-                    {favoriteCount}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  openCart();
-                }}
-                className="relative flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                {translate("nav.cart")}
-                {cartCount > 0 && (
-                  <span className="absolute right-2 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1e40af] px-1 text-[10px] font-semibold text-white">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2 md:hidden">
-              <LanguageToggle variant="light" />
+          <div className="flex flex-col gap-2.5 md:hidden">
+            <div className="w-full [&_button.header-control]:flex [&_button.header-control]:h-11 [&_button.header-control]:min-h-11 [&_button.header-control]:w-full [&_button.header-control]:justify-center [&_button.header-control]:rounded-lg [&_button.header-control]:text-sm">
+              <LanguageToggle variant="light" className="block w-full" />
             </div>
             {PUBLIC_SELLER_SELF_LISTING_ENABLED ? (
               <Link
                 href="/dashboard/draftsman"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A2744] py-2.5 text-sm font-semibold text-white md:hidden"
+                className="flex w-full min-h-11 items-center justify-center gap-2 rounded-lg bg-[#1A2744] px-3 py-2.5 text-sm font-semibold text-white"
               >
-                <PenLine className="h-4 w-4" />
+                <PenLine className="h-4 w-4 shrink-0" />
                 {translate("nav.seller")}
               </Link>
             ) : null}
-            {status === "authenticated" ? (
-              <div className="space-y-2 md:hidden">
-                <Link
-                  href="/purchases"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
-                >
-                  <Package className="h-4 w-4" />
-                  {L("My purchases", "การซื้อของฉัน")}
-                </Link>
-                {PUBLIC_SELLER_SELF_LISTING_ENABLED ? (
-                  <Link
-                    href="/dashboard/draftsman"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
-                  >
-                    <UserRound className="h-4 w-4" />
-                    {L("Seller dashboard", "แดชบอร์ดผู้เขียนแบบ")}
-                  </Link>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {L("Sign out", "ออกจากระบบ")}
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => signIn("google")}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-medium text-text-primary md:hidden"
-              >
-                <CircleUser className="h-5 w-5" strokeWidth={1.6} aria-hidden />
-                {translate("nav.signIn")}
-              </button>
-            )}
           </div>
         }
       />

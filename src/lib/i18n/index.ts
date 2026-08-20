@@ -431,6 +431,7 @@ export type TranslationKey =
   | "store.globalBanner.aria"
   | "pwa.installTitle"
   | "pwa.installSubtitle"
+  | "pwa.firstVisitSubtitle"
   | "pwa.benefit1"
   | "pwa.benefit2"
   | "pwa.benefit3"
@@ -1049,6 +1050,7 @@ const translations: Translations = {
     "store.globalBanner.aria": "International language support",
     "pwa.installTitle": "Install Planasia App",
     "pwa.installSubtitle": "Add to your home screen for instant access to house plans and purchases.",
+    "pwa.firstVisitSubtitle": "Install Planasia on your phone for the best experience — open it like a native app from your home screen.",
     "pwa.benefit1": "One-tap access to the House Plan Store",
     "pwa.benefit2": "Works offline for cached pages",
     "pwa.benefit3": "Full-screen app experience on mobile",
@@ -1659,6 +1661,7 @@ const translations: Translations = {
     "store.globalBanner.aria": "รองรับหลายภาษาระดับสากล",
     "pwa.installTitle": "ติดตั้งแอป Planasia",
     "pwa.installSubtitle": "เพิ่มไปหน้าจอหลักเพื่อเข้าถึงร้านแบบบ้านและประวัติการซื้อได้ทันที",
+    "pwa.firstVisitSubtitle": "ติดตั้ง Planasia บนมือถือเพื่อประสบการณ์ที่ดีที่สุด — เปิดใช้งานได้เหมือนแอปจริงจากหน้าจอหลัก",
     "pwa.benefit1": "เข้าร้านแบบบ้านได้ในคลิกเดียว",
     "pwa.benefit2": "ใช้งานหน้าที่แคชไว้ได้แม้ไม่มีอินเทอร์เน็ต",
     "pwa.benefit3": "ประสบการณ์เต็มจอเหมือนแอปจริง",
@@ -2264,6 +2267,7 @@ const translations: Translations = {
     "store.globalBanner.aria": "अंतर्राष्ट्रीय भाषा समर्थन",
     "pwa.installTitle": "Planasia ऐप इंस्टॉल करें",
     "pwa.installSubtitle": "हाउस प्लान और खरीदारी के लिए होम स्क्रीन पर जोड़ें।",
+    "pwa.firstVisitSubtitle": "बेहतर अनुभव के लिए Planasia को फ़ोन पर इंस्टॉल करें — होम स्क्रीन से ऐप की तरह खोलें।",
     "pwa.benefit1": "स्टोर तक एक-टैप पहुँच",
     "pwa.benefit2": "कैश पेज Offline भी",
     "pwa.benefit3": "मोबाइल पर पूर्ण ऐप अनुभव",
@@ -2869,6 +2873,7 @@ const translations: Translations = {
     "store.globalBanner.aria": "Hỗ trợ đa ngôn ngữ quốc tế",
     "pwa.installTitle": "Cài đặt ứng dụng Planasia",
     "pwa.installSubtitle": "Thêm vào màn hình chính để truy cập cửa hàng và lịch sử mua hàng nhanh hơn.",
+    "pwa.firstVisitSubtitle": "Cài Planasia trên điện thoại để trải nghiệm tốt nhất — mở như ứng dụng từ màn hình chính.",
     "pwa.benefit1": "Truy cập Store một chạm",
     "pwa.benefit2": "Dùng trang đã lưu khi Offline",
     "pwa.benefit3": "Trải nghiệm toàn màn hình như app",

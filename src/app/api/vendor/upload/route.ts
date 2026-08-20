@@ -290,8 +290,8 @@ async function proxyUpload(request: NextRequest, ownerKey: string) {
   if (!isDocKind(kind)) {
     try {
       const compressed = await compressImageBuffer(buffer, file.name, {
-        maxEdge: kind === "kyc" ? 1600 : undefined,
-        quality: kind === "kyc" ? 85 : undefined,
+        maxEdge: 1600,
+        quality: kind === "kyc" ? 85 : 78,
       });
       uploadBuffer = Buffer.from(compressed.buffer);
       uploadType = compressed.contentType;

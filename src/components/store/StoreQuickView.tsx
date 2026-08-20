@@ -12,6 +12,7 @@ import {
   ListingImageCarousel,
   buildListingGalleryUrls,
 } from "@/components/store/ListingImageCarousel";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import type { StoreListing } from "@/lib/store/db";
 import {
   PreCheckoutWizard,
@@ -110,14 +111,19 @@ export function StoreQuickView({ listing, onClose, onBuy, onAddToCart, inCart }:
               />
             ) : (
               <div className="relative aspect-[4/3] p-2 sm:p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={floorUrls[floorIndex] || listing.image}
-                  alt={listing.name}
-                  className="h-full w-full rounded-lg object-contain"
-                />
+                <div className="relative h-full w-full overflow-hidden rounded-lg bg-slate-100">
+                  <OptimizedImage
+                    key={floorUrls[floorIndex] || listing.image}
+                    src={floorUrls[floorIndex] || listing.image}
+                    alt={listing.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={75}
+                    className="object-contain"
+                  />
+                </div>
                 {floorUrls.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-0.5 rounded-full bg-black/35 px-1 py-1">
+                  <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-0.5 rounded-full bg-black/35 px-1 py-1">
                     {floorUrls.map((_, i) => (
                       <button
                         key={i}
