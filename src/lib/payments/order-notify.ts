@@ -1,8 +1,9 @@
 import "server-only";
 
 import type { CartOrder, CartOrderItem } from "@/lib/store/cart-orders";
-import { getListingById } from "@/lib/store/db";
-import { listingSupplierName } from "@/lib/store/listing-supplier";
+import {
+  loadOrderItemFulfilment,
+} from "@/lib/payments/order-item-fulfilment";
 import { pushLineTextMessage } from "@/lib/line/push-text";
 import { toE164Phone } from "@/lib/sms/phone";
 import { isSmsConfigured, sendSms } from "@/lib/sms/send";
@@ -37,37 +38,28 @@ function baht(n: number | null | undefined): string {
   return `฿${Math.round(n).toLocaleString("th-TH")}`;
 }
 
-function listingSaleNote(listing: Awaited<ReturnType<typeof getListingById>>): string {
-  const text =
-    listing?.tagline?.trim() ||
-    listing?.pitch?.trim() ||
-    listing?.description?.trim() ||
-    "";
-  if (!text) return "—";
-  return text.replace(/\s+/g, " ").slice(0, 240);
-}
-
-async function formatOrderLine(item: CartOrderItem, index: number): Promise<string> {
-  const listing = await getListingById(item.listingId).catch(() => null);
-  const supplier = listingSupplierName(listing) || listing?.supplierName?.trim() || "—";
-  const originalCode = listing?.sourcePlanCode?.trim() || "—";
-  const cost = listing?.costPrice != null ? baht(listing.costPrice) : "—";
-  const note = listingSaleNote(listing);
+async function formatOrderLine(
+  item: CartOrderItem,
+  index: number,
+  orderNote: string,
+): Promise<string> {
+  const row = await loadOrderItemFulfilment(item, orderNote);
 
   return [
     `รายการ ${index + 1}`,
-    `แบบบ้าน: ${item.planId} — ${item.name}`,
-    `ราคาขาย: ${baht(item.price)}`,
-    `ซัพพลายเออร์: ${supplier}`,
-    `รหัสบ้านต้นทาง: ${originalCode}`,
-    `ราคาต้นทุน: ${cost}`,
-    `โน้ต: ${note}`,
+    `แบบบ้าน: ${row.housePlanId} — ${row.planName}`,
+    `ราคาขาย: ${baht(row.salePrice)}`,
+    `ซัพพลายเออร์: ${row.supplierName}`,
+    `รหัสบ้านต้นทาง (Original House Code): ${row.originalHouseCode}`,
+    `โน้ต (Note): ${row.note}`,
+    `ราคาต้นทุน: ${row.costPrice != null ? baht(row.costPrice) : "—"}`,
   ].join("\n");
 }
 
 async function buildAdminLineText(order: CartOrder): Promise<string> {
+  const orderNote = order.shippingAddress?.notes?.trim() || "";
   const itemBlocks = await Promise.all(
-    order.items.map((item, i) => formatOrderLine(item, i)),
+    order.items.map((item, i) => formatOrderLine(item, i, orderNote)),
   );
   const sitePlan = order.sitePlanInfo
     ? [
@@ -78,7 +70,6 @@ async function buildAdminLineText(order: CartOrder): Promise<string> {
         `โฉนด ${order.sitePlanInfo.landTitleDeedNumber}`,
       ].join("\n")
     : "";
-  const orderNote = order.shippingAddress?.notes?.trim() || "";
 
   return [
     "✅ มีการชำระเงินสำเร็จ (SlipMate)",
@@ -92,7 +83,6 @@ async function buildAdminLineText(order: CartOrder): Promise<string> {
     itemBlocks.join("\n\n") || "รายการ: —",
     sitePlan,
     "",
-    `หมายเหตุออเดอร์: ${orderNote || "—"}`,
     `แอดมิน: /admin/orders`,
   ]
     .filter((x) => x != null)

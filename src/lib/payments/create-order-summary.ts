@@ -1,9 +1,8 @@
 import "server-only";
 
 import { generateOrderSummaryPdf } from "@/lib/payments/order-summary-pdf";
+import { loadOrderItemFulfilment } from "@/lib/payments/order-item-fulfilment";
 import type { CartOrder } from "@/lib/store/cart-orders";
-import { getListingById } from "@/lib/store/db";
-import { listingSupplierName } from "@/lib/store/listing-supplier";
 import { uploadPrivateBytes } from "@/lib/supabase/private-assets";
 import { updateCartOrderSummaryPdf } from "@/lib/store/cart-orders";
 
@@ -15,16 +14,20 @@ export async function createAndStoreOrderSummaryPdf(
   order: CartOrder,
 ): Promise<string | null> {
   try {
+    const orderNote = order.shippingAddress?.notes?.trim() || "";
     const lines = await Promise.all(
       order.items.map(async (item) => {
-        const listing = await getListingById(item.listingId);
+        const row = await loadOrderItemFulfilment(item, orderNote);
         return {
-          housePlanId: item.planId || listing?.planId || item.listingId,
-          supplierName:
-            listingSupplierName(listing) ||
-            listing?.supplierName ||
-            "—",
-          planName: item.name || listing?.name,
+          housePlanId: row.housePlanId,
+          supplierName: row.supplierName,
+          planName: row.planName,
+          originalHouseCode: row.originalHouseCode,
+          note: row.note,
+          costPrice:
+            row.costPrice != null
+              ? `฿${Math.round(row.costPrice).toLocaleString("th-TH")}`
+              : undefined,
         };
       }),
     );
@@ -40,6 +43,7 @@ export async function createAndStoreOrderSummaryPdf(
         dateStyle: "medium",
         timeStyle: "short",
       }),
+      orderNote: orderNote || undefined,
       sitePlanInfo: order.sitePlanInfo
         ? {
             provinceName: order.sitePlanInfo.provinceName,
