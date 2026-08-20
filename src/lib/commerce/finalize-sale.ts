@@ -17,6 +17,8 @@ import { splitSale } from "@/lib/commerce/commission";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import { notifyVendorsOfSale } from "@/lib/push/notify-sale";
 import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
+import { createAndStoreOrderSummaryPdf } from "@/lib/payments/create-order-summary";
+import { notifyAfterOrderPaid } from "@/lib/payments/order-notify";
 import {
   runPostPaymentTranslation,
   type PostPaymentTranslationResult,
@@ -62,6 +64,7 @@ export async function finalizePaidCartSale(opts: {
   planIds: string[];
   translation?: PostPaymentTranslationResult;
   emailSent?: boolean;
+  orderSummaryPdfPath?: string;
 } | null> {
   const order = await markCartOrderPaid(opts.cartOrderId, opts.stripeSessionId);
   if (!order) return null;
@@ -104,12 +107,33 @@ export async function finalizePaidCartSale(opts: {
       } catch (err) {
         console.error("[finalize-sale] buyer email failed", err);
       }
+      let orderSummaryPdfPath = enriched.orderSummaryPdfPath ?? null;
+      if (!orderSummaryPdfPath) {
+        try {
+          orderSummaryPdfPath = await createAndStoreOrderSummaryPdf(enriched);
+        } catch (err) {
+          console.error("[finalize-sale] order summary PDF failed", err);
+        }
+      }
+      try {
+        const notify = await notifyAfterOrderPaid({
+          ...enriched,
+          orderSummaryPdfPath: orderSummaryPdfPath ?? undefined,
+        });
+        console.info("[finalize-sale] order notifications (retry path)", {
+          orderId: enriched.id,
+          ...notify,
+        });
+      } catch (err) {
+        console.error("[finalize-sale] order notifications failed", err);
+      }
       return {
         order: enriched,
         grants,
         planIds: Array.from(new Set(existing.map((g) => g.planId))),
         translation,
         emailSent,
+        orderSummaryPdfPath: orderSummaryPdfPath ?? undefined,
       };
     }
   }
@@ -141,12 +165,35 @@ export async function finalizePaidCartSale(opts: {
     console.error("[finalize-sale] buyer email failed", err);
   }
 
+  // Admin fulfilment PDF: Customer Name, Phone, House Plan ID, Supplier Name.
+  let orderSummaryPdfPath: string | null = null;
+  try {
+    orderSummaryPdfPath = await createAndStoreOrderSummaryPdf(enriched);
+  } catch (err) {
+    console.error("[finalize-sale] order summary PDF failed", err);
+  }
+
+  // Buyer SMS + admin LINE OA push (never block fulfilment).
+  try {
+    const notify = await notifyAfterOrderPaid({
+      ...enriched,
+      orderSummaryPdfPath: orderSummaryPdfPath ?? enriched.orderSummaryPdfPath,
+    });
+    console.info("[finalize-sale] order notifications", {
+      orderId: enriched.id,
+      ...notify,
+    });
+  } catch (err) {
+    console.error("[finalize-sale] order notifications failed", err);
+  }
+
   return {
     order: enriched,
     grants,
     planIds: Array.from(new Set(order.items.map((i) => i.planId))),
     translation,
     emailSent,
+    orderSummaryPdfPath: orderSummaryPdfPath ?? undefined,
   };
 }
 

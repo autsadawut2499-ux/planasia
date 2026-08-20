@@ -22,7 +22,6 @@ export type TranslationKey =
   | "nav.chat"
   | "nav.bottomNav"
   | "nav.seller"
-  | "nav.sellerHint"
   | "nav.sellerAria"
   | "hero.title"
   | "hero.subtitle"
@@ -377,6 +376,7 @@ export type TranslationKey =
   | "store.filterFloors"
   | "store.filterBeds"
   | "store.filterBaths"
+  | "store.filterLivingRooms"
   | "store.filterStyle"
   | "store.filterCollection"
   | "store.filterProvince"
@@ -385,6 +385,7 @@ export type TranslationKey =
   | "store.specSqft"
   | "store.specBeds"
   | "store.specBaths"
+  | "store.specLivingRooms"
   | "store.specStories"
   | "store.viewPlan"
   | "store.viewExterior"
@@ -621,7 +622,7 @@ const translations: Translations = {
     "nav.housePlans": "House Plans",
     "nav.collections": "Collections",
     "nav.findDraftsman": "Architects & Designers",
-    "nav.aboutPlans": "Customer Service",
+    "nav.aboutPlans": "Home loan consultation",
     "nav.signIn": "Sign In",
     "nav.searchByPlan": "Search by Plan #",
     "nav.wishlist": "Wishlist",
@@ -631,7 +632,6 @@ const translations: Translations = {
     "nav.chat": "Chat",
     "nav.bottomNav": "Mobile navigation",
     "nav.seller": "ลงขายแบบ",
-    "nav.sellerHint": "For plan designers",
     "nav.sellerAria": "ลงขายแบบ — entry for architects and draftsmen who write house plans",
     "hero.title": "House Plans & Designs, Ready to Build",
     "hero.subtitle":
@@ -992,6 +992,7 @@ const translations: Translations = {
     "store.filterFloors": "Stories",
     "store.filterBeds": "Bedrooms",
     "store.filterBaths": "Bathrooms",
+    "store.filterLivingRooms": "Living rooms",
     "store.filterStyle": "Architectural Style",
     "store.filterCollection": "Collection",
     "store.filterProvince": "Province",
@@ -1000,6 +1001,7 @@ const translations: Translations = {
     "store.specSqft": "SQ FT",
     "store.specBeds": "BEDS",
     "store.specBaths": "BATHS",
+    "store.specLivingRooms": "LIVING",
     "store.specStories": "STORIES",
     "store.viewPlan": "View Plan",
     "store.viewExterior": "Exterior",
@@ -1230,7 +1232,7 @@ const translations: Translations = {
     "nav.housePlans": "แบบบ้าน",
     "nav.collections": "คอลเลกชัน",
     "nav.findDraftsman": "สถาปนิกและนักออกแบบ",
-    "nav.aboutPlans": "บริการลูกค้า",
+    "nav.aboutPlans": "ปรึกษาสินเชื่อบ้าน",
     "nav.signIn": "เข้าสู่ระบบ",
     "nav.searchByPlan": "ค้นหาด้วยรหัสแบบบ้าน",
     "nav.wishlist": "รายการโปรด",
@@ -1240,7 +1242,6 @@ const translations: Translations = {
     "nav.chat": "แชท",
     "nav.bottomNav": "เมนูนำทางมือถือ",
     "nav.seller": "ลงขายแบบ",
-    "nav.sellerHint": "สำหรับผู้เขียนแบบ",
     "nav.sellerAria": "ลงขายแบบ — ทางเข้าสำหรับสถาปนิกและนักออกแบบ",
     "hero.title": "แบบบ้านและดีไซน์ พร้อมสร้าง",
     "hero.subtitle":
@@ -1601,6 +1602,7 @@ const translations: Translations = {
     "store.filterFloors": "จำนวนชั้น",
     "store.filterBeds": "ห้องนอน",
     "store.filterBaths": "ห้องน้ำ",
+    "store.filterLivingRooms": "ห้องรับแขก",
     "store.filterStyle": "สไตล์สถาปัตย์",
     "store.filterCollection": "คอลเลกชัน",
     "store.filterProvince": "จังหวัด",
@@ -1609,6 +1611,7 @@ const translations: Translations = {
     "store.specSqft": "ตร.ม.",
     "store.specBeds": "ห้องนอน",
     "store.specBaths": "ห้องน้ำ",
+    "store.specLivingRooms": "ห้องรับแขก",
     "store.specStories": "ชั้น",
     "store.viewPlan": "ดูแบบ",
     "store.viewExterior": "รูปด้าน",
@@ -1839,13 +1842,12 @@ const translations: Translations = {
     "nav.housePlans": "House Plans",
     "nav.collections": "Collections",
     "nav.findDraftsman": "Architects & Designers",
-    "nav.aboutPlans": "Customer Service",
+    "nav.aboutPlans": "Home loan consultation",
     "nav.signIn": "Sign In",
     "nav.searchByPlan": "Search by Plan #",
     "nav.wishlist": "Wishlist",
     "nav.cart": "Cart",
     "nav.seller": "ลงขายแบบ",
-    "nav.sellerHint": "For plan designers",
     "nav.sellerAria": "ลงขายแบบ — entry for architects and draftsmen who write house plans",
     "hero.title": "House Plans & Designs, Ready to Build",
     "hero.subtitle":
@@ -2205,6 +2207,7 @@ const translations: Translations = {
     "store.filterFloors": "Stories",
     "store.filterBeds": "Bedrooms",
     "store.filterBaths": "Bathrooms",
+    "store.filterLivingRooms": "Living rooms",
     "store.filterStyle": "Style",
     "store.filterCollection": "Collection",
     "store.filterProvince": "Province",
@@ -2213,6 +2216,7 @@ const translations: Translations = {
     "store.specSqft": "SQ FT",
     "store.specBeds": "BEDS",
     "store.specBaths": "BATHS",
+    "store.specLivingRooms": "LIVING",
     "store.specStories": "STORIES",
     "store.viewPlan": "View Plan",
     "store.viewExterior": "Exterior",
@@ -2443,13 +2447,12 @@ const translations: Translations = {
     "nav.housePlans": "House Plans",
     "nav.collections": "Collections",
     "nav.findDraftsman": "Architects & Designers",
-    "nav.aboutPlans": "Customer Service",
+    "nav.aboutPlans": "Home loan consultation",
     "nav.signIn": "Sign In",
     "nav.searchByPlan": "Search by Plan #",
     "nav.wishlist": "Wishlist",
     "nav.cart": "Cart",
     "nav.seller": "ลงขายแบบ",
-    "nav.sellerHint": "For plan designers",
     "nav.sellerAria": "ลงขายแบบ — entry for architects and draftsmen who write house plans",
     "hero.title": "House Plans & Designs, Ready to Build",
     "hero.subtitle":
@@ -2809,6 +2812,7 @@ const translations: Translations = {
     "store.filterFloors": "Tầng",
     "store.filterBeds": "Phòng ngủ",
     "store.filterBaths": "Phòng tắm",
+    "store.filterLivingRooms": "Phòng khách",
     "store.filterStyle": "Phong cách",
     "store.filterCollection": "Bộ sưu tập",
     "store.filterProvince": "Tỉnh",
@@ -2817,6 +2821,7 @@ const translations: Translations = {
     "store.specSqft": "M²",
     "store.specBeds": "PN",
     "store.specBaths": "PT",
+    "store.specLivingRooms": "PK",
     "store.specStories": "TẦNG",
     "store.viewPlan": "Xem bản vẽ",
     "store.viewExterior": "Mặt ngoài",

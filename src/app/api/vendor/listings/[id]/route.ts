@@ -5,14 +5,27 @@ import {
   supabaseSetListingPublished,
 } from "@/lib/supabase/store-listings";
 import { revalidateStoreSurfaces } from "@/lib/store/revalidate-store";
+import { PUBLIC_SELLER_SELF_LISTING_ENABLED } from "@/lib/features/public-seller";
 
 export const dynamic = "force-dynamic";
+
+function publicSellerClosedResponse() {
+  return NextResponse.json(
+    {
+      error: "Public seller listing is temporarily closed",
+      message: "ขณะนี้ปิดการลงขายจากผู้เขียนแบบชั่วคราว — แบบบ้านลงโดยแอดมินเท่านั้น",
+    },
+    { status: 403 },
+  );
+}
 
 /** Hide / unpublish (or republish) without deleting the listing. */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!PUBLIC_SELLER_SELF_LISTING_ENABLED) return publicSellerClosedResponse();
+
   const auth = await requireVendorSession(request);
   if (!auth.ok) return auth.response;
 
@@ -54,6 +67,8 @@ export async function PATCH(
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!PUBLIC_SELLER_SELF_LISTING_ENABLED) return publicSellerClosedResponse();
+
   const auth = await requireVendorSession(request);
   if (!auth.ok) return auth.response;
 

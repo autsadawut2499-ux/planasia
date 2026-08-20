@@ -141,7 +141,7 @@ export default function AdminFooterPage() {
               <AdminInput
                 value={footer.contactPhone}
                 onChange={(e) => setFooter({ ...footer, contactPhone: e.target.value })}
-                placeholder="061-691-1599"
+                placeholder="094-286-6661"
               />
             </AdminField>
             <AdminField

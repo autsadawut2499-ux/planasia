@@ -1,6 +1,5 @@
 import "server-only";
 import { createRandomId } from "@/lib/random-id";
-import { splitSale } from "@/lib/commerce/commission";
 import type {
   EarningStatus,
   PayoutBatch,
@@ -27,6 +26,8 @@ interface EarningRow {
   listing_id: string;
   cart_order_id: string;
   gross_thb: number;
+  cost_thb?: number | null;
+  profit_thb?: number | null;
   vendor_amount_thb: number;
   platform_amount_thb: number;
   vendor_share: number;
@@ -34,6 +35,9 @@ interface EarningRow {
   currency: string;
   status: EarningStatus;
   created_at: string;
+  plan_code?: string | null;
+  listing_name?: string | null;
+  supplier_name?: string | null;
   paid_out_at?: string | null;
   paid_out_by?: string | null;
   payout_batch_id?: string | null;
@@ -52,12 +56,23 @@ interface PayoutBatchRow {
 }
 
 function rowToEarning(row: EarningRow): VendorEarning {
+  const grossThb = Number(row.gross_thb);
+  const costThb =
+    row.cost_thb != null && Number.isFinite(Number(row.cost_thb))
+      ? Number(row.cost_thb)
+      : Math.max(0, grossThb - Number(row.platform_amount_thb));
+  const profitThb =
+    row.profit_thb != null && Number.isFinite(Number(row.profit_thb))
+      ? Number(row.profit_thb)
+      : Number(row.platform_amount_thb);
   return {
     id: row.id,
     ownerKey: row.owner_key,
     listingId: row.listing_id,
     cartOrderId: row.cart_order_id,
-    grossThb: Number(row.gross_thb),
+    grossThb,
+    costThb,
+    profitThb,
     vendorAmountThb: Number(row.vendor_amount_thb),
     platformAmountThb: Number(row.platform_amount_thb),
     vendorShare: Number(row.vendor_share),
@@ -65,6 +80,9 @@ function rowToEarning(row: EarningRow): VendorEarning {
     currency: row.currency,
     status: row.status,
     createdAt: row.created_at,
+    planCode: row.plan_code ?? undefined,
+    listingName: row.listing_name ?? undefined,
+    supplierName: row.supplier_name ?? undefined,
     paidOutAt: row.paid_out_at ?? undefined,
     paidOutBy: row.paid_out_by ?? undefined,
     payoutBatchId: row.payout_batch_id ?? undefined,
@@ -86,8 +104,8 @@ function rowToBatch(row: PayoutBatchRow): PayoutBatch {
 }
 
 /**
- * Record 70/30 commission lines for every vendor-owned item in a paid cart.
- * Idempotent via unique (cart_order_id, listing_id).
+ * Record a sale margin line for every item in a paid cart (middleman model).
+ * Stores sale price, supplier cost snapshot, and profit. Idempotent via unique (cart_order_id, listing_id).
  */
 export async function recordSaleCommissions(order: CartOrder): Promise<VendorEarning[]> {
   if (!isSupabaseConfigured() || order.status !== "paid") return [];
@@ -99,20 +117,29 @@ export async function recordSaleCommissions(order: CartOrder): Promise<VendorEar
     const ownerKey = listing?.ownerId?.trim();
     if (!ownerKey) continue;
 
-    const split = splitSale(item.price);
+    const grossThb = Math.max(0, Math.round(item.price));
+    const costThb = Math.max(0, Math.round(listing?.costPrice ?? 0));
+    const profitThb = grossThb - costThb;
+    // Keep legacy share columns populated for older payout tooling:
+    // vendor_amount ≈ cost (money out), platform_amount ≈ profit.
     const row = {
       id: createRandomId(),
       owner_key: ownerKey,
       listing_id: item.listingId,
       cart_order_id: order.id,
-      gross_thb: split.grossThb,
-      vendor_amount_thb: split.vendorAmountThb,
-      platform_amount_thb: split.platformAmountThb,
-      vendor_share: split.vendorShare,
-      platform_share: split.platformShare,
+      gross_thb: grossThb,
+      cost_thb: costThb,
+      profit_thb: profitThb,
+      vendor_amount_thb: costThb,
+      platform_amount_thb: profitThb,
+      vendor_share: 0,
+      platform_share: 1,
       currency: order.currency || "THB",
       status: "available" as EarningStatus,
       created_at: new Date().toISOString(),
+      plan_code: listing?.planCode || listing?.planId || item.planId || null,
+      listing_name: listing?.name || item.name || null,
+      supplier_name: listing?.supplierName || null,
     };
 
     const { data, error } = await getSupabaseAdmin()

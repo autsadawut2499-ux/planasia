@@ -57,6 +57,8 @@ export interface StoreListing {
   highlights?: string[];
   beds: number;
   baths: number;
+  /** Living / reception rooms (ห้องรับแขก). */
+  livingRooms?: number;
   /** Covered car park spaces. */
   parking?: number;
   floors: 1 | 2;
@@ -64,7 +66,31 @@ export interface StoreListing {
   style: string;
   /** Collection / building type (e.g. commercial, warehouse, resort). */
   collection?: string;
-  /** Province slug from `TH_PROVINCES` — powers the location filter. */
+  /**
+   * Supplier / source name (admin product sourcing).
+   * Persisted as `supplier_name` — used for LINE OA routing later.
+   */
+  supplierName?: string;
+  /** FK to `suppliers.id`. */
+  supplierId?: string;
+  /**
+   * Marketplace product URL when supplier is Shopee/Lazada.
+   */
+  productUrl?: string;
+  /**
+   * Admin note: original house plan code from the supplier / source listing.
+   */
+  sourcePlanCode?: string;
+  /**
+   * Supplier cost for the main package (THB). Admin middleman margin =
+   * selling `price` − `costPrice`.
+   */
+  costPrice?: number;
+  /**
+   * Selling price for the site-plan add-on (แผนผังบริเวณเพื่อยื่นขออนุญาต).
+   */
+  sitePlanAddonPrice?: number;
+  /** @deprecated Prefer `supplierName`. Kept for legacy store location filter rows. */
   province?: string;
   /** Structural footprint in metres (used for ±1m dimension matching). */
   widthMeters?: number;

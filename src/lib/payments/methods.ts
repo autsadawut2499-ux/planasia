@@ -1,57 +1,34 @@
 import type { Currency } from "@/lib/currency";
 
-export type PaymentMethodId = "promptpay" | "card";
+/** Only bank transfer with slip verification is supported. */
+export type PaymentMethodId = "bank_transfer";
 
 export interface PaymentMethodOption {
   id: PaymentMethodId;
-  /** Stripe Checkout payment_method_types value. */
-  stripeType: "promptpay" | "card";
   label: string;
-  /** Thai label for domestic storefront. */
   labelTh: string;
   available: boolean;
   reasonUnavailable?: string;
   reasonUnavailableTh?: string;
 }
 
-/** PromptPay for THB (Thailand); card for any local charge currency. */
 export function availablePaymentMethods(
-  currency: Currency,
-  countryCode: string,
+  _currency?: Currency,
+  _countryCode?: string,
 ): PaymentMethodOption[] {
-  const isTh = countryCode.toUpperCase() === "TH";
-  const cardLabel =
-    currency === "THB" ? "Card" : `International card (${currency})`;
-  const cardLabelTh =
-    currency === "THB" ? "บัตรเครดิต/เดบิต" : `บัตรต่างประเทศ (${currency})`;
   return [
     {
-      id: "promptpay",
-      stripeType: "promptpay",
-      label: "PromptPay",
-      labelTh: "พร้อมเพย์",
-      available: currency === "THB" && isTh,
-      reasonUnavailable:
-        currency !== "THB"
-          ? "PromptPay is only available when paying in THB"
-          : "PromptPay is only available for Thailand",
-      reasonUnavailableTh:
-        currency !== "THB"
-          ? "พร้อมเพย์ใช้ได้เฉพาะเมื่อชำระเป็นบาท"
-          : "พร้อมเพย์ใช้ได้เฉพาะในประเทศไทย",
-    },
-    {
-      id: "card",
-      stripeType: "card",
-      label: cardLabel,
-      labelTh: cardLabelTh,
+      id: "bank_transfer",
+      label: "Bank transfer + slip",
+      labelTh: "โอนเงิน / อัปโหลดสลิป",
       available: true,
     },
   ];
 }
 
-export function defaultPaymentMethod(currency: Currency, countryCode: string): PaymentMethodId {
-  const methods = availablePaymentMethods(currency, countryCode);
-  const preferred = methods.find((m) => m.available && m.id === "promptpay");
-  return preferred?.id ?? "card";
+export function defaultPaymentMethod(
+  _currency?: Currency,
+  _countryCode?: string,
+): PaymentMethodId {
+  return "bank_transfer";
 }

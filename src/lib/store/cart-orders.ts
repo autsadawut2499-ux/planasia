@@ -2,13 +2,18 @@ import { randomBytes } from "crypto";
 import type { CartItemBase, UpsellAddonId } from "@/lib/store/cart-pricing";
 import type { DocumentLanguage } from "@/lib/store/document-languages";
 import type { ShippingAddress } from "@/lib/store/shipping-address";
+import type { SitePlanInfo } from "@/lib/store/site-plan-info";
 import {
   claimCartOrderConfirmationEmail as supabaseClaimCartOrderConfirmationEmail,
   findCartOrderByStripeSession as supabaseFindCartOrderByStripeSession,
   getCartOrder as supabaseGetCartOrder,
+  listCartOrders as supabaseListCartOrders,
+  markCartOrderFailed as supabaseMarkCartOrderFailed,
   markCartOrderPaid as supabaseMarkCartOrderPaid,
   releaseCartOrderConfirmationEmail as supabaseReleaseCartOrderConfirmationEmail,
   saveCartOrder as supabaseSaveCartOrder,
+  updateCartOrderSlip as supabaseUpdateCartOrderSlip,
+  updateCartOrderSummaryPdf as supabaseUpdateCartOrderSummaryPdf,
 } from "@/lib/supabase/cart-orders";
 
 export type CartOrderItem = CartItemBase;
@@ -40,10 +45,21 @@ export interface CartOrder {
   translationResult?: Record<string, unknown>;
   /** Present when hardcopy-3sets addon is selected. */
   shippingAddress?: ShippingAddress;
+  /** Present when site-plan addon is selected. */
+  sitePlanInfo?: SitePlanInfo;
   stripeSessionId?: string;
   /** ISO timestamp when Resend confirmation email was claimed/sent. */
   confirmationEmailSentAt?: string;
-  status: "pending" | "paid";
+  /** bank_transfer (current) — legacy stripe sessions may still exist. */
+  paymentMethod?: "bank_transfer" | string;
+  slipImagePath?: string;
+  slipVerifyStatus?: "pending" | "verified" | "invalid" | "error";
+  slipVerifyPayload?: Record<string, unknown>;
+  slipVerifiedAt?: string;
+  paymentFailureReason?: string;
+  /** Private storage path of auto-generated order summary PDF. */
+  orderSummaryPdfPath?: string;
+  status: "pending" | "awaiting_payment" | "paid" | "failed";
   createdAt: string;
 }
 
@@ -66,6 +82,24 @@ export async function markCartOrderPaid(
   return supabaseMarkCartOrderPaid(id, stripeSessionId);
 }
 
+export async function markCartOrderFailed(
+  id: string,
+  reason: string,
+  patch?: {
+    slipImagePath?: string;
+    slipVerifyPayload?: Record<string, unknown>;
+  },
+): Promise<CartOrder | null> {
+  return supabaseMarkCartOrderFailed(id, reason, patch);
+}
+
+export async function updateCartOrderSlip(
+  id: string,
+  patch: Parameters<typeof supabaseUpdateCartOrderSlip>[1],
+): Promise<CartOrder | null> {
+  return supabaseUpdateCartOrderSlip(id, patch);
+}
+
 export async function findCartOrderByStripeSession(
   sessionId: string,
 ): Promise<CartOrder | null> {
@@ -82,4 +116,18 @@ export async function releaseCartOrderConfirmationEmail(
   orderId: string,
 ): Promise<void> {
   return supabaseReleaseCartOrderConfirmationEmail(orderId);
+}
+
+export async function updateCartOrderSummaryPdf(
+  id: string,
+  orderSummaryPdfPath: string,
+): Promise<CartOrder | null> {
+  return supabaseUpdateCartOrderSummaryPdf(id, orderSummaryPdfPath);
+}
+
+export async function listCartOrders(opts?: {
+  status?: CartOrder["status"];
+  limit?: number;
+}): Promise<CartOrder[]> {
+  return supabaseListCartOrders(opts);
 }

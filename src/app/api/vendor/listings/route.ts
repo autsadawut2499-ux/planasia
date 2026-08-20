@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireVendorSession } from "@/lib/vendor/auth";
 import { createOrUpdateVendorListing } from "@/lib/vendor/create-listing";
+import { PUBLIC_SELLER_SELF_LISTING_ENABLED } from "@/lib/features/public-seller";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  if (!PUBLIC_SELLER_SELF_LISTING_ENABLED) {
+    return NextResponse.json(
+      {
+        error: "Public seller listing is temporarily closed",
+        message: "ขณะนี้ปิดการลงขายจากผู้เขียนแบบชั่วคราว — แบบบ้านลงโดยแอดมินเท่านั้น",
+      },
+      { status: 403 },
+    );
+  }
+
   const auth = await requireVendorSession(request);
   if (!auth.ok) return auth.response;
 

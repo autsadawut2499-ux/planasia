@@ -43,6 +43,9 @@ export function buildListingProductJsonLd(
   const additionalProperty = [
     { "@type": "PropertyValue", name: "Bedrooms", value: listing.beds },
     { "@type": "PropertyValue", name: "Bathrooms", value: listing.baths },
+    ...(listing.livingRooms != null
+      ? [{ "@type": "PropertyValue", name: "LivingRooms", value: listing.livingRooms }]
+      : []),
     { "@type": "PropertyValue", name: "Floors", value: listing.floors },
     { "@type": "PropertyValue", name: "Style", value: listing.style },
     { "@type": "PropertyValue", name: "Area", value: listing.area },

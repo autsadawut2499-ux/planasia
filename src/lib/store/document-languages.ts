@@ -203,11 +203,6 @@ export function getDocumentLanguage(code: DocumentLanguage): DocumentLanguageOpt
   return BY_CODE[code] ?? BY_CODE.th;
 }
 
-/** @deprecated Prefer localizationSurchargeThb(targetCountry). */
-export function documentLanguageSurcharge(code: DocumentLanguage): number {
-  return getDocumentLanguage(code).surchargeThb;
-}
-
 /**
  * Flat localization fee in base THB: ฿0 for Thailand, otherwise $10 (= ฿350).
  */

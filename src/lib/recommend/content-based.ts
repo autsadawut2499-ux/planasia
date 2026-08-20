@@ -28,6 +28,12 @@ export function scoreContent(
     if (listing.baths === filters.baths) reasons.push("baths");
   }
 
+  if (filters.livingRooms && filters.livingRooms > 0) {
+    const living = listing.livingRooms ?? 0;
+    parts.push(proximity(living, filters.livingRooms, 1));
+    if (living === filters.livingRooms) reasons.push("livingRooms");
+  }
+
   if (filters.floors && filters.floors > 0) {
     const match = listing.floors === filters.floors;
     parts.push(match ? 1 : 0);

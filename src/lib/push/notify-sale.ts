@@ -2,6 +2,7 @@ import "server-only";
 
 import webpush from "web-push";
 import { getListingById } from "@/lib/store/db";
+import { listingSupplierName } from "@/lib/store/listing-supplier";
 import { getVapidConfig, isWebPushConfigured } from "@/lib/push/vapid";
 import {
   deletePushSubscription,
@@ -54,6 +55,7 @@ export async function notifyVendorsOfSale(
         planId: listing?.planId || item.planId,
         name: listing?.name || item.name,
         priceThb: item.priceThb || listing?.price || 0,
+        supplierName: listingSupplierName(listing) || item.supplierName,
       });
       byOwner.set(ownerKey, list);
     } catch (err) {

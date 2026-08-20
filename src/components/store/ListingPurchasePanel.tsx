@@ -10,16 +10,11 @@ import {
 import { ListingWhatsIncludedPopup } from "@/components/store/ListingWhatsIncludedPopup";
 import { useApp } from "@/context/AppContext";
 import {
-  CAD_DWG_SURCHARGE,
-  HARDCOPY_3SETS_PRICE,
-} from "@/lib/store/cart-pricing";
-import {
-  listingHasBoq,
-  listingHasCalcSheet,
-  boqDocumentLabel,
-  calcDocumentLabel,
-  resolveBoqPrice,
-  resolveCalcPrice,
+  sitePlanDocumentLabel,
+  MAIN_PACKAGE_INCLUDE_ITEMS,
+  MAIN_PACKAGE_INCLUDES,
+  MAIN_PACKAGE_LABEL,
+  resolveSitePlanPrice,
   resolvePurchaseAddons,
   resolvePurchaseFormat,
   resolveCartLinePrice,
@@ -93,10 +88,8 @@ export function ListingPurchasePanel({
   const { formatMoney, translate, uiLocale } = useApp();
   const thai = uiLocale === "th";
   const sale = resolveListingSale(listing);
-  const hasCalc = listingHasCalcSheet(listing);
-  const hasBoq = listingHasBoq(listing);
-  const boqLabel = boqDocumentLabel(thai);
-  const calcLabel = calcDocumentLabel(thai);
+  const sitePlanLabel = sitePlanDocumentLabel(thai);
+  const sitePlanPriceTag = formatMoney(resolveSitePlanPrice(listing));
 
   const [packageId, setPackageId] = useState<ListingPackageId | "">("");
   const [extraId, setExtraId] = useState<ListingExtraId>("");
@@ -105,28 +98,21 @@ export function ListingPurchasePanel({
   const [packageHint, setPackageHint] = useState(false);
 
   const selection = useMemo<ListingPurchaseSelection>(() => {
-    let safeExtra: ListingExtraId = extraId;
-    if (extraId === "calc-sheet" && !hasCalc) safeExtra = "";
-    if (extraId === "boq-bundle" && !hasBoq) safeExtra = "";
-    const pkg = packageId || "pdf";
+    const pkg: ListingPackageId = packageId || "main";
     const linePrice = resolveCartLinePrice(listing, pkg);
     return {
       packageId: pkg,
-      extraId: safeExtra,
+      extraId,
       format: resolvePurchaseFormat(pkg),
-      addons: resolvePurchaseAddons(pkg, safeExtra),
+      addons: resolvePurchaseAddons(pkg, extraId),
       linePrice,
     };
-  }, [extraId, hasBoq, hasCalc, listing, packageId]);
+  }, [extraId, listing, packageId]);
 
   /** Always the clean base starting price — never merges package/extra add-ons. */
   const startingPrice = Math.max(0, listing.price);
-  const pdfPriceTag =
+  const mainPriceTag =
     startingPrice <= 0 ? L("Free", "ฟรี") : formatMoney(startingPrice);
-  const cadPriceTag = formatMoney(CAD_DWG_SURCHARGE);
-  const hardcopyPriceTag = formatMoney(HARDCOPY_3SETS_PRICE);
-  const boqPriceTag = formatMoney(resolveBoqPrice(listing));
-  const calcPriceTag = formatMoney(resolveCalcPrice(listing));
 
   function requirePackage(next: (sel: ListingPurchaseSelection) => void) {
     if (!packageId) {
@@ -170,9 +156,29 @@ export function ListingPurchasePanel({
         {L("See what’s included ›", "ดูรายละเอียดสิ่งที่รวมอยู่ด้วย ›")}
       </button>
 
-      {/* Package dropdown — price tags are informational only; headline stays base price */}
+      <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+          {L("Main package includes", "แพ็กเกจหลักรวม")}
+        </p>
+        <ul className="mt-1.5 space-y-1">
+          {MAIN_PACKAGE_INCLUDE_ITEMS.map((item) => (
+            <li
+              key={item.th}
+              className="flex items-start gap-1.5 text-xs leading-snug text-[#1e3a5f]"
+            >
+              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#1e40af]" aria-hidden />
+              <span>{thai ? item.th : item.en}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+          {thai ? MAIN_PACKAGE_INCLUDES.th : MAIN_PACKAGE_INCLUDES.en}
+        </p>
+      </div>
+
+      {/* Main package — PDF / CAD downloads are no longer offered */}
       <label className="mt-4 block">
-        <FieldHeader>{L("Add-on packages", "แพ็คเกจเสริม")}</FieldHeader>
+        <FieldHeader>{L(MAIN_PACKAGE_LABEL.en, MAIN_PACKAGE_LABEL.th)}</FieldHeader>
         <SelectShell>
           <select
             className={selectClass}
@@ -183,63 +189,37 @@ export function ListingPurchasePanel({
             }}
           >
             <option value="" disabled>
-              {L("Add-on packages", "แพ็คเกจเสริม")}
+              {L(MAIN_PACKAGE_LABEL.en, MAIN_PACKAGE_LABEL.th)}
             </option>
-            <option value="pdf">
-              {pricedOptionLabel(pdfPriceTag, L("PDF file", "ไฟล์ PDF"))}
-            </option>
-            <option value="cad" disabled={!listing.hasCadFiles}>
-              {listing.hasCadFiles
-                ? pricedOptionLabel(
-                    cadPriceTag,
-                    L("AutoCAD (DWG)", "ไฟล์ AutoCAD (DWG)"),
-                  )
-                : `${pricedOptionLabel(
-                    cadPriceTag,
-                    L("AutoCAD (DWG)", "ไฟล์ AutoCAD (DWG)"),
-                  )} ${L("(unavailable)", "(ยังไม่มีไฟล์)")}`}
-            </option>
-            <option value="hardcopy-3sets">
+            <option value="main">
               {pricedOptionLabel(
-                hardcopyPriceTag,
-                L("Photocopy 3 sets (A3)", "ถ่ายเอกสาร 3 ชุด (A3 3 ชุด)"),
+                mainPriceTag,
+                L(MAIN_PACKAGE_LABEL.en, MAIN_PACKAGE_LABEL.th),
               )}
             </option>
           </select>
         </SelectShell>
         {packageHint && (
           <p className="mt-1.5 text-[11px] font-medium text-amber-700">
-            {L("Please select a package option", "กรุณาเลือกแพ็คเกจเสริม")}
+            {L("Please select the main package", "กรุณาเลือกแพ็คเกจหลัก")}
           </p>
         )}
       </label>
 
-      {/* Extra dropdown — price tags informational; totaled only at checkout */}
+      {/* Extra dropdown — site-plan only; BOQ / calc are included in main package */}
       <label className="mt-3 block">
         <FieldHeader>{L("Additional options", "ตัวเลือกเพิ่มเติม")}</FieldHeader>
         <SelectShell>
           <select
             className={selectClass}
-            value={
-              (extraId === "calc-sheet" && !hasCalc) ||
-              (extraId === "boq-bundle" && !hasBoq)
-                ? ""
-                : extraId
-            }
+            value={extraId}
             onChange={(e) => setExtraId(e.target.value as ListingExtraId)}
           >
             <option value="">
               {L("None", "ไม่เลือก")}
             </option>
-            <option value="boq-bundle" disabled={!hasBoq}>
-              {hasBoq
-                ? pricedOptionLabel(boqPriceTag, boqLabel)
-                : `${pricedOptionLabel(boqPriceTag, boqLabel)} ${L("(unavailable)", "(ไม่มีรายการ)")}`}
-            </option>
-            <option value="calc-sheet" disabled={!hasCalc}>
-              {hasCalc
-                ? pricedOptionLabel(calcPriceTag, calcLabel)
-                : `${pricedOptionLabel(calcPriceTag, calcLabel)} ${L("(unavailable)", "(ไม่มีรายการ)")}`}
+            <option value="site-plan">
+              {pricedOptionLabel(sitePlanPriceTag, sitePlanLabel)}
             </option>
           </select>
         </SelectShell>

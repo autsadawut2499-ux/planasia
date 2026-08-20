@@ -65,9 +65,22 @@ export async function uploadPrivateBytes(opts: {
   contentType?: string;
   upsert?: boolean;
 }): Promise<string | null> {
-  if (!isSupabaseConfigured()) return null;
+  const result = await uploadPrivateBytesDetailed(opts);
+  return result.ref;
+}
+
+/** Same as uploadPrivateBytes, but surfaces the storage error message. */
+export async function uploadPrivateBytesDetailed(opts: {
+  path: string;
+  bytes: Buffer;
+  contentType?: string;
+  upsert?: boolean;
+}): Promise<{ ref: string | null; error: string | null }> {
+  if (!isSupabaseConfigured()) {
+    return { ref: null, error: "Supabase is not configured" };
+  }
   const path = opts.path.replace(/^\/+/, "");
-  if (!path) return null;
+  if (!path) return { ref: null, error: "Empty storage path" };
 
   const { error } = await getSupabaseAdmin()
     .storage.from(VENDOR_PRIVATE_BUCKET)
@@ -76,10 +89,13 @@ export async function uploadPrivateBytes(opts: {
       upsert: opts.upsert !== false,
     });
   if (error) {
-    console.error("[private-assets] upload failed", error.message);
-    return null;
+    console.error("[private-assets] upload failed", error.message, {
+      path,
+      contentType: opts.contentType,
+    });
+    return { ref: null, error: error.message };
   }
-  return toPrivateAssetRef(VENDOR_PRIVATE_BUCKET, path);
+  return { ref: toPrivateAssetRef(VENDOR_PRIVATE_BUCKET, path), error: null };
 }
 
 /** Fetch bytes for download stamping — supports private refs and legacy public URLs. */

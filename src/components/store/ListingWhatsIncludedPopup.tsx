@@ -48,31 +48,24 @@ function buildIncludeList(body: string): IncludeItem[] {
 /** Fallback checklist when CMS body cannot be parsed into headings. */
 const FALLBACK_ITEMS: Array<{ title: { en: string; th: string }; detail: { en: string; th: string } }> = [
   {
-    title: { en: "Architectural drawings", th: "แบบสถาปัตยกรรม" },
+    title: { en: "Full printed sets (A3 × 3)", th: "เอกสารรูปเล่ม ฉบับเต็ม 3 ชุด ขนาด A3" },
     detail: {
-      en: "Floor plans, elevations, key sections, and door/window schedules.",
-      th: "แปลนพื้น รูปด้าน รูปตัดสำคัญ และตารางประตู–หน้าต่าง",
+      en: "Complete hard-copy drawing sets in A3 — three copies included in the main package.",
+      th: "ชุดแบบรูปเล่มครบ ขนาด A3 จำนวน 3 ชุด รวมในแพ็กเกจหลัก",
     },
   },
   {
-    title: { en: "3D concept & presentation views", th: "ภาพคอนเซ็ปต์ 3D และการนำเสนอ" },
+    title: { en: "BOQ for bank loan", th: "ใบ BOQ สำหรับยื่นกู้ธนาคาร" },
     detail: {
-      en: "Exterior and interior concept images for materials and atmosphere.",
-      th: "ภาพภายนอก–ภายในสื่อมวลสาร วัสดุ และบรรยากาศ",
+      en: "Bill of quantities formatted for bank loan / mortgage applications.",
+      th: "ใบรายการปริมาณวัสดุสำหรับใช้ยื่นกู้ธนาคาร",
     },
   },
   {
-    title: { en: "Structural & engineering references", th: "ข้อมูลโครงสร้าง / วิศวกรรมอ้างอิง" },
+    title: { en: "Cost estimate sheet", th: "ใบประมาณราคา" },
     detail: {
-      en: "Structural layouts or notes when included with the listing.",
-      th: "ผังโครงสร้างหรือหมายเหตุประกอบ (ตามที่รวมในรายการสินค้า)",
-    },
-  },
-  {
-    title: { en: "BOQ / quantity samples", th: "ตัวอย่าง BOQ / ประมาณการวัสดุ" },
-    detail: {
-      en: "Sample bills of quantities or material summaries when available.",
-      th: "ตัวอย่างรายการวัสดุหรือสรุปปริมาณ (เมื่อมีในแพ็กเกจ)",
+      en: "Preliminary cost estimate sheet to plan your construction budget.",
+      th: "ใบประมาณราคาเบื้องต้นสำหรับวางแผนงบก่อสร้าง",
     },
   },
 ];

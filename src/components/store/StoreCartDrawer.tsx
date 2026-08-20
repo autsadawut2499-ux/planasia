@@ -1,10 +1,14 @@
 "use client";
 
-import { CreditCard, QrCode, ShoppingBag, Trash2, X } from "lucide-react";
+import { Building2, ShoppingBag, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { useStoreCart } from "@/context/StoreCartContext";
 import { useToast } from "@/context/ToastContext";
+import {
+  BankTransferPaymentPanel,
+  type BankTransferBankInfo,
+} from "@/components/store/BankTransferPaymentPanel";
 import { CartLineDisplay } from "@/components/store/CartLineDisplay";
 import {
   CheckoutGoogleGate,
@@ -21,6 +25,7 @@ import {
   BOQ_BUNDLE_PRICE,
   CALC_SHEET_PRICE,
   HARDCOPY_3SETS_PRICE,
+  SITE_PLAN_ADDON_PRICE,
   computeCheckoutTotal,
 } from "@/lib/store/cart-pricing";
 import {
@@ -30,17 +35,15 @@ import {
 import { formatMoney as formatMoneyInCurrency } from "@/lib/currency";
 import type { StoreListing } from "@/lib/store/db";
 import { StoreUpsellSection } from "@/components/store/StoreUpsellSection";
-import {
-  availablePaymentMethods,
-  defaultPaymentMethod,
-  type PaymentMethodId,
-} from "@/lib/payments/methods";
+import { defaultPaymentMethod } from "@/lib/payments/methods";
 import type { CheckoutPreview } from "@/lib/checkout/preview-types";
 import {
   boqDocumentLabel,
   calcDocumentLabel,
+  sitePlanDocumentLabel,
   resolveBoqPrice,
   resolveCalcPrice,
+  resolveSitePlanPrice,
 } from "@/lib/store/listing-packages";
 
 interface StoreCartDrawerProps {
@@ -59,8 +62,10 @@ interface StoreCartDrawerProps {
       docLang?: string;
       targetCountry?: string;
     }[],
+    meta?: { orderId?: string },
   ) => void;
 }
+
 
 export function StoreCartDrawer({
   listings,
@@ -82,6 +87,11 @@ export function StoreCartDrawer({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bankCheckout, setBankCheckout] = useState<{
+    orderId: string;
+    amountThb: number;
+    bank: BankTransferBankInfo;
+  } | null>(null);
   const [preCheckout, setPreCheckout] = useState<PreCheckoutSelections>(() =>
     defaultPreCheckoutSelections(
       defaultDocumentLanguage(uiLocale),
@@ -97,20 +107,7 @@ export function StoreCartDrawer({
     () => (amountThb: number) => formatMoneyInCurrency(amountThb, checkoutCurrency),
     [checkoutCurrency],
   );
-  const paymentMethods = useMemo(
-    () => availablePaymentMethods(checkoutCurrency, geoCountryCode),
-    [checkoutCurrency, geoCountryCode],
-  );
-  const [method, setMethod] = useState<PaymentMethodId>(() =>
-    defaultPaymentMethod(checkoutCurrency, geoCountryCode),
-  );
-
-  useEffect(() => {
-    const next = defaultPaymentMethod(checkoutCurrency, geoCountryCode);
-    if (!paymentMethods.some((m) => m.id === method && m.available)) {
-      setMethod(next);
-    }
-  }, [checkoutCurrency, geoCountryCode, method, paymentMethods]);
+  const activeMethod = defaultPaymentMethod(checkoutCurrency, geoCountryCode);
 
   // Pre-checkout: unit preview for selected country (Gemini runs only after payment).
   const [preview, setPreview] = useState<CheckoutPreview | null>(null);
@@ -179,14 +176,6 @@ export function StoreCartDrawer({
     preCheckout.targetCountry,
   ]);
 
-  // Keep selection valid when currency/country flips (THB↔USD).
-  const activeMethod =
-    paymentMethods.find((m) => m.id === method && m.available)?.id ??
-    defaultPaymentMethod(
-      checkoutCurrency,
-      checkoutCurrency === "THB" ? "TH" : preCheckout.targetCountry,
-    );
-
   const thai = uiLocale === "th";
   const L = (en: string, th: string) => (uiLocale === "th" ? th : en);
 
@@ -198,8 +187,13 @@ export function StoreCartDrawer({
     () => ({
       boqPrice: anchorListing?.boqPrice ?? null,
       calcPrice: anchorListing?.calcPrice ?? null,
+      sitePlanPrice: anchorListing?.sitePlanAddonPrice ?? null,
     }),
-    [anchorListing?.boqPrice, anchorListing?.calcPrice],
+    [
+      anchorListing?.boqPrice,
+      anchorListing?.calcPrice,
+      anchorListing?.sitePlanAddonPrice,
+    ],
   );
 
   const checkoutPricing = useMemo(
@@ -224,12 +218,21 @@ export function StoreCartDrawer({
         tone: "green",
       });
     }
-    if (addons.includes("hardcopy-3sets")) {
+    if (addons.includes("hardcopy-3sets") && HARDCOPY_3SETS_PRICE > 0) {
       lines.push({
         label: thai
-          ? "ถ่ายเอกสาร 3 ชุด (A3)"
-          : "Photocopy 3 sets (A3)",
+          ? "เอกสารรูปเล่ม A3 ×3 (รวมในแพ็คเกจหลัก)"
+          : "Printed A3 sets ×3 (included in main package)",
         amount: HARDCOPY_3SETS_PRICE,
+        tone: "muted",
+      });
+    }
+    if (addons.includes("site-plan")) {
+      lines.push({
+        label: sitePlanDocumentLabel(thai),
+        amount: anchorListing
+          ? resolveSitePlanPrice(anchorListing)
+          : SITE_PLAN_ADDON_PRICE,
       });
     }
     if (addons.includes("boq-bundle")) {
@@ -258,6 +261,7 @@ export function StoreCartDrawer({
   ]);
 
   const requiresShipping = addons.includes("hardcopy-3sets");
+  const requiresSitePlan = addons.includes("site-plan");
 
   const canPay =
     authReady &&
@@ -265,7 +269,7 @@ export function StoreCartDrawer({
     !!preview?.readyForCheckout &&
     reviewConfirmed &&
     !previewError &&
-    isPreCheckoutValid(preCheckout, { requiresShipping });
+    isPreCheckoutValid(preCheckout, { requiresShipping, requiresSitePlan });
 
   if (!drawerOpen) return null;
 
@@ -288,27 +292,34 @@ export function StoreCartDrawer({
           uiLocale,
           userId: buyerId,
           documentLanguage: preCheckout.documentLanguage,
-          buyerName: preCheckout.buyerName.trim(),
-          buyerEmail: preCheckout.buyerEmail.trim(),
+          buyerName: preCheckout.buyerName.trim() || sessionPrefill?.name?.trim() || undefined,
+          buyerEmail: preCheckout.buyerEmail.trim() || sessionPrefill?.email?.trim() || undefined,
           buyerPhone: preCheckout.buyerPhone.trim(),
           shippingAddress: requiresShipping
             ? preCheckout.shippingAddress
+            : undefined,
+          sitePlanInfo: requiresSitePlan
+            ? preCheckout.sitePlanInfo
             : undefined,
         }),
       });
       const data = await res.json();
 
-      // Hosted Stripe Checkout (default production path).
-      if (data.requiresCheckout && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      if (data.requiresBankTransfer && data.orderId && data.bank) {
+        setBankCheckout({
+          orderId: data.orderId,
+          amountThb: Number(data.amountThb ?? data.amount ?? checkoutPricing.total),
+          bank: data.bank,
+        });
         return;
       }
 
       if (data.success && data.downloads?.length) {
         clearCart();
         setDrawerOpen(false);
+        setBankCheckout(null);
         toastSuccess(translate("store.cartCheckoutSuccess"));
-        onCheckoutComplete(data.downloads);
+        onCheckoutComplete(data.downloads, { orderId: data.orderId });
         return;
       }
 
@@ -390,6 +401,7 @@ export function StoreCartDrawer({
                     visitorCountryCode={geoCountryCode}
                     onChange={setPreCheckout}
                     requiresShipping={requiresShipping}
+                    requiresSitePlan={requiresSitePlan}
                     sessionPrefill={sessionPrefill}
                     basePlanLabel={
                       items.length === 1
@@ -426,67 +438,70 @@ export function StoreCartDrawer({
 
         {items.length > 0 && (
           <div className="shrink-0 border-t border-border bg-white px-4 pt-3 sm:px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-            <h3 className="mb-2 text-sm font-bold text-text-primary">
-              {thai ? "ช่องทางชำระเงิน" : "Payment method"}
-            </h3>
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              {paymentMethods.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  disabled={!m.available}
-                  title={thai ? m.reasonUnavailableTh : m.reasonUnavailable}
-                  onClick={() => m.available && setMethod(m.id)}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border p-2.5 disabled:cursor-not-allowed disabled:opacity-40 ${
-                    activeMethod === m.id ? "border-[#1e40af] bg-blue-50" : "border-border"
-                  }`}
-                >
-                  {m.id === "promptpay" ? (
-                    <QrCode className="h-5 w-5" />
-                  ) : (
-                    <CreditCard className="h-5 w-5" />
-                  )}
-                  <span className="text-[10px] font-medium">
-                    {m.id === "promptpay"
-                      ? translate("payment.promptpay")
-                      : thai
-                        ? m.labelTh
-                        : translate("payment.card")}
+            {bankCheckout ? (
+              <BankTransferPaymentPanel
+                orderId={bankCheckout.orderId}
+                amountThb={bankCheckout.amountThb}
+                bank={bankCheckout.bank}
+                thai={thai}
+                formatMoney={formatCheckoutMoney}
+                onCancel={() => {
+                  setBankCheckout(null);
+                  setError(null);
+                }}
+                onPaid={(result) => {
+                  clearCart();
+                  setDrawerOpen(false);
+                  setBankCheckout(null);
+                  toastSuccess(translate("store.cartCheckoutSuccess"));
+                  onCheckoutComplete(result.downloads ?? [], {
+                    orderId: result.orderId,
+                  });
+                }}
+              />
+            ) : (
+              <>
+                <div className="mb-3 flex items-center gap-2 text-sm text-text-secondary">
+                  <Building2 className="h-4 w-4 text-[#1e40af]" />
+                  <span>
+                    {thai
+                      ? "ชำระเงินด้วยโอนธนาคาร + อัปโหลดสลิป (ตรวจอัตโนมัติ)"
+                      : "Pay by bank transfer + slip upload (auto-verified)"}
                   </span>
+                </div>
+                {!authReady ? (
+                  <p className="mb-2 text-center text-[11px] text-text-muted">
+                    {L(
+                      "Sign in with Google to download files and receive documents.",
+                      "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร",
+                    )}
+                  </p>
+                ) : !canPay && !previewLoading ? (
+                  <p className="mb-2 text-center text-[11px] text-text-muted">
+                {L(
+                  requiresShipping || requiresSitePlan
+                    ? "Complete required fields (shipping / site plan), accept the Terms & Refund Policy, and confirm the review"
+                    : "Accept the Terms & Refund Policy and confirm the review to enable payment",
+                  requiresShipping || requiresSitePlan
+                    ? "กรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน"
+                    : "ยอมรับข้อกำหนดและยืนยันการตรวจสอบด้านบน จึงจะชำระเงินได้",
+                )}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={loading || !canPay}
+                  className="min-h-12 w-full rounded-lg bg-[#1e40af] py-3 text-sm font-semibold uppercase tracking-wide text-white hover:bg-[#1d4ed8] disabled:opacity-60"
+                >
+                  {loading
+                    ? translate("payment.processing")
+                    : previewLoading
+                      ? L("Preparing checkout…", "กำลังเตรียมการชำระเงิน…")
+                      : `${thai ? "สร้างคำสั่งซื้อ / โอนเงิน" : "Place order / transfer"} · ${formatCheckoutMoney(checkoutPricing.total)}`}
                 </button>
-              ))}
-            </div>
-            {!authReady ? (
-              <p className="mb-2 text-center text-[11px] text-text-muted">
-                {L(
-                  "Sign in with Google to download files and receive documents.",
-                  "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร",
-                )}
-              </p>
-            ) : !canPay && !previewLoading ? (
-              <p className="mb-2 text-center text-[11px] text-text-muted">
-                {L(
-                  requiresShipping
-                    ? "Enter your name, shipping address, accept the Terms & Refund Policy, and confirm the review (phone optional)"
-                    : "Accept the Terms & Refund Policy and confirm the review to enable payment (phone optional)",
-                  requiresShipping
-                    ? "กรอกที่อยู่จัดส่ง ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน (เบอร์โทรไม่บังคับ)"
-                    : "ยอมรับข้อกำหนดและยืนยันการตรวจสอบด้านบน จึงจะชำระเงินได้ (เบอร์โทรไม่บังคับ)",
-                )}
-              </p>
-            ) : null}
-            <button
-              type="button"
-              onClick={handleCheckout}
-              disabled={loading || !canPay}
-              className="min-h-12 w-full rounded-lg bg-[#1e40af] py-3 text-sm font-semibold uppercase tracking-wide text-white hover:bg-[#1d4ed8] disabled:opacity-60"
-            >
-              {loading
-                ? translate("payment.processing")
-                : previewLoading
-                  ? L("Preparing checkout…", "กำลังเตรียมการชำระเงิน…")
-                  : `${thai ? "ไปชำระเงิน" : "Proceed to payment"} · ${formatCheckoutMoney(checkoutPricing.total)}`}
-            </button>
+              </>
+            )}
           </div>
         )}
       </aside>

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { PUBLIC_SELLER_SELF_LISTING_ENABLED } from "@/lib/features/public-seller";
 import DashboardClient from "./DashboardClient";
 
 export const metadata: Metadata = {
@@ -8,5 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default function DraftsmanDashboardPage() {
+  // Public self-listing closed — admin lists plans via /admin/listings.
+  if (!PUBLIC_SELLER_SELF_LISTING_ENABLED) {
+    redirect("/");
+  }
   return <DashboardClient />;
 }

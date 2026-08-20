@@ -45,6 +45,11 @@ export function buildPlanCardSpecs(listing: StoreListing): PlanCardSpec[] {
       value: String(listing.baths),
     },
     {
+      labelEn: "Living",
+      labelTh: "รับแขก",
+      value: listing.livingRooms != null ? String(listing.livingRooms) : "—",
+    },
+    {
       labelEn: "Park",
       labelTh: "จอด",
       value: listing.parking != null ? String(listing.parking) : "—",

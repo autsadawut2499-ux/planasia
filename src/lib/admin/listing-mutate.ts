@@ -5,6 +5,8 @@ import { buildListingSlug, ensureUniqueSlug } from "@/lib/seo/slug";
 import type { StoreListing, VendorListing } from "@/lib/store/listing-types";
 import { validateListingPrice } from "@/lib/store/listing-price";
 import { supabaseGetAllListings } from "@/lib/supabase/store-listings";
+import { getSupplierById } from "@/lib/supabase/suppliers";
+import { supplierNeedsProductUrl } from "@/lib/store/supplier-platform";
 
 function num(v: unknown, fallback = 0): number {
   const n = Number(v);
@@ -16,40 +18,30 @@ function strList(v: unknown, max = 12): string[] {
   return v.map((u) => String(u).trim()).filter(Boolean).slice(0, max);
 }
 
-/** Exactly one delivery-doc URL slot (schema keeps arrays for compat). */
-function fileList(v: unknown, max = 1): string[] {
-  return strList(v, max);
-}
-
 function asVendor(existing?: StoreListing | null): VendorListing | null {
   return existing ? (existing as VendorListing) : null;
 }
 
-function looksLikePdfUrl(url: string): boolean {
-  const lower = url.toLowerCase();
-  return lower.includes(".pdf") || lower.startsWith("planasia-private://");
-}
-
-function looksLikeDwgUrl(url: string): boolean {
-  const lower = url.toLowerCase();
-  return lower.includes(".dwg") || lower.startsWith("planasia-private://");
-}
-
-function assertSinglePdf(urls: string[], labelTh: string): void {
-  if (urls.length === 0) return;
-  if (urls.length > 1) throw new Error(`${labelTh}: อัปโหลดได้ 1 ไฟล์เท่านั้น`);
-  if (!looksLikePdfUrl(urls[0])) throw new Error(`${labelTh}: ต้องเป็นไฟล์ PDF`);
-}
-
-function assertSingleDwg(urls: string[], labelTh: string): void {
-  if (urls.length === 0) return;
-  if (urls.length > 1) throw new Error(`${labelTh}: อัปโหลดได้ 1 ไฟล์เท่านั้น`);
-  if (!looksLikeDwgUrl(urls[0])) throw new Error(`${labelTh}: ต้องเป็นไฟล์ AutoCAD (.dwg)`);
+function parseNonNegInt(
+  raw: unknown,
+  labelTh: string,
+  opts?: { required?: boolean; existing?: number },
+): number | undefined {
+  if (raw === undefined) return opts?.existing;
+  if (raw === null || raw === "") {
+    if (opts?.required) throw new Error(`กรุณากรอก${labelTh}`);
+    return undefined;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+    throw new Error(`${labelTh} ต้องเป็นจำนวนเต็มไม่ติดลบ (บาท)`);
+  }
+  return n;
 }
 
 /**
  * Build a VendorListing from admin form JSON (create or update).
- * Validation / field shape mirrors the vendor submission flow.
+ * Middleman catalogue model: render images + cost/sell/supplier — no delivery docs on-platform.
  */
 export async function listingFromAdminBody(
   body: Record<string, unknown>,
@@ -70,12 +62,23 @@ export async function listingFromAdminBody(
     body.price !== undefined && body.price !== "" ? body.price : existing?.price,
     {
       rawBody: body,
-      // Admin console may set ฿10+ for live Stripe smoke tests.
       allowAdminTestPricing: true,
     },
   );
   if (!priceCheck.ok) throw new Error(priceCheck.errorTh);
   const price = priceCheck.price;
+
+  const costPrice = parseNonNegInt(body.costPrice ?? body.cost_price, "ราคาต้นทุน", {
+    required: !existing,
+    existing: existing?.costPrice,
+  });
+  if (costPrice == null) throw new Error("กรุณากรอกราคาต้นทุน");
+
+  const sitePlanAddonPrice = parseNonNegInt(
+    body.sitePlanAddonPrice ?? body.site_plan_addon_price,
+    "ราคาแพ็กเกจเสริม (แผนผังบริเวณ)",
+    { existing: existing?.sitePlanAddonPrice },
+  );
 
   const floorPlanUrls = strList(
     body.floorPlanUrls !== undefined ? body.floorPlanUrls : existing?.floorPlanUrls,
@@ -85,10 +88,36 @@ export async function listingFromAdminBody(
     body.renderUrls !== undefined ? body.renderUrls : existing?.renderUrls,
     8,
   );
-  if (floorPlanUrls.length < 1) throw new Error("กรุณาอัปโหลดแปลนพื้นอย่างน้อย 1 รูป");
 
-  const province = String(body.province ?? existing?.province ?? "").trim();
-  if (!province) throw new Error("กรุณาเลือกจังหวัดที่ให้บริการ");
+  const supplierId = String(
+    body.supplierId ?? body.supplier_id ?? existing?.supplierId ?? "",
+  ).trim();
+  if (!supplierId) throw new Error("กรุณาเลือกซัพพลายเออร์");
+
+  const supplier = await getSupplierById(supplierId);
+  if (!supplier) throw new Error("ไม่พบซัพพลายเออร์ที่เลือก");
+  const supplierName = supplier.name;
+
+  let productUrl: string | undefined;
+  const rawProductUrl = String(
+    body.productUrl ?? body.product_url ?? existing?.productUrl ?? "",
+  ).trim();
+  if (supplierNeedsProductUrl(supplier)) {
+    if (!rawProductUrl) {
+      throw new Error("กรุณาใส่ลิงก์สินค้า (Product URL) สำหรับ Shopee / Lazada");
+    }
+    try {
+      const u = new URL(rawProductUrl);
+      if (u.protocol !== "http:" && u.protocol !== "https:") {
+        throw new Error("invalid");
+      }
+      productUrl = u.toString();
+    } catch {
+      throw new Error("ลิงก์สินค้าต้องเป็น URL ที่ขึ้นต้นด้วย http:// หรือ https://");
+    }
+  } else {
+    productUrl = undefined;
+  }
 
   const areaRaw = String(body.area ?? existing?.area ?? "").trim();
   const area = areaRaw
@@ -101,68 +130,18 @@ export async function listingFromAdminBody(
     throw new Error("กรุณากรอกพื้นที่ใช้สอย (ตร.ม.) — ระบบใช้ค่านี้ในตัวกรองค้นหา");
   }
 
+  // Delivery docs are ordered from the supplier after purchase — not stored on admin listings.
+  // Preserve any legacy URLs on edit so older rows are not wiped accidentally.
   const blueprintPdfUrls =
-    body.blueprintPdfUrls !== undefined
-      ? fileList(body.blueprintPdfUrls, 1)
-      : (prev?.blueprintPdfUrls ??
-        (prev?.blueprintPdfUrl ? [prev.blueprintPdfUrl] : []));
-  if (blueprintPdfUrls.length !== 1) {
-    throw new Error("กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF (1 ไฟล์)");
-  }
-
-  const cadFileUrls =
-    body.cadFileUrls !== undefined
-      ? fileList(body.cadFileUrls, 1)
-      : (prev?.cadFileUrls ?? []);
+    prev?.blueprintPdfUrls?.length
+      ? prev.blueprintPdfUrls
+      : prev?.blueprintPdfUrl
+        ? [prev.blueprintPdfUrl]
+        : [];
+  const cadFileUrls = prev?.cadFileUrls ?? [];
   const boqFileUrls =
-    body.boqFileUrls !== undefined
-      ? fileList(body.boqFileUrls, 1)
-      : (prev?.boqFileUrls ?? (prev?.boqFileUrl ? [prev.boqFileUrl] : []));
-  const calcSheetUrls =
-    body.calcSheetUrls !== undefined
-      ? fileList(body.calcSheetUrls, 1)
-      : (prev?.calcSheetUrls ?? []);
-
-  assertSinglePdf(blueprintPdfUrls, "แบบแปลนหลัก");
-  assertSingleDwg(cadFileUrls, "ไฟล์ AutoCAD");
-  assertSinglePdf(boqFileUrls, "ไฟล์ BOQ");
-  assertSinglePdf(calcSheetUrls, "รายการคำนวณ");
-
-  const contractConsent =
-    body.contractConsent !== undefined
-      ? Boolean(body.contractConsent)
-      : (prev?.contractConsent ?? false);
-  if (!contractConsent) {
-    throw new Error(
-      "กรุณายืนยันว่าผลงานเป็นลิขสิทธิ์แท้ของผู้ขาย และยินยอมตามเงื่อนไขของแพลตฟอร์ม",
-    );
-  }
-
-  let boqPrice: number | undefined;
-  if (body.boqPrice != null && body.boqPrice !== "") {
-    const n = Number(body.boqPrice);
-    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
-      throw new Error("ราคา BOQ ต้องเป็นจำนวนเต็มไม่ติดลบ (บาท)");
-    }
-    boqPrice = n;
-  } else if (body.boqPrice === "" || body.boqPrice === null) {
-    boqPrice = undefined;
-  } else {
-    boqPrice = prev?.boqPrice;
-  }
-
-  let calcPrice: number | undefined;
-  if (body.calcPrice != null && body.calcPrice !== "") {
-    const n = Number(body.calcPrice);
-    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
-      throw new Error("ราคารายการคำนวณต้องเป็นจำนวนเต็มไม่ติดลบ (บาท)");
-    }
-    calcPrice = n;
-  } else if (body.calcPrice === "" || body.calcPrice === null) {
-    calcPrice = undefined;
-  } else {
-    calcPrice = prev?.calcPrice;
-  }
+    prev?.boqFileUrls?.length ? prev.boqFileUrls : prev?.boqFileUrl ? [prev.boqFileUrl] : [];
+  const calcSheetUrls = prev?.calcSheetUrls ?? [];
 
   const id = existing?.id ?? createRandomId();
   const planCode =
@@ -177,7 +156,6 @@ export async function listingFromAdminBody(
     existing?.planDocumentId ??
     (body.planDocumentId ? String(body.planDocumentId).trim() || undefined : undefined);
 
-  // Same naming as vendor: "{PlanCode} {Style}" (e.g. MOD-001 Modern).
   const name = buildAutoListingName(style, planCode);
 
   const all = await supabaseGetAllListings();
@@ -194,11 +172,6 @@ export async function listingFromAdminBody(
     body.compareAtPrice != null && body.compareAtPrice !== ""
       ? num(body.compareAtPrice)
       : existing?.compareAtPrice;
-
-  const permitReady =
-    body.permitReady !== undefined ? Boolean(body.permitReady) : (prev?.permitReady ?? false);
-  const boqComplete =
-    body.boqComplete !== undefined ? Boolean(body.boqComplete) : (prev?.boqComplete ?? false);
 
   const draft: VendorListing = {
     id,
@@ -218,6 +191,11 @@ export async function listingFromAdminBody(
       : (existing?.highlights ?? []),
     beds,
     baths,
+    livingRooms: (() => {
+      const raw = body.livingRooms ?? body.living_rooms;
+      if (raw != null && raw !== "") return Math.max(0, Math.round(num(raw)));
+      return existing?.livingRooms;
+    })(),
     parking:
       body.parking != null && body.parking !== ""
         ? Math.max(0, Math.round(num(body.parking)))
@@ -228,7 +206,22 @@ export async function listingFromAdminBody(
     collection: body.collection
       ? String(body.collection).trim() || undefined
       : existing?.collection,
-    province,
+    supplierName,
+    supplierId,
+    productUrl,
+    sourcePlanCode: (() => {
+      const raw = String(
+        body.sourcePlanCode ?? body.source_plan_code ?? existing?.sourcePlanCode ?? "",
+      ).trim();
+      if (!raw) return undefined;
+      if (raw.length > 120) {
+        throw new Error("รหัสบ้านต้นทางยาวเกินไป (สูงสุด 120 ตัวอักษร)");
+      }
+      return raw;
+    })(),
+    costPrice,
+    sitePlanAddonPrice,
+    province: existing?.province,
     widthMeters:
       body.widthMeters != null && body.widthMeters !== ""
         ? num(body.widthMeters)
@@ -246,8 +239,9 @@ export async function listingFromAdminBody(
     renderUrls,
     floorPlanUrls,
     price,
-    boqPrice,
-    calcPrice,
+    // Legacy add-on price columns unused in middleman main package (BOQ included).
+    boqPrice: undefined,
+    calcPrice: undefined,
     priceBreakdown: {
       base: price,
       floorSurcharge: 0,
@@ -259,7 +253,6 @@ export async function listingFromAdminBody(
       ...(compareAt && compareAt > price ? { compareAt } : {}),
     },
     source: "vendor",
-    /** Admin-authored listings are purchase-ready immediately. */
     moderationStatus: "approved",
     createdAt: existing?.createdAt ?? new Date().toISOString(),
     blueprintPdfUrl: blueprintPdfUrls[0],
@@ -271,13 +264,13 @@ export async function listingFromAdminBody(
     hasCadFiles: cadFileUrls.length > 0,
     hasBoqFiles: boqFileUrls.length > 0,
     hasCalcSheets: calcSheetUrls.length > 0,
-    permitReady,
-    boqComplete,
-    contractConsent,
+    // Main package is permit-ready + includes BOQ by product definition.
+    permitReady: true,
+    boqComplete: true,
+    contractConsent: true,
     aiScreening: prev?.aiScreening,
   };
 
-  // Fresh Gemini/rules SEO on every admin create/update.
   return attachListingSeo(draft);
 }
 

@@ -93,6 +93,11 @@ export async function sendOrderConfirmationEmail(
         ? "รับเอกสารรูปเล่ม 3 ชุด: รวมอยู่ในคำสั่งซื้อ — ทีมงานจะติดต่อจัดส่ง"
         : "Hard-copy documents (3 sets): included — our team will contact you for delivery"
       : null,
+    order.addons.includes("site-plan")
+      ? thai
+        ? "เขียนแผนผังบริเวณ: รวมอยู่ในคำสั่งซื้อ — ทีมงานจะจัดทำหลังชำระเงิน"
+        : "Site plan drafting: included — our team will prepare it after payment"
+      : null,
   ].filter(Boolean) as string[];
 
   const itemLines = order.items.map((item) => {

@@ -133,6 +133,11 @@ export function HousePlanCard({
             <p className="store-card-plan-id mt-1.5 truncate text-sm font-bold leading-tight text-[#1e3a5f] md:text-base">
               {localized.name}
             </p>
+            {(item.tagline?.trim() || localized.description?.trim()) && (
+              <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-[#64748b] md:text-xs">
+                {item.tagline?.trim() || localized.description.trim()}
+              </p>
+            )}
           </div>
           <div className="max-w-[46%] shrink-0 text-right">
             {sale.price <= 0 ? (

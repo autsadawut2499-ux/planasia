@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2, X, Eraser, ExternalLink, BadgeCheck } from "lucide-react";
 import {
   AdminCard,
@@ -10,10 +10,8 @@ import {
 import { AiImageToolCards } from "@/components/vendor/AiImageToolCards";
 import { AiRenderingGuide } from "@/components/vendor/AiRenderingGuide";
 import { FileUpload } from "@/components/vendor/FileUpload";
-import { MultiFileUpload } from "@/components/vendor/MultiFileUpload";
-import { Card, Field, PrimaryButton, Select, TextInput } from "@/components/vendor/ui";
+import { Card, Field, PrimaryButton, Select, TextArea, TextInput } from "@/components/vendor/ui";
 import { COLLECTIONS, STYLES } from "@/lib/store/taxonomy";
-import { PROVINCES_BY_REGION, provinceLabel } from "@/lib/geo/th-provinces";
 import { listingStorePath } from "@/lib/seo/slug";
 import { parseAreaSqm } from "@/lib/format";
 import {
@@ -28,6 +26,21 @@ import {
 } from "@/lib/store/plan-code";
 import type { UploadKind } from "@/hooks/useVendorDashboard";
 import type { VendorListing } from "@/lib/store/listing-types";
+import { supplierNeedsProductUrl, type SupplierKind } from "@/lib/store/supplier-platform";
+import {
+  clearListingDraft,
+  readListingDraft,
+  readListingDraftActive,
+  writeListingDraft,
+  type ListingDraftKey,
+} from "@/lib/admin/listing-form-draft";
+
+type AdminSupplier = {
+  id: string;
+  name: string;
+  kind: SupplierKind;
+  slug?: string;
+};
 
 const STYLE_OPTIONS = STYLES;
 const COLLECTION_OPTIONS = COLLECTIONS;
@@ -42,29 +55,30 @@ type FormState = {
   highlights: string[];
   style: string;
   collection: string;
-  province: string;
+  supplierId: string;
+  productUrl: string;
+  /** Admin note: original house code from supplier. */
+  sourcePlanCode: string;
   floors: number;
   beds: number;
   baths: number;
+  /** Living / reception rooms (ห้องรับแขก). */
+  livingRooms: string;
   parking: string;
   widthMeters: string;
   lengthMeters: string;
   areaSqm: string;
   constructionCostEstimate: string;
+  /** Supplier cost (THB) for the main package. */
+  costPrice: string;
+  /** Selling price (THB) for the main package. */
   price: string;
   compareAtPrice: string;
+  /** Selling price for site-plan add-on (แผนผังบริเวณ). */
+  sitePlanAddonPrice: string;
   image: string;
   renderUrls: string[];
   floorPlanUrls: string[];
-  blueprintPdfUrls: string[];
-  cadFileUrls: string[];
-  boqFileUrls: string[];
-  boqPrice: string;
-  calcPrice: string;
-  calcSheetUrls: string[];
-  permitReady: boolean;
-  boqComplete: boolean;
-  contractConsent: boolean;
 };
 
 function emptyForm(): FormState {
@@ -76,29 +90,25 @@ function emptyForm(): FormState {
     highlights: [],
     style: "modern",
     collection: "",
-    province: "",
+    supplierId: "",
+    productUrl: "",
+    sourcePlanCode: "",
     floors: 1,
     beds: 3,
     baths: 2,
+    livingRooms: "1",
     parking: "1",
     widthMeters: "",
     lengthMeters: "",
     areaSqm: "",
     constructionCostEstimate: "",
+    costPrice: "",
     price: "",
     compareAtPrice: "",
+    sitePlanAddonPrice: "",
     image: "",
     renderUrls: [],
     floorPlanUrls: [],
-    blueprintPdfUrls: [],
-    cadFileUrls: [],
-    boqFileUrls: [],
-    boqPrice: "",
-    calcPrice: "",
-    calcSheetUrls: [],
-    permitReady: false,
-    boqComplete: false,
-    contractConsent: false,
   };
 }
 
@@ -113,16 +123,20 @@ function listingToForm(l: VendorListing): FormState {
     highlights: l.highlights ?? [],
     style: l.style || "modern",
     collection: l.collection ?? "",
-    province: l.province ?? "",
+    supplierId: l.supplierId ?? "",
+    productUrl: l.productUrl ?? "",
+    sourcePlanCode: l.sourcePlanCode ?? "",
     floors: l.floors,
     beds: l.beds,
     baths: l.baths,
+    livingRooms: l.livingRooms != null ? String(l.livingRooms) : "",
     parking: l.parking != null ? String(l.parking) : "",
     widthMeters: l.widthMeters != null ? String(l.widthMeters) : "",
     lengthMeters: l.lengthMeters != null ? String(l.lengthMeters) : "",
     areaSqm: parseAreaSqm(l.area)?.toString() ?? "",
     constructionCostEstimate:
       l.constructionCostEstimate != null ? String(l.constructionCostEstimate) : "",
+    costPrice: l.costPrice != null ? String(l.costPrice) : "",
     price: l.price != null ? String(l.price) : "",
     compareAtPrice:
       l.compareAtPrice != null
@@ -130,21 +144,10 @@ function listingToForm(l: VendorListing): FormState {
         : l.priceBreakdown?.compareAt != null
           ? String(l.priceBreakdown.compareAt)
           : "",
+    sitePlanAddonPrice: l.sitePlanAddonPrice != null ? String(l.sitePlanAddonPrice) : "",
     image: l.image,
     renderUrls: l.renderUrls ?? [],
     floorPlanUrls: l.floorPlanUrls ?? [],
-    blueprintPdfUrls: (l.blueprintPdfUrls ?? (l.blueprintPdfUrl ? [l.blueprintPdfUrl] : [])).slice(
-      0,
-      1,
-    ),
-    cadFileUrls: (l.cadFileUrls ?? []).slice(0, 1),
-    boqFileUrls: (l.boqFileUrls ?? (l.boqFileUrl ? [l.boqFileUrl] : [])).slice(0, 1),
-    boqPrice: l.boqPrice != null ? String(l.boqPrice) : "",
-    calcPrice: l.calcPrice != null ? String(l.calcPrice) : "",
-    calcSheetUrls: (l.calcSheetUrls ?? []).slice(0, 1),
-    permitReady: l.permitReady ?? false,
-    boqComplete: l.boqComplete ?? false,
-    contractConsent: l.contractConsent ?? false,
   };
 }
 
@@ -156,35 +159,32 @@ function formToBody(form: FormState) {
   return {
     name: namePreview,
     tagline: form.tagline || undefined,
-    description: form.description || namePreview,
+    description: form.description.trim() || namePreview,
     pitch: form.pitch || undefined,
     highlights: form.highlights,
     style: form.style,
     collection: form.collection || undefined,
-    province: form.province || undefined,
+    supplierId: form.supplierId.trim() || undefined,
+    productUrl: form.productUrl.trim() || undefined,
+    sourcePlanCode: form.sourcePlanCode.trim() || undefined,
     floors: form.floors,
     beds: form.beds,
     baths: form.baths,
+    livingRooms: form.livingRooms === "" ? undefined : Number(form.livingRooms),
     parking: form.parking === "" ? undefined : Number(form.parking),
     area: `${Number(form.areaSqm)} sqm`,
     widthMeters: form.widthMeters === "" ? undefined : Number(form.widthMeters),
     lengthMeters: form.lengthMeters === "" ? undefined : Number(form.lengthMeters),
+    costPrice: form.costPrice === "" ? undefined : Number(form.costPrice),
     price: Number(form.price),
     compareAtPrice: form.compareAtPrice === "" ? undefined : Number(form.compareAtPrice),
+    sitePlanAddonPrice:
+      form.sitePlanAddonPrice === "" ? undefined : Number(form.sitePlanAddonPrice),
     constructionCostEstimate:
       form.constructionCostEstimate === "" ? undefined : Number(form.constructionCostEstimate),
     image: form.image,
     renderUrls: form.renderUrls.filter(Boolean),
     floorPlanUrls: form.floorPlanUrls.filter(Boolean),
-    blueprintPdfUrls: form.blueprintPdfUrls.filter(Boolean).slice(0, 1),
-    cadFileUrls: form.cadFileUrls.filter(Boolean).slice(0, 1),
-    boqFileUrls: form.boqFileUrls.filter(Boolean).slice(0, 1),
-    calcSheetUrls: form.calcSheetUrls.filter(Boolean).slice(0, 1),
-    boqPrice: form.boqPrice !== "" ? form.boqPrice : "",
-    calcPrice: form.calcPrice !== "" ? form.calcPrice : "",
-    permitReady: form.permitReady,
-    boqComplete: form.boqComplete,
-    contractConsent: form.contractConsent,
   };
 }
 
@@ -271,17 +271,24 @@ function SectionTitle({ step, title, desc }: { step: number; title: string; desc
   );
 }
 
-function FilterMatchSummary({ form }: { form: FormState }) {
+function FilterMatchSummary({
+  form,
+  supplierLabel,
+}: {
+  form: FormState;
+  supplierLabel?: string | null;
+}) {
   const style = STYLE_OPTIONS.find((s) => s.id === form.style);
   const collection = COLLECTION_OPTIONS.find((c) => c.id === form.collection);
   const area = Number(form.areaSqm);
   const chips = [
     style ? style.th : null,
     collection ? collection.th : null,
-    provinceLabel(form.province),
+    supplierLabel?.trim() || null,
     `${form.floors} ชั้น`,
     `${form.beds} ห้องนอน`,
     `${form.baths} ห้องน้ำ`,
+    Number(form.livingRooms) > 0 ? `${form.livingRooms} ห้องรับแขก` : null,
     area > 0 ? `${area.toLocaleString()} ตร.ม.` : null,
     Number(form.constructionCostEstimate) > 0
       ? `งบ ~฿${Number(form.constructionCostEstimate).toLocaleString()}`
@@ -305,28 +312,6 @@ function FilterMatchSummary({ form }: { form: FormState }) {
   );
 }
 
-function CheckRow({
-  checked,
-  onChange,
-  children,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-surface-raised">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-[#1e40af] focus:ring-[#1e40af]"
-      />
-      <span className="text-sm text-text-secondary">{children}</span>
-    </label>
-  );
-}
-
 export default function AdminListingsClient() {
   const [listings, setListings] = useState<VendorListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -337,6 +322,23 @@ export default function AdminListingsClient() {
   const [q, setQ] = useState("");
   const [styleFilter, setStyleFilter] = useState("");
   const [form, setForm] = useState<FormState | null>(null);
+  const [suppliers, setSuppliers] = useState<AdminSupplier[]>([]);
+  const [supplierModalOpen, setSupplierModalOpen] = useState(false);
+  const [newSupplierName, setNewSupplierName] = useState("");
+  const [savingSupplier, setSavingSupplier] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+  const [pendingDraft, setPendingDraft] = useState<{
+    key: ListingDraftKey;
+    form: FormState;
+    savedAt: number;
+  } | null>(null);
+
+  const loadSuppliers = useCallback(async () => {
+    const res = await fetch("/api/admin/suppliers", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "โหลดซัพพลายเออร์ไม่สำเร็จ");
+    setSuppliers((data.suppliers ?? []) as AdminSupplier[]);
+  }, []);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams();
@@ -345,33 +347,168 @@ export default function AdminListingsClient() {
     const res = await fetch(`/api/admin/listings?${params}`, { cache: "no-store" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "โหลดไม่สำเร็จ");
-    setListings(data.listings ?? []);
+    setListings(Array.isArray(data.listings) ? data.listings : []);
   }, [q, styleFilter]);
 
   useEffect(() => {
     setLoading(true);
-    load()
+    Promise.all([load(), loadSuppliers()])
       .catch((err) =>
         setStatus({ type: "error", message: err instanceof Error ? err.message : "โหลดไม่สำเร็จ" }),
       )
       .finally(() => setLoading(false));
-  }, [load]);
+  }, [load, loadSuppliers]);
+
+  // Detect auto-saved drafts — do NOT auto-open the form (that hid the listings table).
+  useEffect(() => {
+    if (form) return;
+    try {
+      const active = readListingDraftActive();
+      if (!active) {
+        setPendingDraft(null);
+        return;
+      }
+      const draft = readListingDraft<FormState>(active);
+      if (!draft?.form) {
+        setPendingDraft(null);
+        return;
+      }
+      setPendingDraft({
+        key: active,
+        form: { ...emptyForm(), ...draft.form },
+        savedAt: draft.savedAt,
+      });
+    } catch {
+      setPendingDraft(null);
+    }
+  }, [form]);
+
+  // Auto-save form to localStorage on every change (debounced).
+  useEffect(() => {
+    if (!form) return;
+    const key: ListingDraftKey = form.id?.trim() ? form.id.trim() : "new";
+    const timer = window.setTimeout(() => {
+      writeListingDraft(key, form);
+      setDraftSavedAt(Date.now());
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [form]);
+
+  const selectedSupplier = useMemo(
+    () => suppliers.find((s) => s.id === form?.supplierId) ?? null,
+    [suppliers, form?.supplierId],
+  );
+  const showProductUrl = supplierNeedsProductUrl(selectedSupplier);
+  const platformSuppliers = useMemo(
+    () => suppliers.filter((s) => s.kind === "platform"),
+    [suppliers],
+  );
+  const customSuppliers = useMemo(
+    () => suppliers.filter((s) => s.kind !== "platform"),
+    [suppliers],
+  );
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => (f ? { ...f, [k]: v } : f));
 
   function openCreate() {
-    setForm(emptyForm());
-    setStatus(null);
+    const draft = readListingDraft<FormState>("new");
+    setForm(draft?.form ? { ...emptyForm(), ...draft.form, id: undefined } : emptyForm());
+    setDraftSavedAt(draft?.savedAt ?? null);
+    setStatus(
+      draft?.form
+        ? {
+            type: "success",
+            message: "กู้คืนแบบร่างรายการใหม่ที่บันทึกค้างไว้",
+          }
+        : null,
+    );
   }
 
   function openEdit(listing: VendorListing) {
+    const draft = readListingDraft<FormState>(listing.id);
+    if (draft?.form) {
+      setForm({ ...emptyForm(), ...draft.form, id: listing.id });
+      setDraftSavedAt(draft.savedAt);
+      setStatus({
+        type: "success",
+        message: "กู้คืนแบบร่างการแก้ไขที่บันทึกค้างไว้",
+      });
+      return;
+    }
     setForm(listingToForm(listing));
+    setDraftSavedAt(null);
     setStatus(null);
   }
 
   function closeForm() {
+    // Keep draft in localStorage so returning later can restore it.
     setForm(null);
+  }
+
+  function resumePendingDraft() {
+    if (!pendingDraft) return;
+    setForm(pendingDraft.form);
+    setDraftSavedAt(pendingDraft.savedAt);
+    setPendingDraft(null);
+    setStatus({
+      type: "success",
+      message: "เปิดแบบร่างที่บันทึกค้างไว้แล้ว — กดบันทึกเมื่อพร้อม หรือทิ้งแบบร่างได้",
+    });
+  }
+
+  function discardPendingDraft() {
+    if (!pendingDraft) return;
+    clearListingDraft(pendingDraft.key);
+    setPendingDraft(null);
+    setStatus({ type: "success", message: "ล้างแบบร่างค้างไว้แล้ว" });
+  }
+
+  function discardDraft() {
+    if (!form) return;
+    const key: ListingDraftKey = form.id?.trim() ? form.id.trim() : "new";
+    clearListingDraft(key);
+    setDraftSavedAt(null);
+    setPendingDraft(null);
+    if (form.id) {
+      const listing = listings.find((l) => l.id === form.id);
+      setForm(listing ? listingToForm(listing) : emptyForm());
+    } else {
+      setForm(emptyForm());
+    }
+    setStatus({ type: "success", message: "ล้างแบบร่างแล้ว" });
+  }
+
+  async function saveNewSupplier() {
+    const name = newSupplierName.trim();
+    if (!name) {
+      setStatus({ type: "error", message: "กรุณากรอกชื่อซัพพลายเออร์" });
+      return;
+    }
+    setSavingSupplier(true);
+    setStatus(null);
+    try {
+      const res = await fetch("/api/admin/suppliers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "เพิ่มซัพพลายเออร์ไม่สำเร็จ");
+      const created = data.supplier as AdminSupplier;
+      await loadSuppliers();
+      setForm((f) => (f ? { ...f, supplierId: created.id, productUrl: "" } : f));
+      setSupplierModalOpen(false);
+      setNewSupplierName("");
+      setStatus({ type: "success", message: `เพิ่มซัพพลายเออร์ “${created.name}” แล้ว` });
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : "เพิ่มซัพพลายเออร์ไม่สำเร็จ",
+      });
+    } finally {
+      setSavingSupplier(false);
+    }
   }
 
   async function saveForm() {
@@ -392,23 +529,46 @@ export default function AdminListingsClient() {
       });
       return;
     }
-    if (!form.province) {
-      setStatus({ type: "error", message: "กรุณาเลือกจังหวัดที่ให้บริการ" });
+    if (!form.supplierId.trim()) {
+      setStatus({ type: "error", message: "กรุณาเลือกซัพพลายเออร์" });
       return;
     }
-    if (form.floorPlanUrls.length < 1) {
-      setStatus({ type: "error", message: "กรุณาอัปโหลดแปลนพื้นอย่างน้อย 1 รูป" });
+    if (showProductUrl) {
+      const url = form.productUrl.trim();
+      if (!url) {
+        setStatus({ type: "error", message: "กรุณาใส่ลิงก์สินค้า (Product URL) สำหรับ Shopee / Lazada" });
+        return;
+      }
+      try {
+        const u = new URL(url);
+        if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("bad");
+      } catch {
+        setStatus({ type: "error", message: "ลิงก์สินค้าต้องเป็น URL ที่ขึ้นต้นด้วย http:// หรือ https://" });
+        return;
+      }
+    }
+    if (
+      form.costPrice === "" ||
+      !Number.isFinite(Number(form.costPrice)) ||
+      Number(form.costPrice) < 0 ||
+      !Number.isInteger(Number(form.costPrice))
+    ) {
+      setStatus({ type: "error", message: "กรุณากรอกราคาต้นทุน (จำนวนเต็มไม่ติดลบ)" });
       return;
     }
-    if (form.blueprintPdfUrls.length !== 1) {
-      setStatus({ type: "error", message: "กรุณาอัปโหลดไฟล์แบบแปลนหลัก PDF (1 ไฟล์)" });
+    if (!form.description.trim()) {
+      setStatus({ type: "error", message: "กรุณากรอกคำอธิบายบ้าน" });
       return;
     }
-    if (!form.contractConsent) {
+    if (
+      form.sitePlanAddonPrice !== "" &&
+      (!Number.isFinite(Number(form.sitePlanAddonPrice)) ||
+        Number(form.sitePlanAddonPrice) < 0 ||
+        !Number.isInteger(Number(form.sitePlanAddonPrice)))
+    ) {
       setStatus({
         type: "error",
-        message:
-          "กรุณายืนยันว่าผลงานเป็นลิขสิทธิ์แท้ของผู้ขาย และยินยอมตามเงื่อนไขของแพลตฟอร์ม",
+        message: "ราคาแพ็กเกจเสริมต้องเป็นจำนวนเต็มไม่ติดลบ หรือเว้นว่าง",
       });
       return;
     }
@@ -427,6 +587,8 @@ export default function AdminListingsClient() {
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "บันทึกไม่สำเร็จ");
+      clearListingDraft(form.id?.trim() ? form.id.trim() : "new");
+      setDraftSavedAt(null);
       setForm(null);
       setStatus({
         type: "success",
@@ -538,18 +700,33 @@ export default function AdminListingsClient() {
       <div className="space-y-5">
         <AdminPageHeader
           title={form.id ? "แก้ไขแบบบ้าน" : "เพิ่มแบบบ้านใหม่"}
-          description="ฟอร์มเดียวกับฝั่งผู้ขาย — กรอกต่อเนื่องจากบนลงล่าง แล้วกดบันทึกด้านล่างสุด"
+          description="โมเดลตัวกลาง: อัปโหลดภาพเรนเดอร์ ตั้งราคาต้นทุน/ราคาขาย และระบุซัพพลายเออร์ — ไม่เก็บไฟล์เอกสารแบบบนระบบ"
         />
+
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          <p>
+            {draftSavedAt
+              ? `บันทึกแบบร่างอัตโนมัติแล้ว · ${new Date(draftSavedAt).toLocaleTimeString("th-TH")}`
+              : "ระบบจะบันทึกแบบร่างอัตโนมัติเมื่อมีการแก้ไข"}
+          </p>
+          <button
+            type="button"
+            onClick={discardDraft}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            ทิ้งแบบร่าง
+          </button>
+        </div>
 
         {status && (
           <AdminStatusMessage type={status.type} message={status.message} />
         )}
 
         <Card
-          title="ส่งผลงานเพื่อลงขายบนแพลตฟอร์ม"
+          title="ลงขายแบบบ้าน (สั่งจากซัพพลายเออร์หลังมีออเดอร์)"
           desc={
             form.id
-              ? "แก้ไขรายละเอียดแบบบ้าน (รูปแบบเดียวกับแดชบอร์ดผู้ขาย)"
+              ? "แก้ไขรายละเอียดแบบบ้านในแคตตาล็อก"
               : "กรอกข้อมูลต่อเนื่องจากบนลงล่าง แล้วกดบันทึกที่ด้านล่างสุด"
           }
         >
@@ -558,7 +735,7 @@ export default function AdminListingsClient() {
             <SectionTitle
               step={1}
               title="ข้อมูลหลักและตัวกรองค้นหา"
-              desc="รหัสแบบบ้าน ราคา และข้อมูลสเปกสำหรับระบบค้นหา — ไม่ต้องกรอกข้อความนำเสนอ"
+              desc="รหัสแบบบ้าน ราคา คำอธิบาย และข้อมูลสเปกสำหรับระบบค้นหา"
             />
 
             <div className="space-y-6">
@@ -594,7 +771,20 @@ export default function AdminListingsClient() {
                 </Field>
                 <div className="space-y-2">
                   <Field
-                    label="ราคาขายไฟล์แบบ (บาท) *"
+                    label="ราคาต้นทุน (บาท) *"
+                    hint="ต้นทุนสั่งซื้อจากซัพพลายเออร์สำหรับแพ็กเกจหลัก"
+                  >
+                    <TextInput
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={form.costPrice}
+                      onChange={(e) => set("costPrice", e.target.value)}
+                      placeholder="เช่น 1500"
+                    />
+                  </Field>
+                  <Field
+                    label="ราคาขาย (บาท) *"
                     hint={`แจกฟรีได้ (ใส่ 0) — ถ้าคิดเงินต้องอย่างน้อย ฿${MIN_PAID_LISTING_PRICE_THB.toLocaleString("th-TH")} · แอดมินทดสอบ Stripe ได้ตั้งแต่ ฿${MIN_ADMIN_TEST_LISTING_PRICE_THB}`}
                   >
                     <TextInput
@@ -606,6 +796,27 @@ export default function AdminListingsClient() {
                       placeholder={`0 = ฟรี, หรือ ≥ ${MIN_PAID_LISTING_PRICE_THB}`}
                     />
                   </Field>
+                  {form.costPrice !== "" &&
+                    form.price !== "" &&
+                    Number.isFinite(Number(form.costPrice)) &&
+                    Number.isFinite(Number(form.price)) && (
+                      <div
+                        className={`rounded-lg border px-3 py-2 text-xs ${
+                          Number(form.price) - Number(form.costPrice) >= 0
+                            ? "border-emerald-200 bg-emerald-50/70 text-emerald-900"
+                            : "border-red-200 bg-red-50 text-red-800"
+                        }`}
+                      >
+                        กำไรโดยประมาณ:{" "}
+                        <span className="font-bold">
+                          ฿
+                          {(Number(form.price) - Number(form.costPrice)).toLocaleString("th-TH")}
+                        </span>
+                        {" · "}
+                        ต้นทุน ฿{Number(form.costPrice).toLocaleString("th-TH")} → ขาย ฿
+                        {Number(form.price).toLocaleString("th-TH")}
+                      </div>
+                    )}
                   {form.price !== "" && Number(form.price) === 0 && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900">
                       แบบบ้านนี้จะแสดงเป็น <span className="font-bold">ฟรี</span>
@@ -673,23 +884,86 @@ export default function AdminListingsClient() {
                       ))}
                     </Select>
                   </Field>
-                  <Field label="จังหวัดที่ให้บริการ *" hint="ผู้ซื้อกรองหาช่างใกล้บ้านด้วยค่านี้">
-                    <Select
-                      value={form.province}
-                      onChange={(e) => set("province", e.target.value)}
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <Field
+                      label="ซัพพลายเออร์ (Supplier) *"
+                      hint="แพลตฟอร์มหลักคงที่ (Shopee/Lazada) หรือซัพพลายเออร์ทั่วไปที่เพิ่มเอง"
                     >
-                      <option value="">— เลือกจังหวัด —</option>
-                      {PROVINCES_BY_REGION.map((group) => (
-                        <optgroup key={group.region} label={group.label}>
-                          {group.provinces.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.th}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </Select>
-                  </Field>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                        <Select
+                          value={form.supplierId}
+                          onChange={(e) => {
+                            const id = e.target.value;
+                            const next = suppliers.find((s) => s.id === id) ?? null;
+                            setForm((f) =>
+                              f
+                                ? {
+                                    ...f,
+                                    supplierId: id,
+                                    productUrl: supplierNeedsProductUrl(next) ? f.productUrl : "",
+                                  }
+                                : f,
+                            );
+                          }}
+                          className="sm:flex-1"
+                        >
+                          <option value="">— เลือกซัพพลายเออร์ —</option>
+                          <optgroup label="แพลตฟอร์มหลัก">
+                            {platformSuppliers.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="ซัพพลายเออร์ทั่วไป">
+                            {customSuppliers.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </Select>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewSupplierName("");
+                            setSupplierModalOpen(true);
+                          }}
+                          className="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg border border-[#1e40af]/30 bg-white px-3 py-2 text-xs font-semibold text-[#1e40af] hover:bg-blue-50"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          เพิ่มซัพพลายเออร์ใหม่
+                        </button>
+                      </div>
+                    </Field>
+                    {showProductUrl && (
+                      <div className="mt-3">
+                        <Field
+                          label="ใส่ลิงก์สินค้า (Product URL) *"
+                          hint="ลิงก์หน้าสินค้าบน Shopee / Lazada สำหรับสั่งซื้อหลังมีออเดอร์"
+                        >
+                          <TextInput
+                            value={form.productUrl}
+                            onChange={(e) => set("productUrl", e.target.value.slice(0, 2000))}
+                            placeholder="https://shopee.co.th/... หรือ https://www.lazada.co.th/..."
+                          />
+                        </Field>
+                      </div>
+                    )}
+                    <div className="mt-3">
+                      <Field
+                        label="โน้ตรหัสบ้านต้นทาง"
+                        hint="รหัสแบบบ้านจากซัพพลายเออร์ / แพลตฟอร์มต้นทาง — ใช้ค้นหาตอนสั่งซื้อหลังมีออเดอร์"
+                      >
+                        <TextInput
+                          value={form.sourcePlanCode}
+                          onChange={(e) => set("sourcePlanCode", e.target.value.slice(0, 120))}
+                          placeholder="เช่น MOD-1234 / SKU จาก Shopee"
+                          maxLength={120}
+                        />
+                      </Field>
+                    </div>
+                  </div>
                   <Field label="จำนวนชั้น *">
                     <Select
                       value={form.floors}
@@ -723,6 +997,18 @@ export default function AdminListingsClient() {
                       min={0}
                       value={form.baths}
                       onChange={(e) => set("baths", Number(e.target.value))}
+                    />
+                  </Field>
+                  <Field
+                    label="ห้องรับแขก"
+                    hint="จำนวนห้องรับแขก / ห้องนั่งเล่น — กรอกให้ตรงแบบเพื่อให้ค้นเจอ"
+                  >
+                    <TextInput
+                      type="number"
+                      min={0}
+                      value={form.livingRooms}
+                      onChange={(e) => set("livingRooms", e.target.value)}
+                      placeholder="เช่น 1"
                     />
                   </Field>
                   <Field label="ที่จอดรถ (คัน)">
@@ -769,7 +1055,41 @@ export default function AdminListingsClient() {
                 </div>
 
                 <div className="mt-4">
-                  <FilterMatchSummary form={form} />
+                  <FilterMatchSummary form={form} supplierLabel={selectedSupplier?.name} />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-surface-raised/60 p-4 sm:p-5">
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-text-secondary">คำอธิบายแบบบ้าน</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-text-muted">
+                    แสดงบนหน้ารายละเอียดสินค้าและการ์ดแบบบ้านในร้านค้า — อธิบายจุดเด่น ฟังก์ชันห้อง และการใช้งานจริง
+                  </p>
+                </div>
+                <div className="grid gap-4">
+                  <Field
+                    label="ข้อความสั้นใต้ชื่อ (ไม่บังคับ)"
+                    hint="หนึ่งบรรทัดสรุปแบบบ้าน เช่น “บ้านโมเดิร์น 3 นอน รับแสงดี”"
+                  >
+                    <TextInput
+                      value={form.tagline}
+                      onChange={(e) => set("tagline", e.target.value.slice(0, 160))}
+                      placeholder="เช่น บ้านชั้นเดียวโปร่งโล่ง · เหมาะกับที่ดินแคบ"
+                      maxLength={160}
+                    />
+                  </Field>
+                  <Field
+                    label="คำอธิบายบ้าน *"
+                    hint="รายละเอียดแบบบ้านที่ลูกค้าจะอ่านก่อนซื้อ — กรอกให้ตรงความจริง"
+                  >
+                    <TextArea
+                      value={form.description}
+                      onChange={(e) => set("description", e.target.value.slice(0, 4000))}
+                      placeholder="เช่น บ้าน 2 ชั้นสไตล์โมเดิร์น มีห้องรับแขกกว้าง เชื่อมต่อครัวเปิด ห้องนอนหลักพร้อมห้องน้ำในตัว จอดรถได้ 2 คัน…"
+                      rows={5}
+                      maxLength={4000}
+                    />
+                  </Field>
                 </div>
               </div>
             </div>
@@ -844,8 +1164,8 @@ export default function AdminListingsClient() {
 
               <div>
                 <p className="mb-1.5 text-xs font-semibold text-text-secondary">
-                  ภาพแปลนพื้น (Clean Plan){" "}
-                  <span className="text-text-muted">— สำหรับโชว์ลูกค้า</span>
+                  ภาพแปลนพื้น (สำหรับแสดงผล){" "}
+                  <span className="text-text-muted">— ไม่บังคับ · ไม่ใช่ไฟล์เอกสารส่งมอบ</span>
                 </p>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                   {form.floorPlanUrls.map((url) => (
@@ -886,120 +1206,38 @@ export default function AdminListingsClient() {
             </div>
           </section>
 
-          {/* ── 3. Delivery files ── */}
+          {/* ── 3. Packages (catalogue definition — docs ordered from supplier) ── */}
           <section className="mt-8 border-t border-border pt-8">
             <SectionTitle
               step={3}
-              title="อัปโหลดไฟล์ส่งมอบ"
-              desc="ไฟล์หลักและไฟล์เสริมสำหรับผู้ซื้อหลังชำระเงิน"
+              title="โครงสร้างแพ็กเกจสินค้า"
+              desc="กำหนดราคาแพ็กเกจ — เอกสารจริงสั่งจากซัพพลายเออร์หลังมีออเดอร์ ไม่ได้อัปโหลดไฟล์เอกสารบนระบบ"
             />
-            <div className="grid gap-5 sm:grid-cols-2">
-              <MultiFileUpload
-                kind="pdf"
-                variant="pdf"
-                values={form.blueprintPdfUrls}
-                onChange={(urls) => set("blueprintPdfUrls", urls.slice(0, 1))}
-                label="แบบแปลนหลัก (PDF) *"
-                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .pdf (สูงสุด 100MB)"
-                onUpload={uploadAdminFile}
-                onError={(m) => setStatus({ type: "error", message: m })}
-              />
-              <MultiFileUpload
-                kind="cad"
-                variant="cad"
-                values={form.cadFileUrls}
-                onChange={(urls) => set("cadFileUrls", urls.slice(0, 1))}
-                label="ไฟล์ AutoCAD (DWG)"
-                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .dwg"
-                onUpload={uploadAdminFile}
-                onError={(m) => setStatus({ type: "error", message: m })}
-              />
-              <MultiFileUpload
-                kind="boq"
-                variant="doc"
-                values={form.boqFileUrls}
-                onChange={(urls) => set("boqFileUrls", urls.slice(0, 1))}
-                label="ไฟล์ BOQ (PDF)"
-                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .pdf — รายการประมาณราคา"
-                onUpload={uploadAdminFile}
-                onError={(m) => setStatus({ type: "error", message: m })}
-              />
-              <MultiFileUpload
-                kind="calc"
-                variant="calc"
-                values={form.calcSheetUrls}
-                onChange={(urls) => set("calcSheetUrls", urls.slice(0, 1))}
-                label="รายการคำนวณ (PDF)"
-                hint="อัปโหลดได้ 1 ไฟล์เท่านั้น · นามสกุล .pdf (ไม่บังคับ)"
-                onUpload={uploadAdminFile}
-                onError={(m) => setStatus({ type: "error", message: m })}
-              />
-              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Field
-                    label="กำหนดราคา BOQ (บาท)"
-                    hint="ตั้งราคาเสริม BOQ ได้เอง — ว่างไว้ใช้ราคาเริ่มต้นของแพลตฟอร์ม · ใส่ 0 ได้หากแจกฟรีพร้อมแบบ"
-                  >
-                    <TextInput
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={form.boqPrice}
-                      onChange={(e) => set("boqPrice", e.target.value)}
-                      placeholder="เช่น 490"
-                    />
-                  </Field>
-                  {form.boqFileUrls.length > 0 && form.boqPrice === "" && (
-                    <p className="text-[11px] text-amber-800">
-                      มีไฟล์ BOQ แล้วแต่ยังไม่ได้ตั้งราคา — ลูกค้าจะเห็นราคาเริ่มต้นของระบบ
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Field
-                    label="กำหนดราคารายการคำนวณ (บาท)"
-                    hint="ตั้งราคาเสริมรายการคำนวณได้เอง — ว่างไว้ใช้ราคาเริ่มต้นของแพลตฟอร์ม · ใส่ 0 ได้หากแจกฟรีพร้อมแบบ"
-                  >
-                    <TextInput
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={form.calcPrice}
-                      onChange={(e) => set("calcPrice", e.target.value)}
-                      placeholder="เช่น 390"
-                    />
-                  </Field>
-                  {form.calcSheetUrls.length > 0 && form.calcPrice === "" && (
-                    <p className="text-[11px] text-amber-800">
-                      มีไฟล์รายการคำนวณแล้วแต่ยังไม่ได้ตั้งราคา — ลูกค้าจะเห็นราคาเริ่มต้นของระบบ
-                    </p>
-                  )}
-                </div>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[#1e40af]/20 bg-blue-50/50 px-4 py-3 text-sm text-[#1e3a5f]">
+                <p className="font-semibold">แพ็กเกจหลัก (ราคาขายด้านบน)</p>
+                <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs text-slate-700">
+                  <li>เอกสารแบบบ้านพร้อมยื่นขออนุญาตก่อสร้าง 3 ชุด</li>
+                  <li>ไฟล์ Bill of Quantity (BOQ) เพื่อยื่นขออนุญาตก่อสร้าง</li>
+                </ul>
               </div>
-            </div>
-          </section>
-
-          {/* ── 4. Confirmations ── */}
-          <section className="mt-8 border-t border-border pt-8">
-            <SectionTitle
-              step={4}
-              title="การยืนยันมาตรฐาน"
-              desc="โปรดอ่านและยืนยันข้อความต่อไปนี้ก่อนบันทึก"
-            />
-            <div className="space-y-3">
-              <CheckRow checked={form.permitReady} onChange={(v) => set("permitReady", v)}>
-                แบบชุดนี้มีรายละเอียดครบถ้วน พร้อมสำหรับนำไปใช้ยื่นขออนุญาตก่อสร้างได้จริง
-              </CheckRow>
-              <CheckRow checked={form.boqComplete} onChange={(v) => set("boqComplete", v)}>
-                มีรายการประมาณราคา (BOQ) ครบถ้วนครอบคลุมงานโครงสร้างและสถาปัตยกรรม
-              </CheckRow>
-              <CheckRow
-                checked={form.contractConsent}
-                onChange={(v) => set("contractConsent", v)}
+              <Field
+                label="แพ็กเกจเสริม — แผนผังบริเวณ (บาท)"
+                hint="ราคาขายแอดออน «เขียนแผนผังบริเวณ» · ว่างไว้ใช้ค่าเริ่มต้น ฿1,000"
               >
-                ยืนยันว่าผลงานนี้เป็นลิขสิทธิ์แท้ของผู้ขาย และยินยอมให้ระบบนำไปใช้ตามเงื่อนไขของแพลตฟอร์ม{" "}
-                <span className="text-red-500">*</span>
-              </CheckRow>
+                <TextInput
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.sitePlanAddonPrice}
+                  onChange={(e) => set("sitePlanAddonPrice", e.target.value)}
+                  placeholder="เช่น 490"
+                />
+              </Field>
+              <p className="text-[11px] text-text-muted">
+                หลังลูกค้าชำระเงิน ระบบจะใช้ชื่อซัพพลายเออร์เพื่อสั่งซื้อและจัดส่งเอกสารนอกแพลตฟอร์ม
+                (เชื่อม LINE OA ในขั้นถัดไป)
+              </p>
             </div>
 
             <div className="mt-8 flex flex-wrap justify-end gap-3 border-t border-border pt-6">
@@ -1027,6 +1265,41 @@ export default function AdminListingsClient() {
           <AiImageToolCards />
           <AiRenderingGuide />
         </div>
+
+        {supplierModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-xl">
+              <h3 className="text-base font-bold text-[#1e3a5f]">เพิ่มซัพพลายเออร์ใหม่</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                บันทึกลงตาราง suppliers แล้วเลือกได้ทันทีใน Dropdown (ไม่ต้องรีเฟรช)
+              </p>
+              <label className="mt-4 block">
+                <span className="mb-1 block text-xs font-semibold text-slate-600">
+                  ชื่อซัพพลายเออร์ *
+                </span>
+                <TextInput
+                  value={newSupplierName}
+                  onChange={(e) => setNewSupplierName(e.target.value.slice(0, 120))}
+                  placeholder="เช่น aphouse"
+                  maxLength={120}
+                  autoFocus
+                />
+              </label>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSupplierModalOpen(false)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  ยกเลิก
+                </button>
+                <PrimaryButton onClick={() => void saveNewSupplier()} loading={savingSupplier}>
+                  บันทึก
+                </PrimaryButton>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1035,12 +1308,38 @@ export default function AdminListingsClient() {
     <div>
       <AdminPageHeader
         title="จัดการแบบบ้าน"
-        description="เพิ่ม/แก้ไขแบบบ้าน · ดีไซเนอร์ที่ยืนยันตัวตนแล้วเผยแพร่อัตโนมัติ — แอดมินใช้สำหรับระงับหรือแก้ไขเมื่อจำเป็น"
+        description="แคตตาล็อกตัวกลาง: ภาพเรนเดอร์ · ราคาต้นทุน/ขาย · ซัพพลายเออร์ — สั่งเอกสารจากซัพพลายเออร์หลังมีออเดอร์"
       />
 
       {status && (
         <div className="mb-6">
           <AdminStatusMessage type={status.type} message={status.message} />
+        </div>
+      )}
+
+      {pendingDraft && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p>
+            มีแบบร่างค้างไว้
+            {pendingDraft.key === "new" ? " (รายการใหม่)" : " (กำลังแก้ไข)"} ·{" "}
+            {new Date(pendingDraft.savedAt).toLocaleString("th-TH")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={resumePendingDraft}
+              className="rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800"
+            >
+              เปิดแบบร่างต่อ
+            </button>
+            <button
+              type="button"
+              onClick={discardPendingDraft}
+              className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              ทิ้งแบบร่าง
+            </button>
+          </div>
         </div>
       )}
 
@@ -1080,6 +1379,23 @@ export default function AdminListingsClient() {
           <Eraser className="h-4 w-4" />
           ล้างข้อมูลตัวอย่าง ({dummyCount})
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            void load()
+              .catch((err) =>
+                setStatus({
+                  type: "error",
+                  message: err instanceof Error ? err.message : "โหลดไม่สำเร็จ",
+                }),
+              )
+              .finally(() => setLoading(false));
+          }}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+        >
+          รีเฟรช
+        </button>
         <p className="ml-auto text-sm text-slate-500">{listings.length} รายการ</p>
       </div>
 
@@ -1096,8 +1412,9 @@ export default function AdminListingsClient() {
                   <th className="pb-3 pr-3 font-semibold">รูป</th>
                   <th className="pb-3 pr-3 font-semibold">รหัส / ชื่อ</th>
                   <th className="pb-3 pr-3 font-semibold">หมวด</th>
+                  <th className="pb-3 pr-3 font-semibold">ซัพพลายเออร์</th>
                   <th className="pb-3 pr-3 font-semibold">สเปก</th>
-                  <th className="pb-3 pr-3 font-semibold">ราคา</th>
+                  <th className="pb-3 pr-3 font-semibold">ราคา / ต้นทุน</th>
                   <th className="pb-3 pr-3 font-semibold">สถานะขาย</th>
                   <th className="pb-3 pr-3 font-semibold">ที่มา</th>
                   <th className="pb-3 font-semibold">จัดการ</th>
@@ -1135,12 +1452,45 @@ export default function AdminListingsClient() {
                         </p>
                       </td>
                       <td className="py-3 pr-3 text-slate-600">
-                        {l.beds} นอน · {l.baths} น้ำ · {l.floors} ชั้น
+                        <p className="text-xs font-medium text-slate-800">
+                          {l.supplierName?.trim() || "—"}
+                        </p>
+                        {l.productUrl ? (
+                          <a
+                            href={l.productUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-0.5 inline-flex items-center gap-0.5 text-[11px] font-semibold text-[#1e40af] hover:underline"
+                          >
+                            ลิงก์สินค้า
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : null}
+                        {l.sourcePlanCode?.trim() ? (
+                          <p className="mt-0.5 font-mono text-[11px] text-slate-500">
+                            ต้นทาง: {l.sourcePlanCode.trim()}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="py-3 pr-3 text-slate-600">
+                        {l.beds} นอน · {l.baths} น้ำ
+                        {l.livingRooms != null && l.livingRooms > 0
+                          ? ` · ${l.livingRooms} รับแขก`
+                          : ""}{" "}
+                        · {l.floors} ชั้น
                         <br />
                         <span className="text-xs text-slate-400">{l.area}</span>
                       </td>
                       <td className="py-3 pr-3 font-semibold text-slate-900">
-                        {l.price <= 0 ? "ฟรี" : `฿${l.price.toLocaleString("th-TH")}`}
+                        <p>{l.price <= 0 ? "ฟรี" : `฿${l.price.toLocaleString("th-TH")}`}</p>
+                        {l.costPrice != null && (
+                          <p className="text-[11px] font-normal text-slate-500">
+                            ต้นทุน ฿{l.costPrice.toLocaleString("th-TH")}
+                            {l.price > 0
+                              ? ` · กำไร ฿${(l.price - l.costPrice).toLocaleString("th-TH")}`
+                              : ""}
+                          </p>
+                        )}
                       </td>
                       <td className="py-3 pr-3">
                         <span

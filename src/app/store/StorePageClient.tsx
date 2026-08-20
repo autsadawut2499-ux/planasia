@@ -48,6 +48,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
   useEffect(() => {
     const beds = Number(searchParams.get("beds"));
     const baths = Number(searchParams.get("baths"));
+    const livingRooms = Number(searchParams.get("livingRooms"));
     const floors = Number(searchParams.get("floors"));
     const parking = Number(searchParams.get("parking"));
     const areaMin = Number(searchParams.get("areaMin"));
@@ -62,6 +63,8 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       ...f,
       beds: Number.isFinite(beds) && beds > 0 ? beds : f.beds,
       baths: Number.isFinite(baths) && baths > 0 ? baths : f.baths,
+      livingRooms:
+        Number.isFinite(livingRooms) && livingRooms > 0 ? livingRooms : f.livingRooms,
       floors: floors === 1 || floors === 2 ? floors : f.floors,
       parking: Number.isFinite(parking) && parking > 0 ? parking : f.parking,
       style: style || f.style,
@@ -125,6 +128,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
     const hasHard =
       filters.beds > 0 ||
       filters.baths > 0 ||
+      filters.livingRooms > 0 ||
       filters.floors > 0 ||
       filters.priceMin > 0 ||
       filters.priceMax > 0 ||
@@ -135,6 +139,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
     const hard = filtersToHardConstraints({
       beds: filters.beds || undefined,
       baths: filters.baths || undefined,
+      livingRooms: filters.livingRooms || undefined,
       floors: filters.floors || undefined,
       priceMin: filters.priceMin || undefined,
       priceMax: filters.priceMax || undefined,
@@ -207,6 +212,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
           filters={{
             beds: filters.beds,
             baths: filters.baths,
+            livingRooms: filters.livingRooms,
             floors: filters.floors,
             style: filters.style,
             areaMin: areaRange.min,

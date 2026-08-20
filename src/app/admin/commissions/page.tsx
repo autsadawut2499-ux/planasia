@@ -2,7 +2,7 @@ import { getAdminSession } from "@/lib/admin/auth";
 import CommissionsClient from "./CommissionsClient";
 
 export const metadata = {
-  title: "ส่วนแบ่งรายได้",
+  title: "ต้นทุน / กำไร",
   robots: { index: false, follow: false },
 };
 

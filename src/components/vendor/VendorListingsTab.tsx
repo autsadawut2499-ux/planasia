@@ -46,6 +46,7 @@ interface FormState {
   floors: number;
   beds: number;
   baths: number;
+  livingRooms: string;
   parking: string;
   widthMeters: string;
   lengthMeters: string;
@@ -81,6 +82,7 @@ function emptyForm(): FormState {
     floors: 1,
     beds: 3,
     baths: 2,
+    livingRooms: "1",
     parking: "1",
     widthMeters: "",
     lengthMeters: "",
@@ -117,6 +119,7 @@ function fromListing(l: VendorListing): FormState {
     floors: l.floors,
     beds: l.beds,
     baths: l.baths,
+    livingRooms: l.livingRooms?.toString() ?? "",
     parking: l.parking?.toString() ?? "",
     widthMeters: l.widthMeters?.toString() ?? "",
     lengthMeters: l.lengthMeters?.toString() ?? "",
@@ -179,6 +182,7 @@ function FilterMatchSummary({ form }: { form: FormState }) {
     `${form.floors} ชั้น`,
     `${form.beds} ห้องนอน`,
     `${form.baths} ห้องน้ำ`,
+    Number(form.livingRooms) > 0 ? `${form.livingRooms} ห้องรับแขก` : null,
     area > 0 ? `${area.toLocaleString()} ตร.ม.` : null,
     Number(form.constructionCostEstimate) > 0
       ? `งบ ~฿${Number(form.constructionCostEstimate).toLocaleString()}`
@@ -276,6 +280,7 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
         floors: form.floors,
         beds: form.beds,
         baths: form.baths,
+        livingRooms: form.livingRooms || undefined,
         parking: form.parking || undefined,
         widthMeters: form.widthMeters || undefined,
         lengthMeters: form.lengthMeters || undefined,
@@ -533,6 +538,18 @@ export function VendorListingsTab({ dash }: { dash: Dashboard }) {
                       min={0}
                       value={form.baths}
                       onChange={(e) => set("baths", Number(e.target.value))}
+                    />
+                  </Field>
+                  <Field
+                    label="ห้องรับแขก"
+                    hint="จำนวนห้องรับแขก / ห้องนั่งเล่น — กรอกให้ตรงแบบเพื่อให้ค้นเจอ"
+                  >
+                    <TextInput
+                      type="number"
+                      min={0}
+                      value={form.livingRooms}
+                      onChange={(e) => set("livingRooms", e.target.value)}
+                      placeholder="เช่น 1"
                     />
                   </Field>
                   <Field label="ที่จอดรถ (คัน)">

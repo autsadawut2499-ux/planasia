@@ -21,6 +21,10 @@ import {
   HardHat,
   Sparkles,
   Wand2,
+  Newspaper,
+  Landmark,
+  CreditCard,
+  ShoppingBag,
 } from "lucide-react";
 
 export default async function AdminDashboardPage() {
@@ -35,6 +39,30 @@ export default async function AdminDashboardPage() {
       label: "จัดการแบบบ้าน",
       desc: "เพิ่ม แก้ไข จัดหมวด และลบแบบบ้านในร้านค้า (Full CRUD)",
       icon: Home,
+    },
+    {
+      href: "/admin/articles",
+      label: "จัดการบทความ",
+      desc: "สร้าง แก้ไข ลบ และเผยแพร่บทความบนหน้า /articles",
+      icon: Newspaper,
+    },
+    {
+      href: "/admin/loan-consultations",
+      label: "ปรึกษาสินเชื่อบ้าน",
+      desc: "คำขอจากฟอร์ม · PDF · ตั้งค่า LINE OA ผู้เชี่ยวชาญ",
+      icon: Landmark,
+    },
+    {
+      href: "/admin/payment-settings",
+      label: "การตั้งค่าการชำระเงิน",
+      desc: "บัญชีรับโอน · QR Code สำหรับหน้า Checkout",
+      icon: CreditCard,
+    },
+    {
+      href: "/admin/orders",
+      label: "คำสั่งซื้อ (Paid)",
+      desc: "สรุปลูกค้า · แบบบ้าน · ซัพพลายเออร์ · เปิด PDF สรุปออเดอร์",
+      icon: ShoppingBag,
     },
     {
       href: "/admin/home-builders",
@@ -86,8 +114,8 @@ export default async function AdminDashboardPage() {
     },
     {
       href: "/admin/commissions",
-      label: "ส่วนแบ่งรายได้",
-      desc: "ผู้เขียนแบบ 70% / แพลตฟอร์ม 30% — ดูยอดขายและส่วนแบ่ง",
+      label: "ต้นทุน / กำไร",
+      desc: "ยอดขาย · ต้นทุนซัพพลายเออร์ · กำไร — บันทึกอัตโนมัติเมื่อขายได้",
       icon: Percent,
     },
     {

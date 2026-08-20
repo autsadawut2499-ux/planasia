@@ -21,14 +21,18 @@ export async function GET(request: NextRequest) {
     if (source) listings = listings.filter((l) => l.source === source);
     if (q) {
       listings = listings.filter((l) => {
-        const hay = `${l.name} ${l.planId} ${l.id} ${l.style} ${l.collection ?? ""}`.toLowerCase();
+        const hay =
+          `${l.name} ${l.planId} ${l.planCode ?? ""} ${l.id} ${l.style} ${l.collection ?? ""} ${l.supplierName ?? ""}`.toLowerCase();
         return hay.includes(q);
       });
     }
 
     return NextResponse.json({ listings, total: listings.length });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unauthorized";
+    const status = message.includes("Unauthorized") ? 401 : 500;
+    console.error("[admin/listings GET]", err);
+    return NextResponse.json({ error: message }, { status });
   }
 }
 

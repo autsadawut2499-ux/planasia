@@ -295,6 +295,11 @@ export async function createOrUpdateVendorListing(
     highlights,
     beds,
     baths: Math.max(0, Math.round(num(body.baths, 0))),
+    livingRooms: (() => {
+      const raw = body.livingRooms ?? body.living_rooms;
+      if (raw != null && raw !== "") return Math.max(0, Math.round(num(raw)));
+      return undefined;
+    })(),
     parking:
       body.parking != null && body.parking !== ""
         ? Math.max(0, Math.round(num(body.parking)))

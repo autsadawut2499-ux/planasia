@@ -1,43 +1,6 @@
-import "server-only";
-import {
-  getStripePublishableKey,
-  isStripePublishableConfigured,
-  stripePublishableKeyMode,
-} from "@/lib/payments/publishable-key";
-
 /**
- * Stripe / mock-payment configuration helpers.
- *
- * Production always requires real Stripe keys.
- * Local mock unlocks are opt-in via ALLOW_MOCK_PAYMENTS=true (never in production).
+ * Payment stack config — bank transfer + slip verification (Stripe removed).
  */
-
-export function isStripeSecretConfigured(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
-}
-
-export function isStripeWebhookSecretConfigured(): boolean {
-  return Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim());
-}
-
-export {
-  getStripePublishableKey,
-  isStripePublishableConfigured,
-  stripePublishableKeyMode,
-};
-
-/** Secret key present — enough to create Checkout sessions. */
-export function isStripeConfigured(): boolean {
-  return isStripeSecretConfigured();
-}
-
-/**
- * Both secret key and webhook signing secret are set.
- * Required for reliable PromptPay / async fulfillment in production.
- */
-export function isStripeWebhookConfigured(): boolean {
-  return isStripeSecretConfigured() && isStripeWebhookSecretConfigured();
-}
 
 export function isProductionRuntime(): boolean {
   return (
@@ -46,144 +9,79 @@ export function isProductionRuntime(): boolean {
   );
 }
 
-/**
- * Dev-only free unlock path. Permanently disabled in production /
- * Vercel production — even if ALLOW_MOCK_PAYMENTS is mistakenly set.
- */
 export function isMockPaymentsAllowed(): boolean {
   if (isProductionRuntime()) return false;
-  if (process.env.ALLOW_MOCK_PAYMENTS === "true") {
-    console.warn(
-      "[payments] ALLOW_MOCK_PAYMENTS is enabled — never deploy this to production",
-    );
-    return true;
-  }
+  return process.env.ALLOW_MOCK_PAYMENTS === "true";
+}
+
+/** @deprecated Stripe removed */
+export function isStripeSecretConfigured(): boolean {
   return false;
+}
+
+/** @deprecated Stripe removed */
+export function isStripeWebhookSecretConfigured(): boolean {
+  return false;
+}
+
+/** @deprecated Stripe removed */
+export function isStripeConfigured(): boolean {
+  return false;
+}
+
+/** @deprecated Stripe removed */
+export function isStripeWebhookConfigured(): boolean {
+  return false;
+}
+
+/** @deprecated Stripe removed */
+export function getStripePublishableKey(): string | null {
+  return null;
+}
+
+/** @deprecated Stripe removed */
+export function isStripePublishableConfigured(): boolean {
+  return false;
+}
+
+/** @deprecated Stripe removed */
+export function stripePublishableKeyMode(): "test" | "live" | null {
+  return null;
 }
 
 export type StripeCheckoutReadiness =
   | { ok: true }
-  | { ok: false; status: 503; error: string; missing: string[] };
+  | { ok: false; missing: string[]; error: string };
 
-/** Validate env before creating a Checkout session. */
-export function getStripeCheckoutReadiness(): StripeCheckoutReadiness {
-  const missing: string[] = [];
-  if (!isStripeSecretConfigured()) missing.push("STRIPE_SECRET_KEY");
-
-  if (missing.length === 0) return { ok: true };
-
-  if (isProductionRuntime()) {
-    return {
-      ok: false,
-      status: 503,
-      missing,
-      error:
-        "Stripe is not configured. Set STRIPE_SECRET_KEY (and STRIPE_WEBHOOK_SECRET for webhooks) before accepting payments.",
-    };
-  }
-
-  if (isMockPaymentsAllowed()) {
-    // Caller may fall through to mock path.
-    return {
-      ok: false,
-      status: 503,
-      missing,
-      error:
-        "Stripe is not configured. Mock payments are enabled (ALLOW_MOCK_PAYMENTS=true).",
-    };
-  }
-
-  return {
-    ok: false,
-    status: 503,
-    missing,
-    error:
-      "Stripe is not configured. Set STRIPE_SECRET_KEY, or set ALLOW_MOCK_PAYMENTS=true for local mock unlocks (development only).",
-  };
-}
-
-export type StripeWebhookReadiness =
-  | { ok: true }
-  | { ok: false; status: 503; error: string; missing: string[] };
-
-export function getStripeWebhookReadiness(): StripeWebhookReadiness {
-  const missing: string[] = [];
-  if (!isStripeSecretConfigured()) missing.push("STRIPE_SECRET_KEY");
-  if (!isStripeWebhookSecretConfigured()) missing.push("STRIPE_WEBHOOK_SECRET");
-
-  if (missing.length === 0) return { ok: true };
-
-  return {
-    ok: false,
-    status: 503,
-    missing,
-    error: `Stripe webhook not configured. Missing: ${missing.join(", ")}. Local test: stripe listen --forward-to localhost:3000/api/webhooks/stripe`,
-  };
-}
-
-/** Payment Intent / Elements needs secret + publishable key. */
-export function getStripePaymentIntentReadiness(): StripeCheckoutReadiness {
-  const missing: string[] = [];
-  if (!isStripeSecretConfigured()) missing.push("STRIPE_SECRET_KEY");
-  if (!isStripePublishableConfigured()) {
-    missing.push("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
-  }
-
-  if (missing.length === 0) return { ok: true };
-
-  return {
-    ok: false,
-    status: 503,
-    missing,
-    error:
-      "Stripe Payment Intent is not configured. Set STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.",
-  };
-}
-
-export type StripeStackStatus = {
-  configured: boolean;
-  checkoutReady: boolean;
-  paymentIntentReady: boolean;
-  webhookReady: boolean;
-  mockPaymentsAllowed: boolean;
-  publishableMode: ReturnType<typeof stripePublishableKeyMode>;
-  missing: string[];
-  routes: {
-    checkoutCart: string;
-    checkoutPurchase: string;
-    paymentIntent: string;
-    paymentConfirm: string;
-    intentConfirm: string;
-    webhook: string;
-    status: string;
-  };
+const REMOVED: StripeCheckoutReadiness = {
+  ok: false,
+  missing: [],
+  error:
+    "Stripe ถูกถอดออกแล้ว — ใช้โอนธนาคาร + ตรวจสลิปอัตโนมัติ (แอดมิน → การตั้งค่าการชำระเงิน)",
 };
 
-/** Aggregate readiness for admin / ops diagnostics. */
-export function getStripeStackStatus(): StripeStackStatus {
-  const missing: string[] = [];
-  if (!isStripeSecretConfigured()) missing.push("STRIPE_SECRET_KEY");
-  if (!isStripeWebhookSecretConfigured()) missing.push("STRIPE_WEBHOOK_SECRET");
-  if (!isStripePublishableConfigured()) {
-    missing.push("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
-  }
+export function getStripeCheckoutReadiness(): StripeCheckoutReadiness {
+  return REMOVED;
+}
 
+export function getStripeWebhookReadiness(): StripeCheckoutReadiness {
+  return REMOVED;
+}
+
+export function getStripePaymentIntentReadiness(): StripeCheckoutReadiness {
+  return REMOVED;
+}
+
+export function getStripeStackStatus() {
   return {
-    configured: isStripeSecretConfigured(),
-    checkoutReady: getStripeCheckoutReadiness().ok,
-    paymentIntentReady: getStripePaymentIntentReadiness().ok,
-    webhookReady: getStripeWebhookReadiness().ok,
+    stripeSecretConfigured: false,
+    stripePublishableConfigured: false,
+    webhookSecretConfigured: false,
     mockPaymentsAllowed: isMockPaymentsAllowed(),
-    publishableMode: stripePublishableKeyMode(),
-    missing,
-    routes: {
-      checkoutCart: "/api/store/cart/checkout",
-      checkoutPurchase: "/api/store/purchase",
-      paymentIntent: "/api/payments/intent",
-      paymentConfirm: "/api/payment/confirm",
-      intentConfirm: "/api/payments/intent/confirm",
-      webhook: "/api/webhooks/stripe",
-      status: "/api/payments/status",
-    },
+    checkoutReady: false,
+    paymentIntentReady: false,
+    webhookReady: false,
+    message: "Bank transfer + slip verification only",
+    webhook: null as string | null,
   };
 }

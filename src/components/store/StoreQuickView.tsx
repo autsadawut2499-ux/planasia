@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, QrCode, X, Download, Layers, Home } from "lucide-react";
+import { Building2, X, Download, Layers, Home } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import {
@@ -19,13 +19,14 @@ import {
   isPreCheckoutValid,
   type PreCheckoutSelections,
 } from "@/components/store/PreCheckoutWizard";
+import {
+  BankTransferPaymentPanel,
+  type BankTransferBankInfo,
+} from "@/components/store/BankTransferPaymentPanel";
+import { OrderSuccessModal } from "@/components/store/OrderSuccessModal";
 import { defaultDocumentLanguage } from "@/lib/store/document-languages";
 import { formatMoney as formatMoneyInCurrency } from "@/lib/currency";
-import {
-  availablePaymentMethods,
-  defaultPaymentMethod,
-  type PaymentMethodId,
-} from "@/lib/payments/methods";
+import { defaultPaymentMethod } from "@/lib/payments/methods";
 import { isListingPurchasable } from "@/lib/store/listing-purchase";
 import { useBilingual } from "@/components/landing/useBilingual";
 import {
@@ -213,6 +214,7 @@ interface StoreCheckoutModalProps {
   initialHardcopy?: boolean;
   initialBoq?: boolean;
   initialCalcSheet?: boolean;
+  initialSitePlan?: boolean;
   /** Display price for the base line (includes CAD surcharge when format=cad). */
   basePlanPrice?: number;
 }
@@ -228,6 +230,7 @@ export function StoreCheckoutModal({
   initialHardcopy = false,
   initialBoq = false,
   initialCalcSheet = false,
+  initialSitePlan = false,
   basePlanPrice,
 }: StoreCheckoutModalProps) {
   const { country, currency, geoCountryCode, translate, uiLocale } = useApp();
@@ -236,10 +239,18 @@ export function StoreCheckoutModal({
   const thai = uiLocale === "th";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bankCheckout, setBankCheckout] = useState<{
+    orderId: string;
+    amountThb: number;
+    bank: BankTransferBankInfo;
+  } | null>(null);
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [successOrderId, setSuccessOrderId] = useState<string | undefined>();
   const [format, setFormat] = useState<"pdf" | "cad">(initialFormat);
   const [hardcopy, setHardcopy] = useState(initialHardcopy);
   const [boq, setBoq] = useState(initialBoq);
   const [calcSheet, setCalcSheet] = useState(initialCalcSheet);
+  const [sitePlan, setSitePlan] = useState(initialSitePlan);
   const [selections, setSelections] = useState<PreCheckoutSelections>(() =>
     defaultPreCheckoutSelections(
       defaultDocumentLanguage(uiLocale),
@@ -255,6 +266,10 @@ export function StoreCheckoutModal({
     setHardcopy(initialHardcopy);
     setBoq(initialBoq);
     setCalcSheet(initialCalcSheet);
+    setSitePlan(initialSitePlan);
+    setBankCheckout(null);
+    setShowOrderSuccess(false);
+    setSuccessOrderId(undefined);
     setSelections(
       defaultPreCheckoutSelections(
         defaultDocumentLanguage(uiLocale),
@@ -270,17 +285,18 @@ export function StoreCheckoutModal({
     initialHardcopy,
     initialBoq,
     initialCalcSheet,
+    initialSitePlan,
     uiLocale,
     country.code,
   ]);
 
   const checkoutExtraLines = useMemo(() => {
     const lines: { label: string; amount: number }[] = [];
-    if (hardcopy) {
+    if (hardcopy && HARDCOPY_3SETS_PRICE > 0) {
       lines.push({
         label: thai
-          ? "ถ่ายเอกสาร 3 ชุด (A3)"
-          : "Photocopy 3 sets (A3)",
+          ? "เอกสารรูปเล่ม A3 ×3 (รวมในแพ็คเกจหลัก)"
+          : "Printed A3 sets ×3 (included in main package)",
         amount: HARDCOPY_3SETS_PRICE,
       });
     }
@@ -296,42 +312,36 @@ export function StoreCheckoutModal({
         amount: resolveCalcPrice(listing),
       });
     }
+    if (sitePlan) {
+      lines.push({
+        label: thai ? "เขียนแผนผังบริเวณ" : "Site plan drafting",
+        amount: listing.sitePlanAddonPrice ?? 1000,
+      });
+    }
     return lines;
-  }, [boq, calcSheet, hardcopy, listing, thai]);
+  }, [boq, calcSheet, hardcopy, listing, sitePlan, thai]);
 
   const checkoutCurrency = currency;
   const formatCheckoutMoney = useMemo(
     () => (amountThb: number) => formatMoneyInCurrency(amountThb, checkoutCurrency),
     [checkoutCurrency],
   );
-  const paymentMethods = useMemo(
-    () => availablePaymentMethods(checkoutCurrency, geoCountryCode),
-    [checkoutCurrency, geoCountryCode],
-  );
-  const [method, setMethod] = useState<PaymentMethodId>(() =>
-    defaultPaymentMethod(checkoutCurrency, geoCountryCode),
-  );
-
-  useEffect(() => {
-    const next = defaultPaymentMethod(checkoutCurrency, geoCountryCode);
-    if (!paymentMethods.some((m) => m.id === method && m.available)) {
-      setMethod(next);
-    }
-  }, [checkoutCurrency, geoCountryCode, method, paymentMethods]);
+  const method = defaultPaymentMethod(checkoutCurrency, geoCountryCode);
 
   if (!open) return null;
 
   const requiresShipping = hardcopy;
+  const requiresSitePlan = sitePlan;
   const canPay =
-    authReady && isPreCheckoutValid(selections, { requiresShipping });
-  // Buyer (+ shipping when physical) then payment.
+    authReady && isPreCheckoutValid(selections, { requiresShipping, requiresSitePlan });
+  // Shipping / site-plan (when selected) then payment — buyer identity from Google sign-in.
   const payStep = THAI_DOMESTIC_MARKET
-    ? requiresShipping
+    ? requiresShipping || requiresSitePlan
+      ? "2"
+      : "1"
+    : requiresShipping || requiresSitePlan
       ? "3"
-      : "2"
-    : requiresShipping
-      ? "4"
-      : "3";
+      : "2";
 
   const handlePay = async () => {
     if (!authReady) {
@@ -345,12 +355,12 @@ export function StoreCheckoutModal({
     if (!canPay) {
       setError(
         thai
-          ? requiresShipping
-            ? "กรุณากรอกที่อยู่จัดส่งและยอมรับข้อกำหนด/นโยบายคืนเงิน (เบอร์โทรไม่บังคับ)"
-            : "กรุณายอมรับข้อกำหนด/นโยบายคืนเงิน (เบอร์โทรไม่บังคับ)"
-          : requiresShipping
-            ? "Please complete the shipping address and accept the Terms & Refund Policy (phone optional)"
-            : "Please accept the Terms & Refund Policy (phone optional)",
+          ? requiresShipping || requiresSitePlan
+            ? "กรุณากรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) และยอมรับข้อกำหนด/นโยบายคืนเงิน"
+            : "กรุณายอมรับข้อกำหนด/นโยบายคืนเงิน"
+          : requiresShipping || requiresSitePlan
+            ? "Please complete required fields (shipping / site plan) and accept the Terms & Refund Policy"
+            : "Please accept the Terms & Refund Policy",
       );
       return;
     }
@@ -361,6 +371,7 @@ export function StoreCheckoutModal({
         ...(hardcopy ? (["hardcopy-3sets"] as const) : []),
         ...(boq ? (["boq-bundle"] as const) : []),
         ...(calcSheet ? (["calc-sheet"] as const) : []),
+        ...(sitePlan ? (["site-plan"] as const) : []),
       ];
       const res = await fetch("/api/store/purchase", {
         method: "POST",
@@ -376,23 +387,32 @@ export function StoreCheckoutModal({
           userId: buyerId,
           documentLanguage: selections.documentLanguage,
           addons,
-          buyerName: selections.buyerName.trim(),
-          buyerEmail: selections.buyerEmail.trim(),
+          buyerName: selections.buyerName.trim() || sessionPrefill?.name?.trim() || undefined,
+          buyerEmail: selections.buyerEmail.trim() || sessionPrefill?.email?.trim() || undefined,
           buyerPhone: selections.buyerPhone.trim(),
           shippingAddress: requiresShipping
             ? selections.shippingAddress
             : undefined,
+          sitePlanInfo: requiresSitePlan ? selections.sitePlanInfo : undefined,
           uiLocale,
         }),
       });
       const data = await res.json();
 
-      if (data.requiresCheckout && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      if (data.requiresBankTransfer && data.orderId && data.bank) {
+        setBankCheckout({
+          orderId: data.orderId,
+          amountThb: Number(
+            data.amountThb ?? data.amount ?? basePlanPrice ?? listing.price,
+          ),
+          bank: data.bank,
+        });
         return;
       }
 
       if (data.success && data.downloadToken) {
+        setSuccessOrderId(data.orderId);
+        setShowOrderSuccess(true);
         onSuccess(data.downloadToken, data.planId);
         return;
       }
@@ -408,6 +428,18 @@ export function StoreCheckoutModal({
       setLoading(false);
     }
   };
+
+  if (showOrderSuccess) {
+    return (
+      <OrderSuccessModal
+        orderId={successOrderId}
+        onClose={() => {
+          setShowOrderSuccess(false);
+          onClose();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
@@ -439,6 +471,7 @@ export function StoreCheckoutModal({
               visitorCountryCode={geoCountryCode}
               onChange={setSelections}
               requiresShipping={requiresShipping}
+              requiresSitePlan={requiresSitePlan}
               sessionPrefill={sessionPrefill}
               basePlanLabel={
                 format === "cad"
@@ -454,70 +487,83 @@ export function StoreCheckoutModal({
         </div>
 
         <div className="sticky bottom-0 shrink-0 border-t border-border bg-white px-3 pt-3 sm:px-5 sm:pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <h3 className="text-sm font-bold text-text-primary">
-            {thai ? `${payStep}. ช่องทางชำระเงิน` : `${payStep}. Payment method`}
-          </h3>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {paymentMethods.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                disabled={!m.available}
-                title={thai ? m.reasonUnavailableTh : m.reasonUnavailable}
-                onClick={() => m.available && setMethod(m.id)}
-                className={`flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl border p-2.5 disabled:cursor-not-allowed disabled:opacity-40 ${
-                  method === m.id ? "border-[#1e40af] bg-blue-50" : "border-border"
-                }`}
-              >
-                {m.id === "promptpay" ? (
-                  <QrCode className="h-5 w-5" />
-                ) : (
-                  <CreditCard className="h-5 w-5" />
-                )}
-                <span className="text-xs font-medium">
-                  {m.id === "promptpay"
-                    ? translate("payment.promptpay")
-                    : thai
-                      ? m.labelTh
-                      : translate("payment.card")}
+          {bankCheckout ? (
+            <BankTransferPaymentPanel
+              orderId={bankCheckout.orderId}
+              amountThb={bankCheckout.amountThb}
+              bank={bankCheckout.bank}
+              thai={thai}
+              formatMoney={formatCheckoutMoney}
+              onCancel={() => {
+                setBankCheckout(null);
+                setError(null);
+              }}
+              onPaid={(result) => {
+                setBankCheckout(null);
+                setSuccessOrderId(result.orderId);
+                setShowOrderSuccess(true);
+                const token =
+                  result.downloadToken ?? result.downloads?.[0]?.token;
+                const planId =
+                  result.planId ??
+                  result.downloads?.[0]?.planId ??
+                  listing.planId;
+                if (token) {
+                  onSuccess(token, planId);
+                }
+              }}
+            />
+          ) : (
+            <>
+              <h3 className="text-sm font-bold text-text-primary">
+                {thai
+                  ? `${payStep}. โอนเงิน + อัปโหลดสลิป`
+                  : `${payStep}. Bank transfer + slip`}
+              </h3>
+              <div className="mt-2 flex items-center gap-2 text-xs text-text-secondary">
+                <Building2 className="h-4 w-4 text-[#1e40af]" />
+                <span>
+                  {thai
+                    ? "สร้างคำสั่งซื้อแล้วโอนตามยอด — ระบบตรวจสลิปอัตโนมัติ"
+                    : "Place order, transfer the amount — slip is verified automatically"}
                 </span>
-              </button>
-            ))}
-          </div>
-          {!authReady ? (
-            <p className="mt-2 text-center text-[11px] text-text-muted">
+              </div>
+              {!authReady ? (
+                <p className="mt-2 text-center text-[11px] text-text-muted">
+                  {thai
+                    ? "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร"
+                    : "Sign in with Google to download files and receive documents."}
+                </p>
+              ) : !canPay ? (
+                <p className="mt-2 text-center text-[11px] text-text-muted">
               {thai
-                ? "เข้าสู่ระบบด้วย Google เพื่อดาวน์โหลดไฟล์และรับเอกสาร"
-                : "Sign in with Google to download files and receive documents."}
-            </p>
-          ) : !canPay ? (
-            <p className="mt-2 text-center text-[11px] text-text-muted">
-              {thai
-                ? requiresShipping
-                  ? "กรอกที่อยู่จัดส่งและยอมรับข้อกำหนด จึงจะกดชำระเงินได้ (เบอร์โทรไม่บังคับ)"
-                  : "ยอมรับข้อกำหนดด้านบน จึงจะกดชำระเงินได้ (เบอร์โทรไม่บังคับ)"
-                : requiresShipping
-                  ? "Complete shipping address and accept the terms to enable payment (phone optional)"
-                  : "Accept the terms above to enable payment (phone optional)"}
-            </p>
-          ) : null}
-          <div className="mt-3 flex gap-2 sm:gap-3">
-            <button type="button" onClick={onClose} className="btn-ghost min-h-12 flex-1 text-sm">
-              {translate("workflow.cancel")}
-            </button>
-            <button
-              type="button"
-              onClick={handlePay}
-              disabled={loading || !canPay}
-              className="btn-primary min-h-12 flex-[1.35] text-sm disabled:opacity-60"
-            >
-              {loading
-                ? translate("payment.processing")
-                : thai
-                  ? "ไปชำระเงิน"
-                  : "Proceed to payment"}
-            </button>
-          </div>
+                ? requiresShipping || requiresSitePlan
+                  ? "กรอกข้อมูลที่จำเป็นและยอมรับข้อกำหนด จึงจะกดชำระเงินได้"
+                  : "ยอมรับข้อกำหนดด้านบน จึงจะกดชำระเงินได้"
+                : requiresShipping || requiresSitePlan
+                  ? "Complete required fields and accept the terms to enable payment"
+                  : "Accept the terms above to enable payment"}
+                </p>
+              ) : null}
+              <div className="mt-3 flex gap-2 sm:gap-3">
+                <button type="button" onClick={onClose} className="btn-ghost min-h-12 flex-1 text-sm">
+                  {translate("workflow.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePay}
+                  disabled={loading || !canPay}
+                  className="btn-primary min-h-12 flex-[1.35] text-sm disabled:opacity-60"
+                >
+                  {loading
+                    ? translate("payment.processing")
+                    : thai
+                      ? "สร้างคำสั่งซื้อ / โอนเงิน"
+                      : "Place order / transfer"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

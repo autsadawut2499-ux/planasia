@@ -5,12 +5,11 @@ import { AdminPageHeader, AdminCard, AdminStatusMessage } from "@/components/adm
 import type { VendorEarning } from "@/lib/commerce/earnings-types";
 
 interface Payload {
-  commission: { vendorShare: number; platformShare: number };
   summary: {
     salesCount: number;
-    vendorTotalThb: number;
-    platformTotalThb: number;
     grossThb: number;
+    costThb: number;
+    profitThb: number;
   };
   earnings: VendorEarning[];
 }
@@ -28,20 +27,12 @@ export default function CommissionsClient() {
       .catch((err) => setError(err instanceof Error ? err.message : "ผิดพลาด"));
   }, []);
 
-  const vendorPct = Math.round((data?.commission.vendorShare ?? 0.7) * 100);
-  const platformPct = Math.round((data?.commission.platformShare ?? 0.3) * 100);
-
   return (
     <div>
       <AdminPageHeader
-        title="ส่วนแบ่งรายได้ (Commission)"
-        description={`ผู้เขียนแบบตั้งราคาเอง · แบ่งอัตโนมัติ ${vendorPct}% ผู้เขียนแบบ / ${platformPct}% แพลตฟอร์ม · โอนเงินที่ /admin/payouts`}
+        title="ต้นทุน / กำไร"
+        description="เมื่อขายแบบได้ ระบบบันทึกยอดขาย ต้นทุนซัพพลายเออร์ และกำไรอัตโนมัติจากราคาในแคตตาล็อก"
       />
-      <p className="mb-4 text-sm">
-        <a href="/admin/payouts" className="font-semibold text-[#1e40af] hover:underline">
-          → ไปหน้าโอนเงินผู้ขาย (Payouts)
-        </a>
-      </p>
 
       {error && (
         <div className="mb-4">
@@ -51,36 +42,40 @@ export default function CommissionsClient() {
 
       {data && (
         <div className="mb-6 grid gap-3 sm:grid-cols-4">
-          <SummaryCard label="ยอดขายทั้งหมด" value={String(data.summary.salesCount)} />
-          <SummaryCard label="ยอดรวม (THB)" value={`฿${data.summary.grossThb.toLocaleString()}`} />
+          <SummaryCard label="จำนวนออเดอร์ที่ขาย" value={String(data.summary.salesCount)} />
           <SummaryCard
-            label={`ผู้เขียนแบบ (${vendorPct}%)`}
-            value={`฿${data.summary.vendorTotalThb.toLocaleString()}`}
+            label="ยอดขายรวม"
+            value={`฿${data.summary.grossThb.toLocaleString("th-TH")}`}
           />
           <SummaryCard
-            label={`แพลตฟอร์ม (${platformPct}%)`}
-            value={`฿${data.summary.platformTotalThb.toLocaleString()}`}
+            label="ต้นทุนรวม"
+            value={`฿${data.summary.costThb.toLocaleString("th-TH")}`}
+          />
+          <SummaryCard
+            label="กำไรรวม"
+            value={`฿${data.summary.profitThb.toLocaleString("th-TH")}`}
+            highlight={data.summary.profitThb >= 0}
           />
         </div>
       )}
 
-      <AdminCard title="รายการล่าสุด">
+      <AdminCard title="รายการขายล่าสุด">
         {!data ? (
           <p className="text-sm text-slate-500">กำลังโหลด…</p>
         ) : data.earnings.length === 0 ? (
-          <p className="text-sm text-slate-400">ยังไม่มียอดขายที่บันทึกส่วนแบ่ง</p>
+          <p className="text-sm text-slate-400">ยังไม่มียอดขายที่บันทึกต้นทุน/กำไร</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="text-xs uppercase text-slate-400">
                 <tr>
                   <th className="pb-2 pr-3">วันที่</th>
-                  <th className="pb-2 pr-3">Vendor</th>
-                  <th className="pb-2 pr-3">Order</th>
+                  <th className="pb-2 pr-3">รหัส / ชื่อแบบ</th>
+                  <th className="pb-2 pr-3">ซัพพลายเออร์</th>
                   <th className="pb-2 pr-3">ยอดขาย</th>
-                  <th className="pb-2 pr-3">Vendor 70%</th>
-                  <th className="pb-2 pr-3">Platform 30%</th>
-                  <th className="pb-2">สถานะ</th>
+                  <th className="pb-2 pr-3">ต้นทุน</th>
+                  <th className="pb-2 pr-3">กำไร</th>
+                  <th className="pb-2">Order</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,21 +84,26 @@ export default function CommissionsClient() {
                     <td className="py-2 pr-3 text-slate-500">
                       {new Date(e.createdAt).toLocaleString("th-TH")}
                     </td>
-                    <td className="py-2 pr-3 font-mono text-xs">{e.ownerKey.slice(0, 12)}…</td>
-                    <td className="py-2 pr-3 font-mono text-xs">{e.cartOrderId.slice(0, 16)}…</td>
-                    <td className="py-2 pr-3">฿{e.grossThb.toLocaleString()}</td>
-                    <td className="py-2 pr-3 font-semibold text-emerald-700">
-                      ฿{e.vendorAmountThb.toLocaleString()}
+                    <td className="py-2 pr-3">
+                      <p className="font-mono text-xs text-slate-500">
+                        #{e.planCode || e.listingId.slice(0, 8)}
+                      </p>
+                      <p className="font-medium text-slate-900">{e.listingName || "—"}</p>
                     </td>
+                    <td className="py-2 pr-3 text-slate-600">{e.supplierName || "—"}</td>
+                    <td className="py-2 pr-3">฿{e.grossThb.toLocaleString("th-TH")}</td>
                     <td className="py-2 pr-3 text-slate-700">
-                      ฿{e.platformAmountThb.toLocaleString()}
+                      ฿{e.costThb.toLocaleString("th-TH")}
                     </td>
-                    <td className="py-2 text-xs">
-                      {e.status === "paid_out"
-                        ? "โอนแล้ว"
-                        : e.status === "available"
-                          ? "พร้อมโอน"
-                          : "รอดำเนินการ"}
+                    <td
+                      className={`py-2 pr-3 font-semibold ${
+                        e.profitThb >= 0 ? "text-emerald-700" : "text-red-700"
+                      }`}
+                    >
+                      ฿{e.profitThb.toLocaleString("th-TH")}
+                    </td>
+                    <td className="py-2 font-mono text-xs text-slate-500">
+                      {e.cartOrderId.slice(0, 16)}…
                     </td>
                   </tr>
                 ))}
@@ -116,11 +116,29 @@ export default function CommissionsClient() {
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function SummaryCard({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-bold text-slate-900">{value}</p>
+      <p
+        className={`mt-1 text-lg font-bold ${
+          highlight === undefined
+            ? "text-slate-900"
+            : highlight
+              ? "text-emerald-700"
+              : "text-red-700"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

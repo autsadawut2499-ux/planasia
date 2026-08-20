@@ -1,39 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  createCartCheckoutSession,
-  getStripeCheckoutReadiness,
-  getStripePaymentIntentReadiness,
-  getStripePublishableKey,
-  isMockPaymentsAllowed,
-  isStripeConfigured,
-} from "@/lib/payments/stripe";
-import { createCartPaymentIntent } from "@/lib/payments/payment-intent";
-import {
   computeCheckoutTotal,
   type CartLineItem,
   type UpsellAddonId,
-  HARDCOPY_3SETS_PRICE,
   isUpsellAddonId,
-  resolveAddonBoqPrice,
-  resolveAddonCalcPrice,
 } from "@/lib/store/cart-pricing";
 import {
   createCartOrderId,
   saveCartOrder,
 } from "@/lib/store/cart-orders";
 import { finalizePaidCartSale } from "@/lib/commerce/finalize-sale";
+import { bankTransferCheckoutResponse } from "@/lib/payments/bank-transfer-checkout";
 import { getListingById, getListings } from "@/lib/store/db";
 import { isListingPurchasable } from "@/lib/store/listing-purchase";
 import { getViewerFromRequest } from "@/lib/user/identity";
 import { loadPlanDocument } from "@/lib/plans/store";
 import { resolveCheckoutCurrency } from "@/lib/checkout/pipeline";
 import { defaultPaymentMethod, type PaymentMethodId } from "@/lib/payments/methods";
-import { convertFromThb, formatMoney, isCurrency, type Currency } from "@/lib/currency";
+import { isCurrency, type Currency } from "@/lib/currency";
 import { isUiLocale, type UiLocale } from "@/lib/geo/countries";
 import { resolvePlanDocumentId } from "@/lib/store/plan-identity";
 import { getListingBlueprintUrls } from "@/lib/store/listing-assets";
 import {
-  documentLanguageToStampLocale,
   localizationSurchargeThb,
   resolveCheckoutDocumentLanguage,
 } from "@/lib/store/document-languages";
@@ -42,6 +30,10 @@ import {
   isShippingAddressComplete,
   normalizeShippingAddress,
 } from "@/lib/store/shipping-address";
+import {
+  isSitePlanInfoComplete,
+  normalizeSitePlanInfo,
+} from "@/lib/store/site-plan-info";
 import {
   googleLoginRequiredResponse,
   requireBuyerSession,
@@ -80,19 +72,17 @@ export async function POST(request: NextRequest) {
     targetCountry,
     currencyOverride: isCurrency(body.currency) ? body.currency : undefined,
   });
-  const method: PaymentMethodId =
-    body.method === "promptpay" || body.method === "card"
-      ? body.method
-      : defaultPaymentMethod(currency, visitorCountryCode);
-  /** `checkout` = hosted Stripe Checkout (default). `intent` = PaymentIntent + clientSecret. */
-  const paymentMode =
-    body.mode === "intent" || body.paymentMode === "intent" ? "intent" : "checkout";
+  const method: PaymentMethodId = defaultPaymentMethod(currency, visitorCountryCode);
   const documentLanguage = THAI_DOMESTIC_MARKET
     ? "th"
     : resolveCheckoutDocumentLanguage(body.documentLanguage, targetCountry);
   const wantsHardcopy = addons.includes("hardcopy-3sets");
+  const wantsSitePlan = addons.includes("site-plan");
   const shippingAddress = wantsHardcopy
     ? normalizeShippingAddress(body.shippingAddress)
+    : undefined;
+  const sitePlanInfo = wantsSitePlan
+    ? normalizeSitePlanInfo(body.sitePlanInfo)
     : undefined;
 
   if (!items.length) {
@@ -103,6 +93,15 @@ export async function POST(request: NextRequest) {
   if (wantsHardcopy && !isShippingAddressComplete(shippingAddress)) {
     return NextResponse.json(
       { error: "Complete shipping address is required for hardcopy delivery" },
+      { status: 400 },
+    );
+  }
+  if (wantsSitePlan && !isSitePlanInfoComplete(sitePlanInfo)) {
+    return NextResponse.json(
+      {
+        error:
+          "กรุณากรอกข้อมูลแผนผังบริเวณให้ครบ (จังหวัด อำเภอ เลขโฉนดที่ดิน)",
+      },
       { status: 400 },
     );
   }
@@ -121,6 +120,7 @@ export async function POST(request: NextRequest) {
   }[] = [];
   let addonBoqPrice: number | null = null;
   let addonCalcPrice: number | null = null;
+  let addonSitePlanPrice: number | null = null;
   let cartHasBoq = false;
   let cartHasCalc = false;
 
@@ -159,18 +159,16 @@ export async function POST(request: NextRequest) {
         addonCalcPrice = listing.calcPrice;
       }
     }
+    if (addonSitePlanPrice == null && listing.sitePlanAddonPrice != null) {
+      addonSitePlanPrice = listing.sitePlanAddonPrice;
+    }
     const planCode = listing.planCode || listing.planId;
     const planDocumentId = resolvePlanDocumentId(listing);
     const blueprintUrls = await getListingBlueprintUrls(listing.id);
     const format = item.format === "cad" ? "cad" : "pdf";
-    // Marketplace delivery is vendor-uploaded PDFs (+ optional CAD package).
-    if (blueprintUrls.length === 0) {
-      if (!planDocumentId) {
-        return NextResponse.json(
-          { error: `Plan files not ready for ${listing.name} — seller must upload blueprint PDFs` },
-          { status: 422 },
-        );
-      }
+    // Middleman model: plan documents are ordered from the supplier after payment —
+    // catalogue listings may have no on-platform blueprint files.
+    if (blueprintUrls.length === 0 && planDocumentId) {
       const planDoc = await loadPlanDocument(planDocumentId);
       if (!planDoc) {
         return NextResponse.json(
@@ -215,6 +213,7 @@ export async function POST(request: NextRequest) {
   const addonPrices = {
     boqPrice: addonBoqPrice,
     calcPrice: addonCalcPrice,
+    sitePlanPrice: addonSitePlanPrice,
   };
   const languageSurcharge = localizationSurchargeThb(targetCountry);
   const pricing = computeCheckoutTotal(
@@ -236,7 +235,6 @@ export async function POST(request: NextRequest) {
 
   // Orders store base THB totals; `currency` is the charge/display currency.
   const orderId = createCartOrderId();
-  const stampLocale = documentLanguageToStampLocale(documentLanguage);
   const order = {
     id: orderId,
     items: orderItems,
@@ -255,15 +253,15 @@ export async function POST(request: NextRequest) {
     targetCountry,
     translationStatus: "pending" as const,
     shippingAddress,
-    status: "pending" as const,
+    sitePlanInfo,
+    paymentMethod: "bank_transfer" as const,
+    status: "awaiting_payment" as const,
     createdAt: new Date().toISOString(),
   };
 
   await saveCartOrder(order);
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? request.nextUrl.origin;
-
-  // All free plans + no paid add-ons — grant without Stripe.
+  // Free cart — unlock immediately.
   if (pricing.total === 0) {
     const result = await finalizePaidCartSale({
       cartOrderId: orderId,
@@ -281,202 +279,18 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  if (isStripeConfigured()) {
-    const plansTotal = pricing.subtotal - pricing.discount;
-    const lineItems = [
-      {
-        name:
-          orderItems.length === 1
-            ? `${orderItems[0].name} (${orderItems[0].planId})`
-            : `House plans (${orderItems.length}): ${orderItems.map((o) => o.planId).join(", ")}`.slice(
-                0,
-                120,
-              ),
-        amount: plansTotal, // THB base — gateway converts
-      },
-    ];
-
-    if (pricing.languageSurcharge > 0) {
-      lineItems.push({
-        name: `Localization & units (${targetCountry})`,
-        amount: pricing.languageSurcharge,
-      });
-    }
-
-    if (addons.includes("boq-bundle")) {
-      lineItems.push({
-        name: "เอกสารปริมาณราคาและวัสดุ (ไฟล์ PDF)",
-        amount: resolveAddonBoqPrice(addonPrices),
-      });
-    }
-
-    if (addons.includes("calc-sheet")) {
-      lineItems.push({
-        name: "เอกสารรายการคำนวณโครงสร้าง (ไฟล์ PDF)",
-        amount: resolveAddonCalcPrice(addonPrices),
-      });
-    }
-
-    if (addons.includes("hardcopy-3sets")) {
-      lineItems.push({
-        name: "รับเอกสารรูปเล่ม 3 ชุด (Physical Hard Copy Documents)",
-        amount: HARDCOPY_3SETS_PRICE,
-      });
-    }
-
-    if (paymentMode === "intent") {
-      const intentReady = getStripePaymentIntentReadiness();
-      if (!intentReady.ok) {
-        return NextResponse.json(
-          {
-            error: intentReady.error,
-            missing: intentReady.missing,
-            orderId,
-          },
-          { status: intentReady.status },
-        );
-      }
-
-      const intent = await createCartPaymentIntent({
-        cartOrderId: orderId,
-        planIds: orderItems.map((o) => o.planId),
-        amountThb: pricing.total,
-        currency,
-        method,
-        countryCode: visitorCountryCode,
-        targetCountry,
-        userId: buyerUserId,
-        uiLocale,
-        documentLanguage,
-        buyerName,
-        buyerEmail: buyerEmail || undefined,
-        buyerPhone,
-        description: lineItems.map((l) => l.name).join(" · ").slice(0, 500),
-      });
-
-      if (intent) {
-        return NextResponse.json({
-          success: true,
-          mode: "payment_intent",
-          requiresPaymentIntent: true,
-          orderId,
-          paymentIntentId: intent.paymentIntentId,
-          clientSecret: intent.clientSecret,
-          publishableKey: getStripePublishableKey(),
-          amountThb: pricing.total,
-          amountDisplay: intent.amountDisplay,
-          amountFormatted: formatMoney(pricing.total, currency),
-          currency,
-          uiLocale,
-          method,
-          documentLanguage,
-          confirmUrl: `/api/payments/intent/confirm?payment_intent_id=${intent.paymentIntentId}`,
-        });
-      }
-
-      return NextResponse.json(
-        {
-          error:
-            "Failed to create Stripe PaymentIntent. Check STRIPE_SECRET_KEY and payment method availability.",
-          orderId,
-        },
-        { status: 502 },
-      );
-    }
-
-    const checkout = await createCartCheckoutSession({
-      cartOrderId: orderId,
-      planIds: orderItems.map((o) => o.planId),
-      lineItems,
-      currency,
-      method,
-      countryCode: visitorCountryCode,
-      targetCountry,
-      userId: buyerUserId,
-      uiLocale,
-      documentLanguage,
-      buyerName,
-      buyerEmail: buyerEmail || undefined,
-      buyerPhone,
-      successUrl: `${baseUrl}/store?payment=success&cartOrderId=${orderId}&session_id={CHECKOUT_SESSION_ID}&locale=${stampLocale}&docLang=${documentLanguage}`,
-      cancelUrl: `${baseUrl}/store?payment=cancelled`,
-    });
-
-    if (checkout) {
-      return NextResponse.json({
-        mode: "checkout",
-        requiresCheckout: true,
-        checkoutUrl: checkout.url,
-        sessionId: checkout.sessionId,
-        orderId,
-        amountThb: pricing.total,
-        amountDisplay: checkout.totalDisplay,
-        amountFormatted: formatMoney(pricing.total, currency),
-        currency,
-        uiLocale,
-        method,
-        documentLanguage,
-      });
-    }
-
-    return NextResponse.json(
-      {
-        error: "Failed to create Stripe Checkout session. Check STRIPE_SECRET_KEY and payment method availability.",
-        orderId,
-      },
-      { status: 502 },
-    );
-  }
-
-  // Explicit opt-in mock only — never auto-unlock when Stripe keys are missing.
-  if (!isMockPaymentsAllowed()) {
-    const readiness = getStripeCheckoutReadiness();
-    return NextResponse.json(
-      {
-        error: readiness.ok ? "Stripe is not configured" : readiness.error,
-        missing: readiness.ok ? ["STRIPE_SECRET_KEY"] : readiness.missing,
-        orderId,
-      },
-      { status: 503 },
-    );
-  }
-
-  console.warn(
-    "[cart-checkout] ALLOW_MOCK_PAYMENTS=true — unlocking without Stripe (dev only)",
-  );
-  await new Promise((r) => setTimeout(r, 500));
-  const result = await finalizePaidCartSale({
-    cartOrderId: orderId,
-    buyerUserId,
-  });
-  const grants = result?.grants ?? [];
-
-  return NextResponse.json({
-    success: true,
-    mock: true,
+  const bank = await bankTransferCheckoutResponse({
     orderId,
     amountThb: pricing.total,
-    amountDisplay: convertFromThb(pricing.total, currency),
-    amountFormatted: formatMoney(pricing.total, currency),
     currency,
-    uiLocale,
     documentLanguage,
-    targetCountry,
-    translation: result?.translation
-      ? {
-          status: result.translation.status,
-          target_country: result.translation.target_country,
-        }
-      : undefined,
-    downloads: grants.map((g) => ({
-      token: g.token,
-      planId: g.planId,
-      format: g.format,
-      docLang: documentLanguage,
-      targetCountry,
-      downloadUrl: `/api/download?token=${g.token}&format=${g.format}&locale=${stampLocale}&buyer=${encodeURIComponent(buyerName)}&docLang=${documentLanguage}`,
-    })),
-    message:
-      "Mock cart purchase confirmed (ALLOW_MOCK_PAYMENTS) — set STRIPE_SECRET_KEY for live payments",
+  });
+  if (bank.error) {
+    return NextResponse.json(bank.body, { status: bank.status });
+  }
+  return NextResponse.json({
+    ...bank.body,
+    uiLocale,
+    method: "bank_transfer",
   });
 }

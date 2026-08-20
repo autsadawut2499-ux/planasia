@@ -117,6 +117,10 @@ function buildDetailSpecRows(
     { label: L("Bedrooms", "ห้องนอน"), value: String(listing.beds) },
     { label: L("Bathrooms", "ห้องน้ำ"), value: String(listing.baths) },
     {
+      label: L("Living rooms", "ห้องรับแขก"),
+      value: listing.livingRooms != null ? String(listing.livingRooms) : "—",
+    },
+    {
       label: L("Parking", "ที่จอดรถ"),
       value: listing.parking != null ? String(listing.parking) : "—",
     },
@@ -378,6 +382,11 @@ export default function StoreListingPageClient({
               <h1 className="mt-1 text-[1.35rem] font-bold leading-snug tracking-tight text-[#1e3a5f] sm:mt-1.5 sm:text-3xl lg:text-[2rem]">
                 {copy.name}
               </h1>
+              {listing.tagline?.trim() && (
+                <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-[15px]">
+                  {listing.tagline.trim()}
+                </p>
+              )}
             </div>
 
             <div className="flex min-w-0 flex-col items-start justify-end lg:items-start">
@@ -466,6 +475,20 @@ export default function StoreListingPageClient({
               )}
             </aside>
           </section>
+
+          {/* Admin-authored house description */}
+          {copy.description?.trim() && (
+            <section className="mt-8 sm:mt-10 lg:mt-12">
+              <h2 className="mb-3 text-lg font-bold text-[#1e3a5f] sm:mb-4 sm:text-2xl">
+                {L("House description", "คำอธิบายบ้าน")}
+              </h2>
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:rounded-2xl sm:px-6 sm:py-5">
+                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700 sm:text-[15px]">
+                  {copy.description.trim()}
+                </p>
+              </div>
+            </section>
+          )}
 
           {/* Floorplan drawings */}
           <section className="mt-10 sm:mt-12 lg:mt-16">
@@ -641,6 +664,7 @@ export default function StoreListingPageClient({
         initialHardcopy={purchaseSelection?.addons.includes("hardcopy-3sets") ?? false}
         initialBoq={purchaseSelection?.addons.includes("boq-bundle") ?? false}
         initialCalcSheet={purchaseSelection?.addons.includes("calc-sheet") ?? false}
+        initialSitePlan={purchaseSelection?.addons.includes("site-plan") ?? false}
         basePlanPrice={purchaseSelection?.linePrice ?? listing.price}
       />
     </>

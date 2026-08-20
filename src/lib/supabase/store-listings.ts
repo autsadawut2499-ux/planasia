@@ -23,11 +23,18 @@ interface StoreListingRow {
   highlights: string[] | null;
   beds: number;
   baths: number;
+  living_rooms?: number | null;
   parking: number | null;
   floors: number;
   area: string;
   style: string;
   collection: string | null;
+  supplier_name?: string | null;
+  supplier_id?: string | null;
+  product_url?: string | null;
+  source_plan_code?: string | null;
+  cost_price?: number | null;
+  site_plan_addon_price?: number | null;
   province: string | null;
   width_meters: number | null;
   length_meters: number | null;
@@ -84,11 +91,27 @@ function rowToListing(row: StoreListingRow): StoreListing {
     highlights: row.highlights ?? [],
     beds: row.beds,
     baths: row.baths,
+    livingRooms:
+      row.living_rooms != null && Number.isFinite(Number(row.living_rooms))
+        ? Number(row.living_rooms)
+        : undefined,
     parking: row.parking != null ? Number(row.parking) : undefined,
     floors: row.floors as 1 | 2,
     area: row.area,
     style: row.style,
     collection: row.collection ?? undefined,
+    supplierName: row.supplier_name ?? undefined,
+    supplierId: row.supplier_id ?? undefined,
+    productUrl: row.product_url?.trim() || undefined,
+    sourcePlanCode: row.source_plan_code?.trim() || undefined,
+    costPrice:
+      row.cost_price != null && Number.isFinite(Number(row.cost_price))
+        ? Number(row.cost_price)
+        : undefined,
+    sitePlanAddonPrice:
+      row.site_plan_addon_price != null && Number.isFinite(Number(row.site_plan_addon_price))
+        ? Number(row.site_plan_addon_price)
+        : undefined,
     province: row.province ?? undefined,
     widthMeters: row.width_meters != null ? Number(row.width_meters) : undefined,
     lengthMeters: row.length_meters != null ? Number(row.length_meters) : undefined,
@@ -162,11 +185,18 @@ function listingToRow(listing: StoreListing): StoreListingRow {
     highlights: listing.highlights ?? [],
     beds: listing.beds,
     baths: listing.baths,
+    living_rooms: listing.livingRooms ?? null,
     parking: listing.parking ?? null,
     floors: listing.floors,
     area: listing.area,
     style: listing.style,
     collection: listing.collection ?? null,
+    supplier_name: listing.supplierName ?? null,
+    supplier_id: listing.supplierId ?? null,
+    product_url: listing.productUrl ?? null,
+    source_plan_code: listing.sourcePlanCode ?? null,
+    cost_price: listing.costPrice ?? null,
+    site_plan_addon_price: listing.sitePlanAddonPrice ?? null,
     province: listing.province ?? null,
     width_meters: listing.widthMeters ?? null,
     length_meters: listing.lengthMeters ?? null,
@@ -528,9 +558,8 @@ export async function supabaseGetListingsForAdmin(limit = 200): Promise<VendorLi
   const { data, error } = await getSupabaseAdmin()
     .from("store_listings")
     .select("*")
-    .order("pinned", { ascending: false })
-    .order("ranking_score", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: false })
+    .limit(Math.min(Math.max(limit, 1), 1000));
   if (error) throw error;
   return (data as VendorListingRow[]).map(rowToVendorListing);
 }

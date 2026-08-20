@@ -27,7 +27,7 @@ import { useStoreCartOptional } from "@/context/StoreCartContext";
 import { useSiteConfigOptional } from "@/context/SiteConfigContext";
 import { useBilingual } from "@/components/landing/useBilingual";
 import { COLLECTIONS } from "@/lib/store/taxonomy";
-import { customerServiceTopicCatalog } from "@/lib/content/customer-service";
+import { PUBLIC_SELLER_SELF_LISTING_ENABLED } from "@/lib/features/public-seller";
 import { CollectionsMegaMenuPanel } from "@/components/landing/CollectionsMegaMenu";
 
 interface NavItem {
@@ -49,8 +49,8 @@ export function LandingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
   const contactPhone =
-    siteConfig?.settings.footer.contactPhone?.trim() || "061-691-1599";
-  const phoneTel = contactPhone.replace(/[^\d+]/g, "") || "0616911599";
+    siteConfig?.settings.footer.contactPhone?.trim() || "094-286-6661";
+  const phoneTel = contactPhone.replace(/[^\d+]/g, "") || "0942866661";
 
   const searchQuery = browse?.searchQuery ?? localSearch;
   const setSearchQuery = browse?.setSearchQuery ?? setLocalSearch;
@@ -66,23 +66,9 @@ export function LandingHeader() {
     label: L(c.en, c.th),
   }));
 
-  // บริการลูกค้า — หัวข้อจาก CMS + ลิงก์ภายนอกที่เกี่ยวข้อง
-  const aboutItems: NavItem[] = [
-    ...customerServiceTopicCatalog(siteConfig?.customerServiceArticles).map((topic) => ({
-      href: topic.href,
-      label: L(topic.titleEn, topic.titleTh),
-    })),
-    {
-      href: "https://dashboard.doctranslator.com/home?locale=th",
-      label: L(
-        "Construction plan translation",
-        "แปลภาษาในแบบแปลนก่อสร้าง",
-      ),
-      external: true,
-    },
-  ];
-
   const planIncludesLabel = L("What the Plan Includes", "แบบประกอบด้วยอะไรบ้าง");
+  const loanConsultLabel = L("Home loan consultation", "ปรึกษาสินเชื่อบ้าน");
+  const articlesLabel = L("Articles", "บทความ");
   const homeBuildingLabel = L("Home Building", "รับสร้างบ้าน");
   const draftsmenLabel = translate("nav.findDraftsman");
 
@@ -91,7 +77,8 @@ export function LandingHeader() {
     { href: "/store", label: storeLabel },
     ...collectionItems,
     { href: "/whats-included", label: planIncludesLabel },
-    ...aboutItems,
+    { href: "/articles", label: articlesLabel },
+    { href: "/loan-consultation", label: loanConsultLabel },
     { href: "/draftsmen", label: draftsmenLabel },
     { href: "/home-building", label: homeBuildingLabel },
   ];
@@ -120,23 +107,11 @@ export function LandingHeader() {
     router.push("/store");
   };
 
-  const sloganText = L(
-    "The hub for Thai designers' blueprints and portfolios — going global",
-    "ศูนย์รวมแบบแปลนและผลงานสถาปนิกและนักออกแบบไทย ก้าวไกลสู่สากล",
-  );
-
   return (
     <header className="sticky top-0 z-50 max-w-full border-b border-[#e6e8ee] bg-white/95 font-sans backdrop-blur-md">
-      {/* 1) Top phone banner — phone only on mobile (ABHP-style) */}
+      {/* 1) Top phone banner */}
       <div className="bg-[#1A2744] text-white">
         <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-end px-3 py-1.5 sm:px-4 md:min-h-10 md:px-6">
-          {/* Desktop: centered slogan in the navy bar */}
-          <p
-            className="site-topbar-slogan header-desktop-only absolute inset-x-0 truncate px-48 text-center text-[13px] font-semibold leading-none tracking-[0.01em] text-white"
-            title={sloganText}
-          >
-            {sloganText}
-          </p>
           <a
             href={`tel:${phoneTel}`}
             aria-label={`${L("Call", "โทร")} ${contactPhone}`}
@@ -148,18 +123,8 @@ export function LandingHeader() {
         </div>
       </div>
 
-      {/* 2) Mobile slogan strip — ≤768px only (does not affect desktop) */}
-      <div className="header-mobile-only w-full flex-col border-b border-[#e6e8ee] bg-[#f7f8fa]">
-        <p
-          className="site-topbar-slogan mx-auto max-w-[1440px] truncate px-3 py-1 text-center text-[10px] font-medium leading-none tracking-[0.01em] text-[#1A2744]/80"
-          title={sloganText}
-        >
-          {sloganText}
-        </p>
-      </div>
-
       {/*
-        3) Main header row
+        2) Main header row
         Desktop (>768): [brand+Store | nav | tools] — CSS grid, no overlap
         Mobile (≤768): [logo | search | hamburger] — isolated media query
       */}
@@ -169,7 +134,7 @@ export function LandingHeader() {
           <BrandLogo variant="light" className="site-header-logo" />
           <Link
             href="/store"
-            className="nav-store-btn header-control header-desktop-only text-white"
+            className="header-control header-desktop-only text-black transition-colors hover:bg-[#f4f5f8] hover:text-black"
           >
             {storeLabel}
           </Link>
@@ -186,7 +151,7 @@ export function LandingHeader() {
               aria-label={translate("nav.searchByPlan")}
               inputMode="search"
               autoComplete="off"
-              className="min-w-0 flex-1 border-none bg-transparent px-2.5 text-[12px] font-medium text-[#1e3a5f] outline-none placeholder:text-slate-400"
+              className="min-w-0 flex-1 border-none bg-transparent px-2.5 text-[12px] font-medium text-black outline-none placeholder:text-slate-400"
             />
             <button
               type="submit"
@@ -202,12 +167,8 @@ export function LandingHeader() {
         <nav aria-label={L("Main navigation", "เมนูหลัก")} className="site-header-nav">
           <NavDropdown label={L("Collections", "คอลเลคชั่น")} items={collectionItems} mega="collections" />
           <NavLink href="/whats-included" label={planIncludesLabel} />
-          <NavDropdown
-            label={L("Customer Service", "บริการลูกค้า")}
-            href="/about"
-            items={aboutItems}
-            list="clean"
-          />
+          <NavLink href="/articles" label={articlesLabel} />
+          <NavLink href="/loan-consultation" label={loanConsultLabel} />
           <NavLink href="/draftsmen" label={draftsmenLabel} />
           <NavLink href="/home-building" label={homeBuildingLabel} />
         </nav>
@@ -217,7 +178,7 @@ export function LandingHeader() {
           <form onSubmit={submitPlanSearch} className="header-desktop-only">
             <div className="header-search border border-border bg-white shadow-sm focus-within:border-[#1e40af]/50 focus-within:ring-1 focus-within:ring-[#1e40af]/20">
               <span
-                className="flex shrink-0 items-center pl-2 text-[11px] font-semibold text-[#1e40af]"
+                className="flex shrink-0 items-center pl-2 text-[11px] font-semibold text-black"
                 aria-hidden
               >
                 #
@@ -230,7 +191,7 @@ export function LandingHeader() {
                 aria-label={translate("nav.searchByPlan")}
                 inputMode="search"
                 autoComplete="off"
-                className="min-w-0 flex-1 border-none bg-transparent px-1 text-[#1e3a5f] outline-none placeholder:text-slate-500"
+                className="min-w-0 flex-1 border-none bg-transparent px-1 text-black outline-none placeholder:text-slate-500"
               />
               <button
                 type="submit"
@@ -362,14 +323,16 @@ export function LandingHeader() {
             <div className="flex flex-wrap gap-2 md:hidden">
               <LanguageToggle variant="light" />
             </div>
-            <Link
-              href="/dashboard/draftsman"
-              onClick={() => setMenuOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A2744] py-2.5 text-sm font-semibold text-white md:hidden"
-            >
-              <PenLine className="h-4 w-4" />
-              {translate("nav.seller")}
-            </Link>
+            {PUBLIC_SELLER_SELF_LISTING_ENABLED ? (
+              <Link
+                href="/dashboard/draftsman"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A2744] py-2.5 text-sm font-semibold text-white md:hidden"
+              >
+                <PenLine className="h-4 w-4" />
+                {translate("nav.seller")}
+              </Link>
+            ) : null}
             {status === "authenticated" ? (
               <div className="space-y-2 md:hidden">
                 <Link
@@ -380,14 +343,16 @@ export function LandingHeader() {
                   <Package className="h-4 w-4" />
                   {L("My purchases", "การซื้อของฉัน")}
                 </Link>
-                <Link
-                  href="/dashboard/draftsman"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
-                >
-                  <UserRound className="h-4 w-4" />
-                  {L("Seller dashboard", "แดชบอร์ดผู้เขียนแบบ")}
-                </Link>
+                {PUBLIC_SELLER_SELF_LISTING_ENABLED ? (
+                  <Link
+                    href="/dashboard/draftsman"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-text-primary"
+                  >
+                    <UserRound className="h-4 w-4" />
+                    {L("Seller dashboard", "แดชบอร์ดผู้เขียนแบบ")}
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => signOut({ callbackUrl: "/" })}
@@ -497,15 +462,17 @@ function AccountMenu({
             <Package className="h-3.5 w-3.5" strokeWidth={2} />
             {purchasesLabel}
           </Link>
-          <Link
-            href="/dashboard/draftsman"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-[12px] font-semibold text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
-          >
-            <UserRound className="h-3.5 w-3.5" strokeWidth={2} />
-            {draftsmanLabel}
-          </Link>
+          {PUBLIC_SELLER_SELF_LISTING_ENABLED ? (
+            <Link
+              href="/dashboard/draftsman"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-[12px] font-semibold text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
+            >
+              <UserRound className="h-3.5 w-3.5" strokeWidth={2} />
+              {draftsmanLabel}
+            </Link>
+          ) : null}
           <button
             type="button"
             role="menuitem"
@@ -532,7 +499,7 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`header-control text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A] ${className}`}
+      className={`header-control text-black transition-colors hover:bg-[#f4f5f8] hover:text-black ${className}`}
     >
       {label}
     </Link>
@@ -543,7 +510,7 @@ function NavDropdown({
   label,
   href,
   items,
-  primary = false,
+  primary: _primary = false,
   emptyLabel,
   mega,
   list = "default",
@@ -624,12 +591,10 @@ function NavDropdown({
     setOpen((v) => !v);
   };
 
-  // Store = brand pill reference; all nav triggers share header-control scale.
-  const triggerClass = primary
-    ? `nav-store-btn header-control text-white ${open ? "brightness-110" : ""}`
-    : open
-      ? "header-control bg-[#1A2744] text-white"
-      : "header-control text-[#1A2744] transition-colors hover:bg-[#f4f5f8] hover:text-[#C45C3A]";
+  // All nav triggers: solid black text (logo stays unchanged).
+  const triggerClass = open
+    ? "header-control bg-[#f4f5f8] text-black"
+    : "header-control text-black transition-colors hover:bg-[#f4f5f8] hover:text-black";
 
   return (
     <div
@@ -711,8 +676,8 @@ function NavDropdown({
             items.map((item) => {
               const itemClass =
                 list === "clean"
-                  ? "block px-4 py-2.5 text-[12px] font-semibold leading-snug tracking-wide text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]"
-                  : "block px-3 py-1.5 text-[11px] font-semibold tracking-wide text-[#1e3a5f] transition-colors hover:bg-surface-raised hover:text-[#1e40af]";
+                  ? "block px-4 py-2.5 text-[12px] font-semibold leading-snug tracking-wide text-black transition-colors hover:bg-surface-raised hover:text-black"
+                  : "block px-3 py-1.5 text-[11px] font-semibold tracking-wide text-black transition-colors hover:bg-surface-raised hover:text-black";
               if (item.external) {
                 return (
                   <a

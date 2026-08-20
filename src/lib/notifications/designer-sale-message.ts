@@ -6,6 +6,8 @@ export interface DesignerSaleLine {
   planId: string;
   name: string;
   priceThb: number;
+  /** Supplier / source for LINE OA routing (from store_listings.supplier_name). */
+  supplierName?: string;
 }
 
 /**

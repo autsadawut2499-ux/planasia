@@ -1,20 +1,27 @@
 import { NextResponse } from "next/server";
-import { getStripeStackStatus } from "@/lib/payments/config";
+import { loadPaymentSettings } from "@/lib/supabase/payment-settings";
+import { publicBankDetails } from "@/lib/payments/settings";
+import { isSlipmateConfigured } from "@/lib/payments/slipmate-config";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * GET /api/payments/status
- * Ops diagnostic — which Stripe keys/routes are ready (no secrets returned).
- */
+/** Public payment stack status (no secrets). */
 export async function GET() {
-  const status = getStripeStackStatus();
+  const settings = await loadPaymentSettings();
+  const bank = publicBankDetails(settings);
+  const slipmateConfigured = isSlipmateConfigured();
+
   return NextResponse.json({
-    ok: status.checkoutReady || status.paymentIntentReady,
-    ...status,
-    hint: status.webhookReady
-      ? "Stripe stack looks ready. Register webhook events in Dashboard if not already."
-      : "Set STRIPE_WEBHOOK_SECRET and point Dashboard webhook to /api/webhooks/stripe",
+    provider: "slipmate",
+    stripeRemoved: true,
+    bankConfigured: bank.configured,
+    autoVerifyEnabled: true,
+    slipApiConfigured: slipmateConfigured,
+    ready: bank.configured && slipmateConfigured,
+    message: !bank.configured
+      ? "Configure bank account in Admin → Payment Settings"
+      : !slipmateConfigured
+        ? "Set SLIPMATE_API_KEY in environment variables"
+        : "Bank transfer + SlipMate verification ready",
   });
 }

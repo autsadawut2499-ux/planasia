@@ -1,6 +1,11 @@
 /**
  * Thai provinces — single source of truth for the vendor forms, the listing
  * `province` column and the store's province filter. `id` is the stored value.
+ *
+ * Thai display names (`th`) align with the nationwide dataset
+ * kongvut/thai-province-data (77 จังหวัด). Districts/amphoes for each province
+ * live in `th-districts-by-province.json` (regenerate via
+ * `node scripts/generate-th-districts.cjs`).
  */
 
 export interface Province {

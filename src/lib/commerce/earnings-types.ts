@@ -8,6 +8,10 @@ export interface VendorEarning {
   listingId: string;
   cartOrderId: string;
   grossThb: number;
+  /** Supplier cost at sale time (middleman model). */
+  costThb: number;
+  /** Profit = gross − cost at sale time. */
+  profitThb: number;
   vendorAmountThb: number;
   platformAmountThb: number;
   vendorShare: number;
@@ -15,6 +19,9 @@ export interface VendorEarning {
   currency: string;
   status: EarningStatus;
   createdAt: string;
+  planCode?: string;
+  listingName?: string;
+  supplierName?: string;
   paidOutAt?: string;
   paidOutBy?: string;
   payoutBatchId?: string;

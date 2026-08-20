@@ -60,7 +60,9 @@ export interface CheckoutPreview {
   };
   paymentMethods: PaymentMethodOption[];
   defaultPaymentMethod: PaymentMethodId;
+  /** True when bank transfer account is configured (Stripe removed). */
   stripeConfigured: boolean;
+  paymentConfigured?: boolean;
   translationConfigured: boolean;
   /** True when AI/unit pipeline finished for every cart line. */
   readyForCheckout: boolean;

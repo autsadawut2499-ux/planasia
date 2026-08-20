@@ -13,6 +13,17 @@ import {
   type ShippingAddress,
 } from "@/lib/store/shipping-address";
 import {
+  EMPTY_SITE_PLAN_INFO,
+  isSitePlanInfoComplete,
+  type SitePlanInfo,
+} from "@/lib/store/site-plan-info";
+import {
+  getDistrictForProvince,
+  getThaiProvinceById,
+  listDistrictsForProvince,
+  listThaiProvinces,
+} from "@/lib/geo/th-admin-divisions";
+import {
   listGeminiMarketCountryOptions,
   resolveGeminiMarketCountry,
   type GeminiMarketCountryCode,
@@ -37,6 +48,8 @@ export interface PreCheckoutSelections {
   /** Optional — used for SMS receipt / download links when provided. */
   buyerPhone: string;
   shippingAddress: ShippingAddress;
+  /** Required when site-plan addon is selected. */
+  sitePlanInfo: SitePlanInfo;
   /** Required: buyer acknowledges digital-goods ToS + refund policy. */
   acceptedDigitalTerms: boolean;
 }
@@ -47,6 +60,8 @@ export interface PreCheckoutValidOptions {
    * (e.g. hardcopy / printed sets). Shipping address becomes required.
    */
   requiresShipping?: boolean;
+  /** True when the order includes the site-plan (แผนผังบริเวณ) add-on. */
+  requiresSitePlan?: boolean;
 }
 
 interface PreCheckoutWizardProps {
@@ -68,6 +83,8 @@ interface PreCheckoutWizardProps {
    * Hidden by default for digital-only checkouts.
    */
   requiresShipping?: boolean;
+  /** When true, reveal site-plan info fields (province / district / deed no.). */
+  requiresSitePlan?: boolean;
   /** Prefill from Google Login session (name + email). */
   sessionPrefill?: { name?: string | null; email?: string | null } | null;
 }
@@ -87,13 +104,15 @@ export function isPreCheckoutValid(
   opts?: PreCheckoutValidOptions,
 ): boolean {
   if (!s.targetCountry) return false;
-  if (s.buyerName.trim().length < 2) return false;
+  // Buyer name/email come from Google sign-in (no buyer form UI).
   const email = s.buyerEmail.trim();
   const phone = s.buyerPhone.trim();
-  // Email and phone are optional; if filled, format must be valid.
   if (email && !validEmail(email)) return false;
   if (phone && !validPhone(phone)) return false;
   if (opts?.requiresShipping && !isShippingAddressComplete(s.shippingAddress)) {
+    return false;
+  }
+  if (opts?.requiresSitePlan && !isSitePlanInfoComplete(s.sitePlanInfo)) {
     return false;
   }
   if (!s.acceptedDigitalTerms) return false;
@@ -121,14 +140,16 @@ export function defaultPreCheckoutSelections(
     buyerEmail: "",
     buyerPhone: "",
     shippingAddress: { ...EMPTY_SHIPPING_ADDRESS },
+    sitePlanInfo: { ...EMPTY_SITE_PLAN_INFO },
     acceptedDigitalTerms: false,
   };
 }
 
 /**
  * Shared pre-payment steps:
- * (international) target country → buyer details →
+ * (international) target country →
  * (physical only) shipping address → terms → total.
+ * Buyer identity comes from Google sign-in (no buyer form).
  */
 export function PreCheckoutWizard({
   thai,
@@ -140,12 +161,20 @@ export function PreCheckoutWizard({
   extraLines = [],
   visitorCountryCode = "TH",
   requiresShipping = false,
+  requiresSitePlan = false,
   sessionPrefill = null,
 }: PreCheckoutWizardProps) {
   const shippingRef = useRef<HTMLElement>(null);
+  const sitePlanRef = useRef<HTMLElement>(null);
   const prevRequiresShipping = useRef(requiresShipping);
+  const prevRequiresSitePlan = useRef(requiresSitePlan);
   const prefilledFromSession = useRef(false);
   const countryOptions = useMemo(() => listGeminiMarketCountryOptions(), []);
+  const provinces = useMemo(() => listThaiProvinces(), []);
+  const districts = useMemo(
+    () => listDistrictsForProvince(selections.sitePlanInfo?.provinceId ?? ""),
+    [selections.sitePlanInfo?.provinceId],
+  );
   const selectedCountry =
     countryOptions.find((c) => c.code === selections.targetCountry) ?? countryOptions[0];
   const chargeCurrency = checkoutCurrencyFor(
@@ -224,6 +253,19 @@ export function PreCheckoutWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reveal when shipping requirement flips on
   }, [requiresShipping]);
 
+  // When site-plan becomes required, scroll to the section.
+  useEffect(() => {
+    if (requiresSitePlan && !prevRequiresSitePlan.current) {
+      const el = sitePlanRef.current;
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
+      }
+    }
+    prevRequiresSitePlan.current = requiresSitePlan;
+  }, [requiresSitePlan]);
+
   const localizationFee = localizationSurchargeThb(selections.targetCountry);
   const extras = extraLines.reduce((sum, l) => sum + l.amount, 0);
   const total = Math.max(0, basePlanPrice + localizationFee + extras);
@@ -243,9 +285,24 @@ export function PreCheckoutWizard({
       },
     });
 
-  const stepBuyer = THAI_DOMESTIC_MARKET ? "1" : "2";
-  const stepShip = THAI_DOMESTIC_MARKET ? "2" : "3";
+  const setSitePlan = (patch: Partial<SitePlanInfo>) =>
+    set({
+      sitePlanInfo: {
+        ...(selections.sitePlanInfo ?? EMPTY_SITE_PLAN_INFO),
+        ...patch,
+      },
+    });
+
+  const stepShip = THAI_DOMESTIC_MARKET ? "1" : "2";
+  const stepSitePlan = THAI_DOMESTIC_MARKET
+    ? requiresShipping
+      ? "2"
+      : "1"
+    : requiresShipping
+      ? "3"
+      : "2";
   const ship = selections.shippingAddress ?? EMPTY_SHIPPING_ADDRESS;
+  const sitePlan = selections.sitePlanInfo ?? EMPTY_SITE_PLAN_INFO;
 
   return (
     <div className="space-y-5">
@@ -319,80 +376,6 @@ export function PreCheckoutWizard({
       </section>
       )}
 
-      <section>
-        <h3 className="text-sm font-bold text-text-primary">
-          {thai ? `${stepBuyer}. ข้อมูลผู้ซื้อ` : `${stepBuyer}. Buyer details`}
-        </h3>
-        <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">
-          {thai
-            ? "หากต้องการให้ระบบส่งใบเสร็จและลิงก์ดาวน์โหลดทางอีเมล กรุณากรอกอีเมล หรือหากต้องการรับทาง SMS กรุณากรอกเบอร์โทรศัพท์ — ทั้งสองช่องเป็นข้อมูลทางเลือก"
-            : "If you want the system to send your receipt and download link via email, please enter your email. Or if you prefer receiving it via SMS, please enter your phone number — both are optional."}
-        </p>
-        <div className="mt-2 space-y-2">
-          <label className="block">
-            <span className="text-xs font-medium text-text-secondary">
-              {thai ? "ชื่อ-นามสกุล" : "Full name"}
-            </span>
-            <input
-              type="text"
-              autoComplete="name"
-              value={selections.buyerName}
-              onChange={(e) => set({ buyerName: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
-              placeholder={thai ? "ชื่อที่ใช้ในใบเสร็จ" : "Name on receipt"}
-            />
-          </label>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-xs font-medium text-text-secondary">
-                {sessionPrefill?.email
-                  ? thai
-                    ? "อีเมล (จาก Google)"
-                    : "Email (from Google)"
-                  : thai
-                    ? "อีเมล (ไม่บังคับ)"
-                    : "Email (optional)"}
-              </span>
-              <input
-                type="email"
-                autoComplete="email"
-                value={selections.buyerEmail}
-                onChange={(e) => set({ buyerEmail: e.target.value })}
-                readOnly={Boolean(sessionPrefill?.email)}
-                className={`mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af] ${
-                  sessionPrefill?.email ? "bg-slate-50 text-text-secondary" : "bg-white"
-                }`}
-                placeholder={thai ? "name@email.com" : "you@example.com"}
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-text-secondary">
-                {thai ? "เบอร์โทรศัพท์ (ไม่บังคับ)" : "Phone number (optional)"}
-              </span>
-              <input
-                type="tel"
-                autoComplete="tel"
-                inputMode="tel"
-                value={selections.buyerPhone}
-                onChange={(e) => set({ buyerPhone: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
-                placeholder={thai ? "08x-xxx-xxxx" : "+66 8x xxx xxxx"}
-              />
-            </label>
-          </div>
-          {(selections.buyerEmail.trim() &&
-            !validEmail(selections.buyerEmail)) ||
-          (selections.buyerPhone.trim() &&
-            !validPhone(selections.buyerPhone)) ? (
-            <p className="text-[11px] font-medium text-amber-800">
-              {thai
-                ? "หากกรอกอีเมลหรือเบอร์โทร กรุณาใช้รูปแบบที่ถูกต้อง"
-                : "If you enter an email or phone number, please use a valid format"}
-            </p>
-          ) : null}
-        </div>
-      </section>
-
       {requiresShipping && (
         <section
           ref={shippingRef}
@@ -440,7 +423,7 @@ export function PreCheckoutWizard({
             </label>
             <label className="block sm:col-span-2">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "ที่อยู่บรรทัดที่ 1 *" : "Address line 1 *"}
+                {thai ? "ที่อยู่ *" : "Address *"}
               </span>
               <input
                 type="text"
@@ -448,31 +431,35 @@ export function PreCheckoutWizard({
                 value={ship.line1}
                 onChange={(e) => setShip({ line1: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
-                placeholder={thai ? "บ้านเลขที่ ถนน หมู่บ้าน" : "House no., street, village"}
-              />
-            </label>
-            <label className="block sm:col-span-2">
-              <span className="text-xs font-medium text-text-secondary">
-                {thai ? "ที่อยู่บรรทัดที่ 2 (ถ้ามี)" : "Address line 2 (optional)"}
-              </span>
-              <input
-                type="text"
-                autoComplete="shipping address-line2"
-                value={ship.line2 ?? ""}
-                onChange={(e) => setShip({ line2: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+                placeholder={
+                  thai ? "บ้านเลขที่ ถนน หมู่บ้าน" : "House no., street, village"
+                }
               />
             </label>
             <label className="block">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "แขวง/ตำบล *" : "District / Subdistrict *"}
+                {thai ? "แขวง / ตำบล *" : "Sub-district *"}
               </span>
               <input
                 type="text"
                 autoComplete="address-level3"
+                value={ship.subDistrict}
+                onChange={(e) => setShip({ subDistrict: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+                placeholder={thai ? "เช่น บางรัก" : "Tambon / Khwaeng"}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-text-secondary">
+                {thai ? "อำเภอ / เขต *" : "District *"}
+              </span>
+              <input
+                type="text"
+                autoComplete="address-level2"
                 value={ship.district}
                 onChange={(e) => setShip({ district: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+                placeholder={thai ? "เช่น เมือง" : "Amphoe / Khet"}
               />
             </label>
             <label className="block">
@@ -519,6 +506,111 @@ export function PreCheckoutWizard({
               {thai
                 ? "กรุณากรอกที่อยู่จัดส่งให้ครบก่อนชำระเงิน"
                 : "Please complete the shipping address before paying"}
+            </p>
+          )}
+        </section>
+      )}
+
+      {requiresSitePlan && (
+        <section
+          ref={sitePlanRef}
+          className="scroll-mt-4 rounded-xl border border-emerald-600/25 bg-emerald-50/40 p-3.5"
+          aria-labelledby="site-plan-info-heading"
+        >
+          <h3
+            id="site-plan-info-heading"
+            className="text-sm font-bold text-text-primary"
+          >
+            {thai
+              ? `${stepSitePlan}. ข้อมูลแผนผังบริเวณ`
+              : `${stepSitePlan}. Site plan information`}
+          </h3>
+          <p className="mt-0.5 text-xs text-text-secondary">
+            {thai
+              ? "จำเป็นเมื่อเลือกบริการเขียนแผนผังบริเวณ — ใช้จัดทำเอกสารสำหรับที่ดินของคุณ"
+              : "Required when site-plan drafting is selected — used to prepare your land documents"}
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-xs font-medium text-text-secondary">
+                จังหวัด *
+              </span>
+              <select
+                value={sitePlan.provinceId}
+                onChange={(e) => {
+                  const provinceId = e.target.value;
+                  const province = getThaiProvinceById(provinceId);
+                  setSitePlan({
+                    provinceId,
+                    // Always persist Thai display name (land documents).
+                    provinceName: province?.th ?? "",
+                    districtId: "",
+                    districtName: "",
+                  });
+                }}
+                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+              >
+                <option value="">เลือกจังหวัด</option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.th}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-text-secondary">
+                อำเภอ / เขต *
+              </span>
+              <select
+                value={sitePlan.districtId}
+                disabled={!sitePlan.provinceId}
+                onChange={(e) => {
+                  const districtId = e.target.value;
+                  const district = getDistrictForProvince(
+                    sitePlan.provinceId,
+                    districtId,
+                  );
+                  setSitePlan({
+                    districtId,
+                    districtName: district?.th ?? "",
+                  });
+                }}
+                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af] disabled:opacity-50"
+              >
+                <option value="">
+                  {!sitePlan.provinceId
+                    ? "เลือกจังหวัดก่อน"
+                    : "เลือกอำเภอ / เขต"}
+                </option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.th}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-medium text-text-secondary">
+                {thai ? "เลขโฉนดที่ดิน *" : "Land title deed number *"}
+              </span>
+              <input
+                type="text"
+                value={sitePlan.landTitleDeedNumber}
+                onChange={(e) =>
+                  setSitePlan({ landTitleDeedNumber: e.target.value })
+                }
+                className="mt-1 w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1e40af] focus:ring-1 focus:ring-[#1e40af]"
+                placeholder={thai ? "เช่น 12345 หรือ เลขที่โฉนด" : "e.g. deed number"}
+                maxLength={80}
+              />
+            </label>
+          </div>
+          {!isSitePlanInfoComplete(sitePlan) && (
+            <p className="mt-2 text-[11px] font-medium text-amber-800">
+              {thai
+                ? "กรุณาเลือกจังหวัด อำเภอ และกรอกเลขโฉนดที่ดินให้ครบ"
+                : "Please complete province, district, and land title deed number"}
             </p>
           )}
         </section>

@@ -24,12 +24,30 @@ import {
   HardHat,
   Sparkles,
   Wand2,
+  Truck,
+  Newspaper,
+  Landmark,
+  CreditCard,
+  ShoppingBag,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 const NAV = [
   { href: "/admin", label: "แดชบอร์ด", icon: LayoutDashboard, exact: true },
   { href: "/admin/listings", label: "จัดการแบบบ้าน", icon: Home },
+  { href: "/admin/suppliers", label: "ซัพพลายเออร์", icon: Truck },
+  { href: "/admin/articles", label: "จัดการบทความ", icon: Newspaper },
+  {
+    href: "/admin/loan-consultations",
+    label: "ปรึกษาสินเชื่อบ้าน",
+    icon: Landmark,
+  },
+  {
+    href: "/admin/payment-settings",
+    label: "การตั้งค่าการชำระเงิน",
+    icon: CreditCard,
+  },
+  { href: "/admin/orders", label: "คำสั่งซื้อ (Paid)", icon: ShoppingBag },
   { href: "/admin/home-builders", label: "รับสร้างบ้าน", icon: HardHat },
   { href: "/admin/hero-cover", label: "ภาพปกหน้าแรก", icon: ImageIcon },
   { href: "/admin/ai-image-tools", label: "รูปการ์ด AI", icon: Sparkles },
@@ -38,7 +56,7 @@ const NAV = [
   { href: "/admin/mega-menu-collections", label: "คอลเลกชันในเมนู", icon: FolderKanban },
   { href: "/admin/customer-service", label: "บริการลูกค้า (บทความ)", icon: Headphones },
   { href: "/admin/kyc", label: "KYC (Audit)", icon: ShieldCheck },
-  { href: "/admin/commissions", label: "ส่วนแบ่งรายได้", icon: Percent },
+  { href: "/admin/commissions", label: "ต้นทุน / กำไร", icon: Percent },
   { href: "/admin/payouts", label: "โอนเงินผู้ขาย", icon: Banknote },
   { href: "/admin/ranking", label: "Smart Ranking", icon: TrendingUp },
   { href: "/admin/popular", label: "แบบบ้านยอดนิยม", icon: Flame },

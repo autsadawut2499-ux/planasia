@@ -7,6 +7,7 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { useBilingual } from "@/components/landing/useBilingual";
 import { withMediaCacheBust } from "@/lib/media/cache-bust";
 import type { DraftsmanCard } from "@/lib/vendors/directory";
+import { PUBLIC_SELLER_SELF_LISTING_ENABLED } from "@/lib/features/public-seller";
 
 export default function DraftsmenPageClient() {
   const t = useBilingual();
@@ -57,12 +58,14 @@ export default function DraftsmenPageClient() {
                   className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
                 />
               </div>
-              <Link
-                href="/dashboard/draftsman"
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/25"
-              >
-                {t("Become a seller", "เปิดร้านขายแบบบ้าน")}
-              </Link>
+              {PUBLIC_SELLER_SELF_LISTING_ENABLED ? (
+                <Link
+                  href="/dashboard/draftsman"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/25"
+                >
+                  {t("Become a seller", "เปิดร้านขายแบบบ้าน")}
+                </Link>
+              ) : null}
             </div>
           </div>
         </section>
@@ -79,12 +82,14 @@ export default function DraftsmenPageClient() {
               <p className="text-text-muted">
                 {t("No architects or designers found yet.", "ยังไม่มีสถาปนิกและนักออกแบบในระบบ")}
               </p>
-              <Link
-                href="/dashboard/draftsman"
-                className="mt-4 inline-block rounded-full bg-[#1e40af] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1d4ed8]"
-              >
-                {t("Become a seller", "สมัครเป็นสถาปนิกและนักออกแบบ")}
-              </Link>
+              {PUBLIC_SELLER_SELF_LISTING_ENABLED ? (
+                <Link
+                  href="/dashboard/draftsman"
+                  className="mt-4 inline-block rounded-full bg-[#1e40af] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1d4ed8]"
+                >
+                  {t("Become a seller", "สมัครเป็นสถาปนิกและนักออกแบบ")}
+                </Link>
+              ) : null}
             </div>
           ) : (
             <>

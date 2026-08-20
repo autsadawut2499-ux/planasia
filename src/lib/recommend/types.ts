@@ -4,6 +4,7 @@ import type { StoreListing } from "@/lib/store/listing-types";
 export interface RecommendationFilters {
   beds?: number;
   baths?: number;
+  livingRooms?: number;
   floors?: number;
   /** Interior area range in square metres. */
   areaMin?: number;

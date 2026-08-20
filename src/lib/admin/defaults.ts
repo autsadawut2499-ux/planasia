@@ -60,7 +60,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsBundle = {
   brand: {
     name: "Planasia",
     logoUrl: "/brand/planasia-lockup.png",
-    tagline: "ศูนย์รวมแบบแปลนและผลงานสถาปนิกและนักออกแบบไทย ก้าวไกลสู่สากล",
+    tagline: "",
   },
   header: {
     showStoreLink: true,
@@ -69,7 +69,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsBundle = {
   },
   footer: {
     contactEmail: "hello@planasia.com",
-    contactPhone: "061-691-1599",
+    contactPhone: "094-286-6661",
     contactLineUrl: "",
     organizationName: "Planasia Co., Ltd.",
     address: "Bangkok, Thailand",
@@ -81,7 +81,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsBundle = {
     copyrightText: "© {year} Planasia. All Rights Reserved.",
   },
   hero: {
-    badgeText: "ศูนย์รวมแบบแปลนและผลงานสถาปนิกและนักออกแบบไทย ก้าวไกลสู่สากล",
+    badgeText: "",
     backgroundImageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80",
   },

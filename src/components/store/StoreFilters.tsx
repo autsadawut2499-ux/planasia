@@ -14,6 +14,8 @@ export interface StoreFiltersState {
   beds: number;
   /** 0 = any; otherwise minimum bathrooms (3 = 3+) */
   baths: number;
+  /** 0 = any; otherwise minimum living/reception rooms (2 = 2+) */
+  livingRooms: number;
   /** 0 = any; 3 = 3+ parking spaces */
   parking: number;
   style: string;
@@ -29,6 +31,7 @@ export const DEFAULT_STORE_FILTERS: StoreFiltersState = {
   floors: 0,
   beds: 0,
   baths: 0,
+  livingRooms: 0,
   parking: 0,
   style: "",
   collection: "",
@@ -75,7 +78,7 @@ interface StoreFiltersProps {
 
 /**
  * Framed search-filter sidebar for /store.
- * Options map to draftsman listing fields: style, collection, area, beds, baths, floors, parking.
+ * Options map to draftsman listing fields: style, collection, area, beds, baths, livingRooms, floors, parking.
  */
 export function StoreFilters({
   filters,
@@ -122,6 +125,7 @@ export function StoreFilters({
     filters.floors > 0 ||
     filters.beds > 0 ||
     filters.baths > 0 ||
+    filters.livingRooms > 0 ||
     filters.parking > 0 ||
     !!filters.style ||
     !!filters.collection ||
@@ -274,6 +278,20 @@ export function StoreFilters({
           />
         </FilterGroup>
 
+        <FilterGroup
+          label={translate("store.filterLivingRooms")}
+          hint={thai ? "จำนวนห้องรับแขกขั้นต่ำ" : "Minimum living / reception rooms"}
+        >
+          <Segmented
+            options={[0, 1, 2].map((n) => ({
+              value: n,
+              label: n === 0 ? translate("store.any") : n === 2 ? "2+" : String(n),
+            }))}
+            value={filters.livingRooms}
+            onChange={(livingRooms) => onChange({ livingRooms })}
+          />
+        </FilterGroup>
+
         <FilterGroup label={translate("store.filterFloors")}>
           <Segmented
             options={[
@@ -331,9 +349,13 @@ export function listingMatchesStoreFilters(
 ): boolean {
   if (filters.floors && item.floors !== filters.floors) return false;
 
-  // Minimum beds / baths (spec: bedrooms >= min AND bathrooms >= min)
+  // Minimum beds / baths / living rooms
   if (filters.beds && item.beds < filters.beds) return false;
   if (filters.baths && item.baths < filters.baths) return false;
+  if (filters.livingRooms) {
+    const living = item.livingRooms ?? 0;
+    if (living < filters.livingRooms) return false;
+  }
 
   if (filters.parking) {
     const parking = item.parking ?? 0;

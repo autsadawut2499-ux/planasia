@@ -32,6 +32,9 @@ export function filtersToHardConstraints(
 
   if (filters.beds && filters.beds > 0) hard.minBeds = Math.round(filters.beds);
   if (filters.baths && filters.baths > 0) hard.minBaths = Math.round(filters.baths);
+  if (filters.livingRooms && filters.livingRooms > 0) {
+    hard.minLivingRooms = Math.round(filters.livingRooms);
+  }
   if (filters.areaMin && filters.areaMin > 0) hard.areaMin = filters.areaMin;
   if (filters.areaMax && filters.areaMax > 0) hard.areaMax = filters.areaMax;
   if (filters.floors && filters.floors > 0) hard.floors = Math.round(filters.floors);
@@ -125,6 +128,10 @@ export function extractSoftIntentFromText(message: string): {
   }
   if (/สระ|pool/i.test(text)) {
     lifestyleFeatures.push("Pool");
+  }
+  if (/ห้องรับแขก|ห้องนั่งเล่น|living\s*room/i.test(text)) {
+    lifestyleFeatures.push("Living room");
+    keywords.push("living room");
   }
 
   if (/หน้าแคบ|แคบ.*ลึก|narrow\s*lot|ที่ดินแคบ|หน้าดินแคบ/i.test(text)) {

@@ -8,6 +8,7 @@ import { getDraftsmanDirectory } from "@/lib/vendors/directory";
 import { ABOUT_PAGES } from "@/lib/content/about";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isListingPubliclyVisible } from "@/lib/store/listing-purchase";
+import { listArticles } from "@/lib/supabase/articles";
 
 /** Rebuild sitemap periodically so new auto-published plans appear for crawlers. */
 export const revalidate = 3600;
@@ -23,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let listings: Awaited<ReturnType<typeof getAllListingsForSitemap>> = [];
   let draftsmen: Awaited<ReturnType<typeof getDraftsmanDirectory>> = [];
+  let articles: Awaited<ReturnType<typeof listArticles>> = [];
   if (isSupabaseConfigured()) {
     try {
       listings = (await getAllListingsForSitemap()).filter(isListingPubliclyVisible);
@@ -33,6 +35,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       draftsmen = await getDraftsmanDirectory();
     } catch {
       draftsmen = [];
+    }
+    try {
+      articles = await listArticles({ publishedOnly: true });
+    } catch {
+      articles = [];
     }
   }
 
@@ -65,6 +72,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/draftsmen`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${base}/home-building`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/whats-included`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/loan-consultation`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/articles`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    ...articles.map((a) => ({
+      url: `${base}/articles/${encodeURIComponent(a.slug)}`,
+      lastModified: new Date(a.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.55,
+    })),
     { url: `${base}/plan-includes`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     { url: `${base}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     ...ABOUT_PAGES.map((p) => ({

@@ -83,35 +83,6 @@ export function normalizeCustomerServiceArticles(
   return out;
 }
 
-/** Split body into heading/paragraph blocks (same rules as plan-includes). */
-export function customerServiceBlocks(
-  body: string,
-): Array<{ type: "heading" | "paragraph"; text: string }> {
-  const parts = body
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  return parts.map((text) => {
-    const isHeading =
-      text.length < 80 &&
-      !text.includes(". ") &&
-      !text.endsWith(".") &&
-      !text.endsWith("。") &&
-      text.split("\n").length === 1;
-    return { type: isHeading ? "heading" : "paragraph", text };
-  });
-}
-
-/** Topic list for admin / nav (titles from defaults). */
-export function customerServiceTopicList(): Array<{ slug: string; titleTh: string; titleEn: string }> {
-  return ABOUT_PAGES.map((p) => ({
-    slug: p.slug,
-    titleTh: p.title.th,
-    titleEn: p.title.en,
-  }));
-}
-
 export interface CustomerServiceTopicCatalogItem {
   slug: string;
   titleTh: string;

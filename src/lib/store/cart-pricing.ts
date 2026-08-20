@@ -15,10 +15,15 @@ export interface CartItemBase {
 
 /** BOQ (Bill of Quantities) cart add-on — THB. */
 export const BOQ_BUNDLE_PRICE = 490;
-/** Physical hard-copy documents — 3 sets — THB. */
-export const HARDCOPY_3SETS_PRICE = 500;
+/** Physical hard-copy documents — 3 sets.
+ * Included in the main listing package price (no separate checkout surcharge).
+ * Addon id is still used to require shipping address at checkout.
+ */
+export const HARDCOPY_3SETS_PRICE = 0;
 /** Structural calculation sheet add-on — THB. */
 export const CALC_SHEET_PRICE = 390;
+/** Site-plan drafting add-on (เขียนแผนผังบริเวณ) — THB. */
+export const SITE_PLAN_ADDON_PRICE = 1000;
 /** AutoCAD (DWG) surcharge on top of the listing PDF price — THB. */
 export const CAD_DWG_SURCHARGE = 900;
 export const BUNDLE_DISCOUNT_2 = 0.05;
@@ -32,18 +37,27 @@ export interface CartLineItem extends CartItemBase {
   format?: "pdf" | "cad";
 }
 
-export const UPSELL_ADDON_IDS = ["boq-bundle", "hardcopy-3sets", "calc-sheet"] as const;
+export const UPSELL_ADDON_IDS = [
+  "boq-bundle",
+  "hardcopy-3sets",
+  "calc-sheet",
+  "site-plan",
+] as const;
 export type UpsellAddonId = (typeof UPSELL_ADDON_IDS)[number];
 
 export function isUpsellAddonId(value: unknown): value is UpsellAddonId {
   return (
-    value === "boq-bundle" || value === "hardcopy-3sets" || value === "calc-sheet"
+    value === "boq-bundle" ||
+    value === "hardcopy-3sets" ||
+    value === "calc-sheet" ||
+    value === "site-plan"
   );
 }
 
 export type AddonPriceOpts = {
   boqPrice?: number | null;
   calcPrice?: number | null;
+  sitePlanPrice?: number | null;
 };
 
 export function resolveAddonBoqPrice(opts?: AddonPriceOpts): number {
@@ -60,6 +74,13 @@ export function resolveAddonCalcPrice(opts?: AddonPriceOpts): number {
   return CALC_SHEET_PRICE;
 }
 
+export function resolveAddonSitePlanPrice(opts?: AddonPriceOpts): number {
+  if (opts?.sitePlanPrice != null && Number.isFinite(opts.sitePlanPrice)) {
+    return Math.max(0, Math.round(opts.sitePlanPrice));
+  }
+  return SITE_PLAN_ADDON_PRICE;
+}
+
 export function computeAddonTotal(
   addons: readonly UpsellAddonId[],
   opts?: AddonPriceOpts,
@@ -68,6 +89,7 @@ export function computeAddonTotal(
   if (addons.includes("boq-bundle")) total += resolveAddonBoqPrice(opts);
   if (addons.includes("hardcopy-3sets")) total += HARDCOPY_3SETS_PRICE;
   if (addons.includes("calc-sheet")) total += resolveAddonCalcPrice(opts);
+  if (addons.includes("site-plan")) total += resolveAddonSitePlanPrice(opts);
   return total;
 }
 

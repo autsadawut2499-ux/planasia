@@ -20,6 +20,8 @@ export interface HardConstraints {
   minBeds?: number;
   /** Minimum bathrooms. */
   minBaths?: number;
+  /** Minimum living / reception rooms. */
+  minLivingRooms?: number;
   /** Usable interior area (m²). */
   areaMin?: number;
   areaMax?: number;
@@ -99,6 +101,13 @@ export function passesHardConstraints(
   if (hard.minBaths != null && hard.minBaths > 0 && listing.baths < hard.minBaths) {
     return false;
   }
+  if (
+    hard.minLivingRooms != null &&
+    hard.minLivingRooms > 0 &&
+    (listing.livingRooms ?? 0) < hard.minLivingRooms
+  ) {
+    return false;
+  }
 
   if (hard.floors != null && hard.floors > 0 && listing.floors !== hard.floors) {
     return false;
@@ -128,6 +137,9 @@ export function relaxHardConstraints(hard: HardConstraints): HardConstraints {
   }
   if (next.minBaths != null && next.minBaths > 1) {
     next.minBaths = Math.max(1, next.minBaths - 1);
+  }
+  if (next.minLivingRooms != null && next.minLivingRooms > 1) {
+    next.minLivingRooms = Math.max(1, next.minLivingRooms - 1);
   }
   if (next.areaMin != null && next.areaMin > 0) {
     next.areaMin = Math.round(next.areaMin * 0.85);
@@ -400,6 +412,9 @@ function buildListingHaystack(listing: StoreListing): string {
     listing.style,
     listing.collection,
     ...(listing.highlights ?? []),
+    listing.livingRooms != null && listing.livingRooms > 0
+      ? `${listing.livingRooms} ห้องรับแขก living room`
+      : "",
   ]
     .filter(Boolean)
     .join(" ")
@@ -439,4 +454,5 @@ const LIFESTYLE_ALIASES: Record<string, string[]> = {
   "garden": ["สวน", "garden", "yard"],
   "pool": ["สระ", "pool"],
   "parking": ["จอดรถ", "parking", "โรงรถ"],
+  "living room": ["ห้องรับแขก", "ห้องนั่งเล่น", "living room", "living", "salon"],
 };

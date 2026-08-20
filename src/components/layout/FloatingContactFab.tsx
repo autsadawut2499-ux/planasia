@@ -29,7 +29,7 @@ function resolveContactConfig(footer: {
 }) {
   const contactPhone =
     footer.contactPhone?.trim() || DEFAULT_SITE_SETTINGS.footer.contactPhone;
-  const phoneTel = contactPhone.replace(/[^\d+]/g, "") || "0616911599";
+  const phoneTel = contactPhone.replace(/[^\d+]/g, "") || "0942866661";
 
   const fromField = footer.contactLineUrl?.trim() || "";
   const fromSocial =

@@ -69,6 +69,7 @@ Return ONLY valid JSON:
   "filters": {
     "beds": number | omit,
     "baths": number | omit,
+    "livingRooms": number | omit,
     "floors": number | omit,
     "areaMin": number | omit,
     "areaMax": number | omit,
@@ -82,14 +83,15 @@ Return ONLY valid JSON:
     "collection": string | omit
   },
   "styleTags": ["Modern", "Warm/Cozy"],
-  "lifestyleFeatures": ["Home Office", "Elderly Bedroom on 1st Floor"],
+  "lifestyleFeatures": ["Home Office", "Elderly Bedroom on 1st Floor", "Living room"],
   "siteConstraints": ["narrow-lot"],
   "keywords": ["optional", "search", "terms"],
   "needsClarification": boolean
 }
 
 Rules:
-- HARD: beds/baths are minimums; areaMin/areaMax in m²; priceMin/priceMax = plan sale price in THB when user talks about ราคาแบบ/ราคาไฟล์.
+- HARD: beds/baths/livingRooms are minimums; areaMin/areaMax in m²; priceMin/priceMax = plan sale price in THB when user talks about ราคาแบบ/ราคาไฟล์.
+- "ห้องรับแขก" / living room → livingRooms: 1 (or the stated count).
 - Construction budget (งบสร้าง 2 ล้าน) → budgetMax: 2000000 (soft financial context, not always sale price).
 - Land "หน้าแคบ แต่ลึก" → siteConstraints: ["narrow-lot"] and/or collection "small".
 - "มุมทำงาน WFH" → lifestyleFeatures: ["Home Office"].
@@ -111,6 +113,7 @@ function cleanFilters(raw: RecommendationFilters | undefined): RecommendationFil
   const out: RecommendationFilters = {};
   const beds = positiveNumber(raw.beds);
   const baths = positiveNumber(raw.baths);
+  const livingRooms = positiveNumber(raw.livingRooms);
   const floors = positiveNumber(raw.floors);
   const areaMin = positiveNumber(raw.areaMin);
   const areaMax = positiveNumber(raw.areaMax);
@@ -122,6 +125,7 @@ function cleanFilters(raw: RecommendationFilters | undefined): RecommendationFil
   const priceMax = positiveNumber(raw.priceMax);
   if (beds) out.beds = Math.round(beds);
   if (baths) out.baths = Math.round(baths);
+  if (livingRooms) out.livingRooms = Math.round(livingRooms);
   if (floors) out.floors = Math.round(floors);
   if (areaMin) out.areaMin = areaMin;
   if (areaMax) out.areaMax = areaMax;
@@ -177,6 +181,14 @@ export function heuristicPlanIntent(
     text.match(/(\d+)\s*(?:ห้องน้ำ|bath(?:room)?s?)/i) ||
     lower.match(/(\d+)\s*bath/);
   if (baths) filters.baths = Number(baths[1]);
+
+  const living =
+    text.match(/(\d+)\s*(?:ห้องรับแขก|ห้องนั่งเล่น|living\s*rooms?)/i) ||
+    lower.match(/(\d+)\s*living/);
+  if (living) filters.livingRooms = Number(living[1]);
+  else if (/ห้องรับแขก|ห้องนั่งเล่น|living\s*room/i.test(text)) {
+    filters.livingRooms = 1;
+  }
 
   const floors =
     text.match(/(\d+)\s*(?:ชั้น|floor|stor(?:y|ies))/i) ||

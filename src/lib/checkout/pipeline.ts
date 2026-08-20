@@ -35,13 +35,14 @@ import { getListingById } from "@/lib/store/db";
 import type { StoreListing } from "@/lib/store/listing-types";
 import { computeCartTotal, type CartLineItem, type UpsellAddonId } from "@/lib/store/cart-pricing";
 import { isTranslationConfigured } from "@/lib/translation/service";
-import { isStripeConfigured } from "@/lib/payments/stripe";
 import {
   availablePaymentMethods,
   defaultPaymentMethod,
   type PaymentMethodId,
   type PaymentMethodOption,
 } from "@/lib/payments/methods";
+import { publicBankDetails } from "@/lib/payments/settings";
+import { loadPaymentSettings } from "@/lib/supabase/payment-settings";
 import {
   formatArea,
   formatDimension,
@@ -270,6 +271,8 @@ export async function buildCheckoutPreview(input: {
 
   const pricingThb = computeCartTotal(cartLines, addons);
   const paymentMethods = availablePaymentMethods(currency, input.countryCode);
+  const paymentSettings = await loadPaymentSettings();
+  const bank = publicBankDetails(paymentSettings);
 
   return {
     uiLocale: input.uiLocale,
@@ -298,12 +301,11 @@ export async function buildCheckoutPreview(input: {
     },
     paymentMethods,
     defaultPaymentMethod: defaultPaymentMethod(currency, input.countryCode),
-    stripeConfigured: isStripeConfigured(),
+    /** Bank account configured for transfer checkout (Stripe removed). */
+    stripeConfigured: bank.configured,
+    paymentConfigured: bank.configured,
     translationConfigured: isTranslationConfigured(),
     // Pipeline completed for every found listing — UI gates payment on this flag.
     readyForCheckout: listings.length > 0,
   };
 }
-
-/** @deprecated use localizeListingCopy — kept for any older imports */
-export const localizeListingFlat = localizeListingCopy;

@@ -20,7 +20,7 @@
     "@google-cloud/translate": "^9.4.2",
     "@google-cloud/vision": "^5.3.7",
     "@google/generative-ai": "^0.24.1",
-    "@stripe/stripe-js": "^9.12.1",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@supabase/supabase-js": "^2.110.7",
     "@tiptap/extension-link": "^3.29.2",
     "@tiptap/extension-placeholder": "^3.29.2",
@@ -37,7 +37,6 @@
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
     "sharp": "^0.34.5",
-    "stripe": "^22.3.2",
     "unpdf": "^1.8.0",
     "web-push": "^3.6.7"
   },

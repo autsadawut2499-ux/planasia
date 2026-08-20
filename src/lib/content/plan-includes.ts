@@ -32,39 +32,41 @@ export const DEFAULT_PLAN_INCLUDES: PlanIncludesContent = {
     th: "แบบประกอบด้วยอะไรบ้าง",
   },
   intro: {
-    en: "Every ready-to-build house plan on Planasia is a complete drawing package — not just a pretty picture. Below is what you typically receive when you purchase a plan.",
-    th: "แบบบ้านพร้อมสร้างทุกหลังบน Planasia คือชุดแบบครบ ไม่ใช่แค่รูปสวยๆ ด้านล่างคือสิ่งที่คุณมักได้รับเมื่อซื้อแบบบ้าน",
+    en: "Every ready-to-build house plan on Planasia ships as a complete main package — printed sets, bank BOQ, and cost estimate. Optional site-plan drafting is available as an add-on.",
+    th: "แบบบ้านพร้อมสร้างทุกหลังบน Planasia ส่งเป็นแพ็กเกจหลักครบ — เอกสารรูปเล่ม, ใบ BOQ ยื่นกู้ธนาคาร และใบประมาณราคา มีบริการเขียนแผนผังบริเวณเป็นตัวเลือกเสริม",
   },
   body: {
-    en: `When you buy a digital house plan, you receive documents that help you understand the design and prepare for construction with your builder or engineer.
+    en: `Main package includes
+Full printed document set × 3 (A3), BOQ for bank loan applications, and a cost estimate sheet.
 
-Architectural drawings
-Floor plans for each level, exterior elevations, key sections, and door/window schedules so rooms, circulation, and overall proportions are clear.
+Full printed document set × 3 (A3)
+Complete hard-copy drawing sets in A3 size — three copies for permit, site, and your records.
 
-3D concept & presentation views
-Exterior and interior concept images that communicate massing, materials, and atmosphere — useful for client presentations and site discussions.
+BOQ for bank loan applications
+Bill of quantities prepared for bank loan / mortgage submission.
 
-Structural & engineering references
-Where included with the listing, structural layouts or notes that support coordination with a licensed engineer in your local jurisdiction.
+Cost estimate sheet
+A preliminary cost estimate to help you plan construction budgeting with your builder.
 
-BOQ / quantity samples
-Some packages include sample bills of quantities or material summaries to help estimate construction budgets (always verify with your contractor).
+Optional add-on
+Site plan drafting (เขียนแผนผังบริเวณ) can be added at checkout when you need a site layout for permit submission.
 
 How to use this page
 The gallery below shows the kinds of sheets and visuals you can expect. Exact contents vary by listing — always check the product page for that specific plan before purchase.`,
-    th: `เมื่อซื้อแบบบ้านดิจิทัล คุณจะได้รับเอกสารที่ช่วยให้เข้าใจดีไซน์ และเตรียมงานก่อสร้างร่วมกับผู้รับเหมาหรือวิศวกรได้
+    th: `แพ็กเกจหลักรวม
+เอกสารรูปเล่ม ฉบับเต็ม 3 ชุด ขนาด A3, ใบ BOQ สำหรับยื่นกู้ธนาคาร, และใบประมาณราคา
 
-แบบสถาปัตยกรรม
-แปลนพื้นแต่ละชั้น รูปด้านภายนอก รูปตัดสำคัญ และตารางประตู–หน้าต่าง เพื่อให้เห็นผังห้อง การไหลของพื้นที่ และสัดส่วนโดยรวมชัดเจน
+เอกสารรูปเล่ม ฉบับเต็ม 3 ชุด ขนาด A3
+ชุดแบบรูปเล่มครบขนาด A3 จำนวน 3 ชุด สำหรับยื่นอนุญาต หน้างาน และเก็บไว้เป็นสำเนา
 
-ภาพคอนเซ็ปต์ 3D และการนำเสนอ
-ภาพภายนอก–ภายในที่สื่อมวลสาร วัสดุ และบรรยากาศ เหมาะสำหรับนำเสนอลูกค้าและพูดคุยหน้างาน
+ใบ BOQ สำหรับยื่นกู้ธนาคาร
+ใบรายการปริมาณวัสดุสำหรับใช้ยื่นกู้หรือสินเชื่อกับธนาคาร
 
-ข้อมูลโครงสร้าง / วิศวกรรมอ้างอิง
-ในบางแบบจะมีผังโครงสร้างหรือหมายเหตุประกอบ เพื่อประสานงานกับวิศวกรที่มีใบอนุญาตในท้องที่ของคุณ
+ใบประมาณราคา
+ใบประมาณราคาเบื้องต้นช่วยวางแผนงบก่อสร้างร่วมกับผู้รับเหมา
 
-ตัวอย่าง BOQ / ประมาณการวัสดุ
-บางแพ็กเกจมีตัวอย่างรายการวัสดุหรือสรุปปริมาณ ช่วยประมาณงบก่อสร้างเบื้องต้น (ควรยืนยันกับผู้รับเหมาอีกครั้ง)
+ตัวเลือกเสริม
+บริการเขียนแผนผังบริเวณ เพิ่มได้ตอนชำระเงิน เมื่อต้องการผังบริเวณสำหรับยื่นขออนุญาต
 
 วิธีใช้หน้านี้
 แกลเลอรีด้านล่างแสดงลักษณะแผ่นงานและภาพที่คุณอาจได้รับ รายละเอียดจริงขึ้นกับแต่ละแบบ — โปรดดูหน้าสินค้าของแบบนั้นๆ ก่อนสั่งซื้อ`,
@@ -115,12 +117,4 @@ export function planIncludesBlocks(
       text.split("\n").length === 1;
     return { type: isHeading ? "heading" : "paragraph", text };
   });
-}
-
-/** @deprecated use planIncludesBlocks */
-export function planIncludesParagraphs(body: string): string[] {
-  return body
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
 }
