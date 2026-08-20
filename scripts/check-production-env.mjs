@@ -25,6 +25,12 @@ const required = [
   "GOOGLE_CLIENT_SECRET",
 ];
 
+/** Soft-warn only — slip upload can queue for manual review without this. */
+const recommended = [
+  "SLIPMATE_API_KEY", // auto slip verify; without it, slips stay awaiting_payment for admin
+  "RESEND_API_KEY",
+];
+
 if (process.env.SKIP_PRODUCTION_ENV_CHECK === "1") {
   console.log("[env-check] skipped (SKIP_PRODUCTION_ENV_CHECK=1)");
   process.exit(0);
@@ -57,6 +63,28 @@ if (isProd && adminPin && adminPin.length !== 6) {
   process.exit(1);
 }
 
+const missingRecommended = recommended.filter((key) => {
+  if (key === "SLIPMATE_API_KEY") {
+    // Accept legacy alias used by getSlipmateApiKey()
+    return (
+      !String(process.env.SLIPMATE_API_KEY ?? "").trim() &&
+      !String(process.env.SLIP_VERIFY_API_KEY ?? "").trim()
+    );
+  }
+  return !String(process.env[key] ?? "").trim();
+});
+
+if (missingRecommended.length) {
+  console.warn(
+    `[env-check] recommended (soft): ${missingRecommended.join(", ")} — see .env.example / docs/DEPLOYMENT.md`,
+  );
+  if (missingRecommended.includes("SLIPMATE_API_KEY")) {
+    console.warn(
+      "[env-check] without SLIPMATE_API_KEY, slip uploads queue for manual admin review (no auto-verify)",
+    );
+  }
+}
+
 if (missing.length) {
   const msg = `[env-check] missing: ${missing.join(", ")}`;
   if (isProd && strict) {
@@ -75,6 +103,12 @@ if (missing.length) {
     console.warn(msg);
   }
   process.exit(0);
+}
+
+if (missingRecommended.length && isProd && strict) {
+  console.warn(
+    "[env-check] STRICT_PRODUCTION_ENV=1 but recommended keys still missing — build OK; set them for full auto features",
+  );
 }
 
 console.log("[env-check] production env looks complete");

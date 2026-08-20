@@ -33,7 +33,7 @@ interface BankTransferPaymentPanelProps {
   onCancel?: () => void;
 }
 
-type Phase = "transfer" | "uploading" | "failed" | "paid";
+type Phase = "transfer" | "uploading" | "failed" | "paid" | "pending_review";
 
 export function BankTransferPaymentPanel({
   orderId,
@@ -153,13 +153,13 @@ export function BankTransferPaymentPanel({
       }
 
       if (data.pendingReview) {
-        setPhase("transfer");
+        setPhase("pending_review");
         setMessage(
           String(
             data.message ??
               (thai
-                ? "รับสลิปแล้ว — รอตรวจสอบ"
-                : "Slip received — pending review"),
+                ? "รับสลิปแล้ว — เจ้าหน้าที่จะตรวจสอบและติดต่อกลับภายใน 24 ชั่วโมง"
+                : "Slip received — our team will review and contact you within 24 hours"),
           ),
         );
         return;
@@ -267,8 +267,14 @@ export function BankTransferPaymentPanel({
         <p className="text-[11px] leading-relaxed text-text-secondary">{bank.transferNote}</p>
       ) : null}
 
-      {phase === "paid" ? (
-        <div className="flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+      {phase === "paid" || phase === "pending_review" ? (
+        <div
+          className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${
+            phase === "paid"
+              ? "bg-emerald-50 text-emerald-800"
+              : "bg-amber-50 text-amber-900"
+          }`}
+        >
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{message}</span>
         </div>

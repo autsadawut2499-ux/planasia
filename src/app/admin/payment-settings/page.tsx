@@ -238,7 +238,8 @@ export default function AdminPaymentSettingsPage() {
           <p className="text-sm text-slate-600">
             API Key ถูกตั้งค่าใน environment variable{" "}
             <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">SLIPMATE_API_KEY</code>{" "}
-            บนเซิร์ฟเวอร์ — ไม่แสดงและไม่แก้ไขจากแอดมิน
+            บน Vercel (Settings → Environment Variables → Production) แล้ว Redeploy —
+            ไม่แสดงและไม่แก้ไขจากแอดมิน
           </p>
           <p
             className={`mt-3 text-sm font-medium ${
@@ -247,7 +248,7 @@ export default function AdminPaymentSettingsPage() {
           >
             {form.slipmateConfigured
               ? "สถานะ: SlipMate พร้อมใช้งาน"
-              : "สถานะ: ยังไม่พบ SLIPMATE_API_KEY ใน environment"}
+              : "สถานะ: ยังไม่พบ SLIPMATE_API_KEY — สลิปที่อัปโหลดจะเข้าคิวรอตรวจสอบด้วยมือ"}
           </p>
         </AdminCard>
 

@@ -21,7 +21,7 @@ export async function GET() {
     message: !bank.configured
       ? "Configure bank account in Admin → Payment Settings"
       : !slipmateConfigured
-        ? "Set SLIPMATE_API_KEY in environment variables"
+        ? "Set SLIPMATE_API_KEY in Vercel Environment Variables (Production), then redeploy — until then slip uploads queue for manual review"
         : "Bank transfer + SlipMate verification ready",
   });
 }

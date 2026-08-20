@@ -38,7 +38,26 @@ See the top of [`.env.example`](../.env.example). For a full go-live set:
 - Auth: `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - Site: `NEXT_PUBLIC_SITE_URL`
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Payments: `SLIPMATE_API_KEY` (bank transfer + slip verify; configure bank/QR in Admin)
+- Payments: `SLIPMATE_API_KEY` (bank transfer + auto slip verify; configure bank/QR in Admin)
+
+### SlipMate on Vercel (required for auto-verify)
+
+Without this key, buyers can still upload a slip — the order stays `awaiting_payment` for **manual admin review** (no red dead-end). Auto-verify + instant “paid” needs the key.
+
+1. Open [Vercel Dashboard](https://vercel.com) → project **`planasia`** → **Settings** → **Environment Variables**
+2. Add for **Production** (and Preview if you test payments there):
+
+| Name | Value | Notes |
+|------|--------|--------|
+| `SLIPMATE_API_KEY` | *(from [SlipMate dashboard](https://developers.slipmate.ai/))* | Server-only. Never `NEXT_PUBLIC_`. |
+| `SLIPMATE_API_BASE_URL` | `https://api.slipmate.ai/open-api` | Optional — this is the default |
+| `SLIPMATE_MATCH_AMOUNT` | `true` | Optional — default on |
+| `SLIPMATE_ALLOW_DUPLICATE` | `false` | Optional — default |
+
+3. **Redeploy** Production after saving (env vars apply to new builds only).
+4. Confirm: `GET https://www.planasia.net/api/payments/status` → `slipApiConfigured: true`.
+
+Local: copy the same key into `.env.local` (already documented in `.env.example`). Do not commit the real key.
 - LINE: `LINE_CHANNEL_ID`, `LINE_CHANNEL_SECRET` (Messaging API webhook + admin push)
 - Ops: `ADMIN_PIN` (not `501499`), `CRON_SECRET`
 

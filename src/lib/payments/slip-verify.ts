@@ -12,7 +12,13 @@ import {
 export type SlipVerifyOutcome =
   | { ok: true; verified: true; amount?: number; transRef?: string; raw: unknown }
   | { ok: true; verified: false; reason: string; raw: unknown }
-  | { ok: false; error: string; raw?: unknown };
+  | {
+      ok: false;
+      error: string;
+      /** Present when SLIPMATE_API_KEY / legacy alias is unset — callers should queue manual review. */
+      code?: "missing_api_key";
+      raw?: unknown;
+    };
 
 /**
  * SlipMate only accepts JPG/JPEG/PNG/JFIF/WEBP.
@@ -67,8 +73,9 @@ export async function verifyBankSlip(opts: {
   if (!isSlipmateConfigured()) {
     return {
       ok: false,
+      code: "missing_api_key",
       error:
-        "SlipMate API Key ยังไม่ได้ตั้งค่า — ใส่ SLIPMATE_API_KEY ใน environment variables",
+        "SlipMate API Key ยังไม่ได้ตั้งค่า — ใส่ SLIPMATE_API_KEY ใน Vercel Environment Variables (Production) แล้ว Redeploy",
     };
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { finalizePaidCartSale } from "@/lib/commerce/finalize-sale";
 import { verifyBankSlip } from "@/lib/payments/slip-verify";
+import { isSlipmateConfigured } from "@/lib/payments/slipmate-config";
 import {
   getCartOrder,
   updateCartOrderSlip,
@@ -9,6 +10,12 @@ import { uploadPrivateBytesDetailed } from "@/lib/supabase/private-assets";
 import { requireBuyerSession } from "@/lib/auth/buyer-session";
 import { getListingById } from "@/lib/store/db";
 import { listingSupplierName } from "@/lib/store/listing-supplier";
+
+/** Customer-facing copy when auto-verify is unavailable (never mention env vars). */
+const MANUAL_REVIEW_TH =
+  "รับสลิปแล้ว — เจ้าหน้าที่จะตรวจสอบและติดต่อกลับภายใน 24 ชั่วโมง";
+const MANUAL_REVIEW_EN =
+  "Slip received — our team will review and contact you within 24 hours";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -156,27 +163,82 @@ export async function POST(request: NextRequest) {
       paymentFailureReason: null,
     });
 
+    // SlipMate key missing on host (common on Vercel) — keep slip, queue manual review.
+    // Never surface env-var instructions to buyers; UI already handles pendingReview.
+    if (!isSlipmateConfigured()) {
+      console.error(
+        "[payments/slip] SLIPMATE_API_KEY missing — slip queued for manual review",
+        { orderId, storagePath },
+      );
+      await updateCartOrderSlip(orderId, {
+        slipVerifyStatus: "pending",
+        slipVerifyPayload: {
+          manualReview: true,
+          reason: "slipmate_not_configured",
+        },
+        status: "awaiting_payment",
+        paymentFailureReason: null,
+      });
+      return NextResponse.json({
+        ok: true,
+        pendingReview: true,
+        orderId,
+        status: "awaiting_payment",
+        message: MANUAL_REVIEW_TH,
+        successMessage: MANUAL_REVIEW_TH,
+        detail: MANUAL_REVIEW_EN,
+      });
+    }
+
     const verified = await verifyBankSlip({
       imageBytes: bytes,
       expectedAmountThb: order.total,
     });
 
     if (!verified.ok) {
-      // Config / network error — leave status unchanged.
+      // Missing key race / config — same graceful path as above.
+      if (verified.code === "missing_api_key") {
+        console.error(
+          "[payments/slip] SlipMate missing_api_key — slip queued for manual review",
+          { orderId },
+        );
+        await updateCartOrderSlip(orderId, {
+          slipVerifyStatus: "pending",
+          slipVerifyPayload: {
+            manualReview: true,
+            reason: "slipmate_not_configured",
+          },
+          status: "awaiting_payment",
+          paymentFailureReason: null,
+        });
+        return NextResponse.json({
+          ok: true,
+          pendingReview: true,
+          orderId,
+          status: "awaiting_payment",
+          message: MANUAL_REVIEW_TH,
+          successMessage: MANUAL_REVIEW_TH,
+          detail: MANUAL_REVIEW_EN,
+        });
+      }
+
+      // Network / transport error — leave status unchanged; show generic failure.
       console.error("[payments/slip] SlipMate transport error", verified.error);
       await updateCartOrderSlip(orderId, {
         slipVerifyStatus: "error",
         slipVerifyPayload: { error: verified.error },
         paymentFailureReason: verified.error,
       });
+      const transportMsg =
+        "ระบบตรวจสอบสลิปขัดข้องชั่วคราว — กรุณาลองใหม่อีกครั้ง หรือติดต่อแอดมิน";
       return NextResponse.json(
         {
           ok: false,
           orderId,
           status: order.status === "failed" ? "awaiting_payment" : order.status,
-          error: verified.error,
-          reason: verified.error,
-          message: verified.error,
+          error: transportMsg,
+          reason: transportMsg,
+          message: transportMsg,
           detail: verified.error,
         },
         { status: 502 },
