@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { CmsSectionContent, SiteHeroSettings } from "@/lib/admin/defaults";
+import type { CmsSectionContent, CmsSectionKey, SiteHeroSettings } from "@/lib/admin/defaults";
 import type { Locale } from "@/lib/geo/countries";
 import {
   AdminCard,
@@ -23,6 +23,7 @@ export default function AdminContentPage() {
   });
   const [heroCms, setHeroCms] = useState<CmsSectionContent>({});
   const [ctaCms, setCtaCms] = useState<CmsSectionContent>({});
+  const [tipsCms, setTipsCms] = useState<CmsSectionContent>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(
@@ -35,11 +36,13 @@ export default function AdminContentPage() {
       fetch("/api/admin/settings").then((r) => r.json()),
       fetch(`/api/admin/cms?section=hero&locale=${locale}`).then((r) => r.json()),
       fetch(`/api/admin/cms?section=cta_band&locale=${locale}`).then((r) => r.json()),
+      fetch(`/api/admin/cms?section=construction_tips&locale=${locale}`).then((r) => r.json()),
     ])
-      .then(([settingsData, heroData, ctaData]) => {
+      .then(([settingsData, heroData, ctaData, tipsData]) => {
         if (settingsData.settings?.hero) setHero(settingsData.settings.hero);
         if (heroData.content) setHeroCms(heroData.content);
         if (ctaData.content) setCtaCms(ctaData.content);
+        if (tipsData.content) setTipsCms(tipsData.content);
       })
       .finally(() => setLoading(false));
   }, [locale]);
@@ -62,7 +65,10 @@ export default function AdminContentPage() {
     }
   }
 
-  async function saveCms(section: "hero" | "cta_band", content: CmsSectionContent) {
+  async function saveCms(
+    section: Extract<CmsSectionKey, "hero" | "cta_band" | "construction_tips">,
+    content: CmsSectionContent,
+  ) {
     setSaving(true);
     setStatus(null);
     try {
@@ -88,7 +94,7 @@ export default function AdminContentPage() {
     <div>
       <AdminPageHeader
         title="เนื้อหาและ UI"
-        description="แก้ไขข้อความ Hero คำโปรย แบนเอนร์ CTA และรูปภาพ (ภาษาไทย)"
+        description="แก้ไขข้อความ Hero คำโปรย แบนเอนร์ CTA เคล็ดลับการก่อสร้าง และรูปภาพ (ภาษาไทย)"
       />
 
       {status && (
@@ -178,6 +184,47 @@ export default function AdminContentPage() {
               />
             </AdminField>
             <AdminSaveButton saving={saving} onClick={() => saveCms("cta_band", ctaCms)} />
+          </div>
+        </AdminCard>
+
+        <AdminCard title={`เคล็ดลับการก่อสร้าง (หน้าแรก) — ${locale.toUpperCase()}`}>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-500">
+              ส่วนกลางหน้าแรก ระหว่างแถบบริการคอนเซปต์และแบบ Exclusive — แก้หัวข้อ คำอธิบาย
+              ปุ่ม และลิงก์ปลายทาง
+            </p>
+            <AdminField label="หัวข้อ">
+              <AdminInput
+                value={tipsCms.title ?? ""}
+                onChange={(e) => setTipsCms({ ...tipsCms, title: e.target.value })}
+              />
+            </AdminField>
+            <AdminField label="คำอธิบาย">
+              <AdminTextarea
+                rows={3}
+                value={tipsCms.description ?? ""}
+                onChange={(e) => setTipsCms({ ...tipsCms, description: e.target.value })}
+              />
+            </AdminField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <AdminField label="ข้อความปุ่ม">
+                <AdminInput
+                  value={tipsCms.cta ?? ""}
+                  onChange={(e) => setTipsCms({ ...tipsCms, cta: e.target.value })}
+                />
+              </AdminField>
+              <AdminField label="ลิงก์ปุ่ม (เช่น /articles)">
+                <AdminInput
+                  value={tipsCms.ctaHref ?? ""}
+                  onChange={(e) => setTipsCms({ ...tipsCms, ctaHref: e.target.value })}
+                  placeholder="/articles"
+                />
+              </AdminField>
+            </div>
+            <AdminSaveButton
+              saving={saving}
+              onClick={() => saveCms("construction_tips", tipsCms)}
+            />
           </div>
         </AdminCard>
       </div>

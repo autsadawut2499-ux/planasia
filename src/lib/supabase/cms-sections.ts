@@ -1,4 +1,5 @@
 import {
+  CMS_SECTION_KEYS,
   DEFAULT_CMS_BY_LOCALE,
   type CmsSectionContent,
   type CmsSectionKey,
@@ -46,7 +47,7 @@ export async function loadCmsSection(
 }
 
 export async function loadAllCmsForLocale(locale: Locale): Promise<Record<CmsSectionKey, CmsSectionContent>> {
-  const sections: CmsSectionKey[] = ["hero", "cta_band", "footer"];
+  const sections = CMS_SECTION_KEYS;
   const result = {} as Record<CmsSectionKey, CmsSectionContent>;
 
   if (!isSupabaseConfigured()) {

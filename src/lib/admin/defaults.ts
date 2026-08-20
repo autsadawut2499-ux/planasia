@@ -44,13 +44,21 @@ export interface SiteSettingsBundle {
   hero: SiteHeroSettings;
 }
 
-export type CmsSectionKey = "hero" | "cta_band" | "footer";
+export type CmsSectionKey = "hero" | "cta_band" | "footer" | "construction_tips";
+
+export const CMS_SECTION_KEYS: CmsSectionKey[] = [
+  "hero",
+  "cta_band",
+  "footer",
+  "construction_tips",
+];
 
 export interface CmsSectionContent {
   title?: string;
   subtitle?: string;
   cta?: string;
   ctaSecondary?: string;
+  ctaHref?: string;
   badge?: string;
   description?: string;
   [key: string]: string | undefined;
@@ -101,6 +109,13 @@ export const DEFAULT_CMS_BY_LOCALE: Record<Locale, Record<CmsSectionKey, CmsSect
       description: "Start with AI-guided questionnaires and export concept design ideas.",
       cta: "Start Designing",
     },
+    construction_tips: {
+      title: "เคล็ดลับการก่อสร้าง",
+      description:
+        "ยกระดับความรู้ในการสร้างบ้านด้วยเคล็ดลับมาตรฐาน ค้นหาข้อมูลเชิงลึกและแนวทางการควบคุมงานก่อสร้างให้มีคุณภาพสูงสุดกับ Planasia",
+      cta: "เคล็ดลับการก่อสร้าง",
+      ctaHref: "/articles",
+    },
     footer: {
       adminLabel: "Administrator",
     },
@@ -117,6 +132,13 @@ export const DEFAULT_CMS_BY_LOCALE: Record<Locale, Record<CmsSectionKey, CmsSect
       title: "พร้อมออกแบบบ้านในฝันของคุณแล้วหรือยัง?",
       description: "เริ่มต้นด้วยแบบสอบถาม AI และส่งออกชุดคอนเซปต์ดีไซน์",
       cta: "เริ่มต้นใช้งานฟรี",
+    },
+    construction_tips: {
+      title: "เคล็ดลับการก่อสร้าง",
+      description:
+        "ยกระดับความรู้ในการสร้างบ้านด้วยเคล็ดลับมาตรฐาน ค้นหาข้อมูลเชิงลึกและแนวทางการควบคุมงานก่อสร้างให้มีคุณภาพสูงสุดกับ Planasia",
+      cta: "เคล็ดลับการก่อสร้าง",
+      ctaHref: "/articles",
     },
     footer: {
       adminLabel: "ผู้ดูแลระบบ",
@@ -135,6 +157,13 @@ export const DEFAULT_CMS_BY_LOCALE: Record<Locale, Record<CmsSectionKey, CmsSect
       description: "Browse ready-to-download concept house plans from verified draftsmen.",
       cta: "Start Designing",
     },
+    construction_tips: {
+      title: "เคล็ดลับการก่อสร้าง",
+      description:
+        "ยกระดับความรู้ในการสร้างบ้านด้วยเคล็ดลับมาตรฐาน ค้นหาข้อมูลเชิงลึกและแนวทางการควบคุมงานก่อสร้างให้มีคุณภาพสูงสุดกับ Planasia",
+      cta: "เคล็ดลับการก่อสร้าง",
+      ctaHref: "/articles",
+    },
     footer: {
       adminLabel: "Administrator",
     },
@@ -151,6 +180,13 @@ export const DEFAULT_CMS_BY_LOCALE: Record<Locale, Record<CmsSectionKey, CmsSect
       title: "Ready to design your dream home?",
       description: "Browse ready-to-download concept house plans from verified draftsmen.",
       cta: "Start Designing",
+    },
+    construction_tips: {
+      title: "เคล็ดลับการก่อสร้าง",
+      description:
+        "ยกระดับความรู้ในการสร้างบ้านด้วยเคล็ดลับมาตรฐาน ค้นหาข้อมูลเชิงลึกและแนวทางการควบคุมงานก่อสร้างให้มีคุณภาพสูงสุดกับ Planasia",
+      cta: "เคล็ดลับการก่อสร้าง",
+      ctaHref: "/articles",
     },
     footer: {
       adminLabel: "Administrator",
