@@ -468,11 +468,11 @@ export function StoreCartDrawer({
                   <p className="mb-2 text-center text-[11px] text-text-muted">
                 {L(
                   requiresShipping || requiresSitePlan
-                    ? "Complete contact details, required fields (shipping / site plan), accept the Terms & Refund Policy, and confirm the review"
-                    : "Complete contact details, accept the Terms & Refund Policy, and confirm the review to enable payment",
+                    ? "Complete required fields (shipping / site plan), accept the Terms & Refund Policy, and confirm the review"
+                    : "Accept the Terms & Refund Policy and confirm the review to enable payment",
                   requiresShipping || requiresSitePlan
-                    ? "กรอกข้อมูลติดต่อ ข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน"
-                    : "กรอกข้อมูลติดต่อ ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน จึงจะชำระเงินได้",
+                    ? "กรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน"
+                    : "ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน จึงจะชำระเงินได้",
                 )}
                   </p>
                 ) : null}

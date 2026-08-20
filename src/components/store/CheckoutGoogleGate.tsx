@@ -5,8 +5,8 @@ import { signIn, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
 /**
- * Optional Google sign-in for checkout — speeds up prefilling name/email.
- * Guest checkout with manual contact details is always allowed.
+ * Optional Google sign-in for checkout — saves receipts/downloads to the account.
+ * Guest checkout is always allowed without contact fields.
  */
 export function CheckoutGoogleGate({
   thai,
@@ -39,8 +39,8 @@ export function CheckoutGoogleGate({
       </h3>
       <p className="mt-1 text-xs leading-relaxed text-text-secondary">
         {thai
-          ? "เข้าสู่ระบบเพื่อกรอกชื่อและอีเมลอัตโนมัติ — หรือกรอกข้อมูลติดต่อด้านล่างแล้วสร้างคำสั่งซื้อได้เลย"
-          : "Sign in to autofill your name and email — or enter contact details below and place your order as a guest."}
+          ? "เข้าสู่ระบบเพื่อบันทึกใบเสร็จและลิงก์ดาวน์โหลดในบัญชี — ไม่บังคับ สามารถสั่งซื้อได้เลย"
+          : "Sign in to save the receipt and download links to your account — optional, you can place an order without signing in."}
       </p>
       <button
         type="button"

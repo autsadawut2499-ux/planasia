@@ -28,7 +28,7 @@ function shouldSkipPath(pathname: string | null): boolean {
 export function PwaMobileInstallWatcher() {
   const pathname = usePathname();
   const { status } = useSession();
-  const { canPrompt, installed, mobile } = usePwaInstall();
+  const { canPrompt, installed, mobile, inApp } = usePwaInstall();
   const [open, setOpen] = useState(false);
   const prevStatus = useRef(status);
   const openTimer = useRef<number | null>(null);
@@ -61,7 +61,7 @@ export function PwaMobileInstallWatcher() {
   // First-time (and returning snoozed) mobile visitors
   useEffect(() => {
     if (shouldSkipPath(pathname)) return;
-    if (!mobile || installed || !canPrompt) return;
+    if (!(mobile || inApp) || installed || !canPrompt) return;
     if (alreadyShownThisSession()) return;
 
     // Brief delay so the page paints first, then show the install sheet.
@@ -70,7 +70,7 @@ export function PwaMobileInstallWatcher() {
     return () => {
       if (openTimer.current) window.clearTimeout(openTimer.current);
     };
-  }, [pathname, mobile, installed, canPrompt]);
+  }, [pathname, mobile, inApp, installed, canPrompt]);
 
   // Extra nudge right after Google login (if not shown this session yet)
   useEffect(() => {
@@ -78,7 +78,7 @@ export function PwaMobileInstallWatcher() {
       prevStatus.current !== "authenticated" && status === "authenticated";
     prevStatus.current = status;
 
-    if (!justLoggedIn || installed || !canPrompt || !mobile) return;
+    if (!justLoggedIn || installed || !canPrompt || !(mobile || inApp)) return;
     if (alreadyShownThisSession()) return;
     if (shouldSkipPath(pathname)) return;
 
@@ -87,9 +87,9 @@ export function PwaMobileInstallWatcher() {
     return () => {
       if (openTimer.current) window.clearTimeout(openTimer.current);
     };
-  }, [status, canPrompt, installed, mobile, pathname]);
+  }, [status, canPrompt, installed, mobile, inApp, pathname]);
 
-  if (!mobile) return null;
+  if (!mobile && !inApp) return null;
 
   return (
     <PwaInstallPrompt

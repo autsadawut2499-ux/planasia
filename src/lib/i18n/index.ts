@@ -442,6 +442,8 @@ export type TranslationKey =
   | "pwa.iosSteps"
   | "pwa.gotIt"
   | "pwa.androidHint"
+  | "pwa.inAppTitle"
+  | "pwa.inAppSteps"
   | "landing.ctaBand"
   | "landing.ctaBandDesc"
   | "editor.title"
@@ -1060,6 +1062,8 @@ const translations: Translations = {
     "pwa.iosSteps": "Tap the Share button in Safari, then choose \"Add to Home Screen\".",
     "pwa.gotIt": "Got it",
     "pwa.androidHint": "Open your browser menu (⋮) and tap \"Install app\" or \"Add to Home screen\".",
+    "pwa.inAppTitle": "Open in your browser to install",
+    "pwa.inAppSteps": "This in-app browser (LINE / Facebook / Instagram) cannot install apps. Tap the menu (⋯) and choose Open in Safari or Open in Chrome, then add Planasia to your home screen.",
     "landing.ctaBand": "Find Your Perfect House Plan",
     "landing.ctaBandDesc": "Explore our full catalog of house designs and buy the plans you love.",
     "editor.title": "3D Design Editor",
@@ -1670,6 +1674,8 @@ const translations: Translations = {
     "pwa.iosSteps": "แตะปุ่มแชร์ใน Safari แล้วเลือก \"เพิ่มที่หน้าจอโฮม\"",
     "pwa.gotIt": "เข้าใจแล้ว",
     "pwa.androidHint": "เปิดเมนูเบราว์เซอร์ (⋮) แล้วแตะ \"ติดตั้งแอป\" หรือ \"เพิ่มไปหน้าจอหลัก\"",
+    "pwa.inAppTitle": "เปิดในเบราว์เซอร์เพื่อติดตั้งแอป",
+    "pwa.inAppSteps": "เบราว์เซอร์ในแอป (LINE / Facebook / Instagram) ติดตั้งแอปไม่ได้ แตะเมนู (⋯) แล้วเลือกเปิดใน Safari หรือ Chrome จากนั้นค่อยเพิ่ม Planasia ไปหน้าจอหลัก",
     "landing.ctaBand": "ค้นหาแบบบ้านที่ใช่สำหรับคุณ",
     "landing.ctaBandDesc": "สำรวจแคตตาล็อกแบบบ้านทั้งหมดของเรา และซื้อแบบที่คุณชอบ",
     "editor.title": "ตัวแก้ไขดีไซน์ 3D",
@@ -2275,6 +2281,8 @@ const translations: Translations = {
     "pwa.iosSteps": "Safari में Share दबाएँ, फिर \"Add to Home Screen\" चुनें।",
     "pwa.gotIt": "समझ गया",
     "pwa.androidHint": "ब्राउज़र मेनू (⋮) खोलें और \"Install app\" या \"Add to Home screen\" टैप करें।",
+    "pwa.inAppTitle": "इंस्टॉल करने के लिए ब्राउज़र में खोलें",
+    "pwa.inAppSteps": "इन-ऐप ब्राउज़र (LINE / Facebook / Instagram) ऐप इंस्टॉल नहीं कर सकता। मेनू (⋯) से Safari या Chrome में खोलें, फिर होम स्क्रीन पर जोड़ें।",
     "landing.ctaBand": "Find Your Perfect House Plan",
     "landing.ctaBandDesc": "Explore our full catalog of house designs and buy the plans you love.",
     "editor.title": "3D Design Editor",
@@ -2880,6 +2888,8 @@ const translations: Translations = {
     "pwa.iosSteps": "Nhấn Share trong Safari, chọn \"Thêm vào Màn hình chính\".",
     "pwa.gotIt": "Đã hiểu",
     "pwa.androidHint": "Mở menu trình duyệt (⋮) và chọn \"Cài đặt ứng dụng\" hoặc \"Thêm vào Màn hình chính\".",
+    "pwa.inAppTitle": "Mở trong trình duyệt để cài đặt",
+    "pwa.inAppSteps": "Trình duyệt trong ứng dụng (LINE / Facebook / Instagram) không cài được app. Mở menu (⋯), chọn Safari hoặc Chrome, rồi thêm Planasia vào màn hình chính.",
     "landing.ctaBand": "Find Your Perfect House Plan",
     "landing.ctaBandDesc": "Explore our full catalog of house designs and buy the plans you love.",
     "editor.title": "Trình chỉnh sửa 3D",

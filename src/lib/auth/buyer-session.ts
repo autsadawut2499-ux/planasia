@@ -40,9 +40,9 @@ export function googleLoginRequiredResponse() {
 }
 
 /**
- * Resolve buyer identity from optional session + form fields.
- * Guests must supply name and email/phone via the body; signed-in buyers
- * fall back to Google profile when form fields are empty.
+ * Resolve buyer identity from optional session + optional body fields.
+ * Contact details are not required for checkout; signed-in buyers fall back
+ * to Google profile when form fields are empty.
  */
 export function resolveBuyerCheckoutIdentity(
   session: BuyerSession | null,
@@ -73,22 +73,10 @@ export function resolveBuyerCheckoutIdentity(
   };
 }
 
-/** Validate buyer contact fields used by purchase + cart checkout. */
+/** Validate optional buyer contact fields used by purchase + cart checkout. */
 export function validateBuyerCheckoutIdentity(
   buyer: BuyerCheckoutIdentity,
 ): NextResponse | null {
-  if (buyer.name.length < 2) {
-    return NextResponse.json(
-      { error: "Buyer name is required" },
-      { status: 400 },
-    );
-  }
-  if (!buyer.email && !buyer.phone) {
-    return NextResponse.json(
-      { error: "Email or phone is required" },
-      { status: 400 },
-    );
-  }
   if (buyer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.email)) {
     return NextResponse.json(
       { error: "Invalid email address" },

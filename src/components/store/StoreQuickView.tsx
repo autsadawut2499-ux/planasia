@@ -342,25 +342,21 @@ export function StoreCheckoutModal({
     requiresShipping,
     requiresSitePlan,
   });
-  // Contact → shipping / site-plan (when selected) → payment
+  // Shipping / site-plan (when selected) → payment. Contact form removed.
   const payStep = THAI_DOMESTIC_MARKET
-    ? requiresShipping || requiresSitePlan
-      ? String(2 + (requiresShipping ? 1 : 0) + (requiresSitePlan ? 1 : 0))
-      : "2"
-    : requiresShipping || requiresSitePlan
-      ? String(3 + (requiresShipping ? 1 : 0) + (requiresSitePlan ? 1 : 0))
-      : "3";
+    ? String(1 + (requiresShipping ? 1 : 0) + (requiresSitePlan ? 1 : 0))
+    : String(2 + (requiresShipping ? 1 : 0) + (requiresSitePlan ? 1 : 0));
 
   const handlePay = async () => {
     if (!canPay) {
       setError(
         thai
           ? requiresShipping || requiresSitePlan
-            ? "กรุณากรอกข้อมูลที่จำเป็น (ติดต่อ / ที่อยู่จัดส่ง / แผนผังบริเวณ) และยอมรับข้อกำหนด/นโยบายคืนเงิน"
-            : "กรุณากรอกข้อมูลติดต่อและยอมรับข้อกำหนด/นโยบายคืนเงิน"
+            ? "กรุณากรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) และยอมรับข้อกำหนด/นโยบายคืนเงิน"
+            : "กรุณายอมรับข้อกำหนด/นโยบายคืนเงิน"
           : requiresShipping || requiresSitePlan
-            ? "Please complete required fields (contact / shipping / site plan) and accept the Terms & Refund Policy"
-            : "Please complete contact details and accept the Terms & Refund Policy",
+            ? "Please complete required fields (shipping / site plan) and accept the Terms & Refund Policy"
+            : "Please accept the Terms & Refund Policy",
       );
       return;
     }
@@ -530,11 +526,11 @@ export function StoreCheckoutModal({
                 <p className="mt-2 text-center text-[11px] text-text-muted">
               {thai
                 ? requiresShipping || requiresSitePlan
-                  ? "กรอกข้อมูลติดต่อ ที่จำเป็น และยอมรับข้อกำหนด จึงจะกดชำระเงินได้"
-                  : "กรอกข้อมูลติดต่อและยอมรับข้อกำหนดด้านบน จึงจะกดชำระเงินได้"
+                  ? "กรอกข้อมูลที่จำเป็น และยอมรับข้อกำหนด จึงจะกดชำระเงินได้"
+                  : "ยอมรับข้อกำหนดด้านบน จึงจะกดชำระเงินได้"
                 : requiresShipping || requiresSitePlan
-                  ? "Complete contact details, required fields, and accept the terms to enable payment"
-                  : "Complete contact details and accept the terms above to enable payment"}
+                  ? "Complete required fields and accept the terms to enable payment"
+                  : "Accept the terms above to enable payment"}
                 </p>
               ) : null}
               <div className="mt-3 flex gap-2 sm:gap-3">

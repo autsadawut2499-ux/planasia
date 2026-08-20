@@ -17,7 +17,7 @@ export function PwaInstallPrompt({
   forceAttention = false,
 }: PwaInstallPromptProps) {
   const { translate } = useApp();
-  const { ios, hasNativePrompt, installing, install, dismiss } = usePwaInstall();
+  const { ios, inApp, hasNativePrompt, installing, install, dismiss } = usePwaInstall();
 
   if (!open) return null;
 
@@ -85,7 +85,12 @@ export function PwaInstallPrompt({
             </li>
           </ul>
 
-          {ios && !hasNativePrompt ? (
+          {inApp && !hasNativePrompt ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+              <p className="mb-2 font-semibold">{translate("pwa.inAppTitle")}</p>
+              <p className="leading-relaxed">{translate("pwa.inAppSteps")}</p>
+            </div>
+          ) : ios && !hasNativePrompt ? (
             <div className="rounded-xl border border-[#dbeafe] bg-[#eff6ff] p-4 text-sm text-[#1e3a8a]">
               <p className="mb-2 flex items-center gap-2 font-semibold">
                 <Share className="h-4 w-4 shrink-0" />

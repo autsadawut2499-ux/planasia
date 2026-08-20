@@ -12,7 +12,7 @@ const svg = await readFile(svgPath);
 
 await mkdir(outDir, { recursive: true });
 
-for (const size of [192, 512]) {
+for (const size of [180, 192, 512]) {
   const out = path.join(outDir, `icon-${size}.png`);
   await sharp(svg).resize(size, size).png().toFile(out);
   console.log(`Wrote ${out}`);
