@@ -2,8 +2,10 @@ import "server-only";
 import { createRandomId } from "@/lib/random-id";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
+  ARTICLE_SLUG_MAX_ENCODED_LEN,
   excerptFromContent,
   slugifyArticleTitle,
+  truncateArticleSlug,
   type Article,
   type ArticleInput,
 } from "@/lib/content/articles";
@@ -40,16 +42,28 @@ function mapRow(row: ArticleRow): Article {
 
 async function ensureUniqueSlug(base: string, excludeId?: string): Promise<string> {
   const sb = getSupabaseAdmin();
-  if (!sb) return base;
-  let candidate = base;
+  const safeBase = truncateArticleSlug(base);
+  if (!sb) return safeBase;
+
+  let candidate = safeBase;
   for (let i = 0; i < 20; i++) {
     let q = sb.from("articles").select("id").eq("slug", candidate).limit(1);
     if (excludeId) q = q.neq("id", excludeId);
     const { data } = await q.maybeSingle();
     if (!data) return candidate;
-    candidate = `${base}-${i + 2}`;
+    const suffix = `-${i + 2}`;
+    const suffixEnc = encodeURIComponent(suffix).length;
+    candidate =
+      truncateArticleSlug(safeBase, ARTICLE_SLUG_MAX_ENCODED_LEN - suffixEnc) + suffix;
   }
-  return `${base}-${createRandomId().slice(0, 6)}`;
+  const rand = createRandomId().slice(0, 6);
+  const randSuffix = `-${rand}`;
+  return (
+    truncateArticleSlug(
+      safeBase,
+      ARTICLE_SLUG_MAX_ENCODED_LEN - encodeURIComponent(randSuffix).length,
+    ) + randSuffix
+  );
 }
 
 export async function listArticles(opts?: {

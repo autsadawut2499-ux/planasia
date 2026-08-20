@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getArticleBySlug, listArticles } from "@/lib/supabase/articles";
+import { getArticleBySlug } from "@/lib/supabase/articles";
 import { getSiteUrl } from "@/lib/seo/site-url";
 import { excerptFromContent } from "@/lib/content/articles";
 
-/** ISR backup; on-demand bust via `revalidateArticleSurfaces` after admin CMS save. */
+/**
+ * On-demand ISR — do not prerender every slug at build time.
+ * Long Thai slugs expand via percent-encoding into ENAMETOOLONG filesystem paths
+ * under `.next/.../prerender-fallback`.
+ */
 export const revalidate = 1800;
+export const dynamicParams = true;
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -30,9 +35,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export async function generateStaticParams() {
-  const articles = await listArticles({ publishedOnly: true });
-  return articles.map((a) => ({ slug: a.slug }));
+/** Empty: avoid writing huge encoded slug paths during `next build`. */
+export function generateStaticParams() {
+  return [];
 }
 
 export default async function ArticleDetailPage({ params }: PageProps) {
