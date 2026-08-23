@@ -310,17 +310,17 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="mt-8 flex items-center justify-center gap-3">
+                  <div className="mt-8 flex w-full items-center justify-between gap-2 px-2 sm:justify-center sm:gap-3 sm:px-0">
                     <button
                       type="button"
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={!hasPrev}
                       aria-label={locale === "th" ? "หน้าก่อนหน้า" : "Previous page"}
-                      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-white text-[#1e3a5f] shadow-sm transition hover:border-[#1e40af]/40 hover:text-[#1e40af] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-lg border border-border bg-white text-[#1e3a5f] shadow-sm transition hover:border-[#1e40af]/40 hover:text-[#1e40af] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11 sm:min-w-11"
                     >
-                      <ChevronLeft className="h-5 w-5" />
+                      <ChevronLeft className="h-6 w-6 sm:h-5 sm:w-5" />
                     </button>
-                    <span className="min-w-[120px] text-center text-sm font-semibold text-[#1e3a5f]">
+                    <span className="flex-1 whitespace-nowrap px-2 text-center text-sm font-semibold text-[#1e3a5f] sm:min-w-[120px] sm:flex-initial">
                       {locale === "th"
                         ? `หน้า ${currentPage} จาก ${totalPages}`
                         : `Page ${currentPage} of ${totalPages}`}
@@ -330,9 +330,9 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={!hasNext}
                       aria-label={locale === "th" ? "หน้าถัดไป" : "Next page"}
-                      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-white text-[#1e3a5f] shadow-sm transition hover:border-[#1e40af]/40 hover:text-[#1e40af] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-lg border border-border bg-white text-[#1e3a5f] shadow-sm transition hover:border-[#1e40af]/40 hover:text-[#1e40af] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11 sm:min-w-11"
                     >
-                      <ChevronRight className="h-5 w-5" />
+                      <ChevronRight className="h-6 w-6 sm:h-5 sm:w-5" />
                     </button>
                   </div>
                 )}
