@@ -76,6 +76,7 @@ export const STYLES: TaxonomyItem[] = [
   { id: "classic", en: withBanBaanPrefix("Classic"), th: withBanBaanPrefix("คลาสสิก") },
   { id: "muji", en: withBanBaanPrefix("Muji / Japanese"), th: withBanBaanPrefix("มูจิ / ญี่ปุ่น") },
   { id: "industrial", en: withBanBaanPrefix("Industrial"), th: withBanBaanPrefix("อินดัสเทรียล") },
+  { id: "resort", en: withBanBaanPrefix("Resort"), th: withBanBaanPrefix("รีสอร์ท") },
   { id: "custom", en: withBanBaanPrefix("Custom / Other"), th: withBanBaanPrefix("อื่นๆ / ตามสั่ง") },
 ];
 

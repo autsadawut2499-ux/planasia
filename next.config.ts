@@ -32,6 +32,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.supabase.co",
       },
+      {
+        // Cloudflare R2 bucket for AP House scraped images.
+        protocol: "https",
+        hostname: "pub-98f76254806e480ea4be2ece6e5de7b3.r2.dev",
+      },
     ],
   },
   async headers() {
