@@ -13,7 +13,6 @@ import {
   sitePlanDocumentLabel,
   MAIN_PACKAGE_INCLUDE_ITEMS,
   MAIN_PACKAGE_INCLUDES,
-  MAIN_PACKAGE_LABEL,
   resolveSitePlanPrice,
   resolvePurchaseAddons,
   resolvePurchaseFormat,
@@ -91,37 +90,26 @@ export function ListingPurchasePanel({
   const sitePlanLabel = sitePlanDocumentLabel(thai);
   const sitePlanPriceTag = formatMoney(resolveSitePlanPrice(listing));
 
-  const [packageId, setPackageId] = useState<ListingPackageId | "">("");
   const [extraId, setExtraId] = useState<ListingExtraId>("");
   const [openPolicy, setOpenPolicy] = useState<ListingPolicyId | null>(null);
   const [openWhatsIncluded, setOpenWhatsIncluded] = useState(false);
-  const [packageHint, setPackageHint] = useState(false);
+
+  // The main package is always selected by default.
+  const packageId: ListingPackageId = "main";
 
   const selection = useMemo<ListingPurchaseSelection>(() => {
-    const pkg: ListingPackageId = packageId || "main";
-    const linePrice = resolveCartLinePrice(listing, pkg);
+    const linePrice = resolveCartLinePrice(listing, packageId);
     return {
-      packageId: pkg,
+      packageId,
       extraId,
-      format: resolvePurchaseFormat(pkg),
-      addons: resolvePurchaseAddons(pkg, extraId),
+      format: resolvePurchaseFormat(packageId),
+      addons: resolvePurchaseAddons(packageId, extraId),
       linePrice,
     };
   }, [extraId, listing, packageId]);
 
   /** Always the clean base starting price — never merges package/extra add-ons. */
   const startingPrice = Math.max(0, listing.price);
-  const mainPriceTag =
-    startingPrice <= 0 ? L("Free", "ฟรี") : formatMoney(startingPrice);
-
-  function requirePackage(next: (sel: ListingPurchaseSelection) => void) {
-    if (!packageId) {
-      setPackageHint(true);
-      return;
-    }
-    setPackageHint(false);
-    next(selection);
-  }
 
   return (
     <div
@@ -176,37 +164,7 @@ export function ListingPurchasePanel({
         </p>
       </div>
 
-      {/* Main package — PDF / CAD downloads are no longer offered */}
-      <label className="mt-4 block">
-        <FieldHeader>{L(MAIN_PACKAGE_LABEL.en, MAIN_PACKAGE_LABEL.th)}</FieldHeader>
-        <SelectShell>
-          <select
-            className={selectClass}
-            value={packageId}
-            onChange={(e) => {
-              setPackageId(e.target.value as ListingPackageId | "");
-              setPackageHint(false);
-            }}
-          >
-            <option value="" disabled>
-              {L(MAIN_PACKAGE_LABEL.en, MAIN_PACKAGE_LABEL.th)}
-            </option>
-            <option value="main">
-              {pricedOptionLabel(
-                mainPriceTag,
-                L(MAIN_PACKAGE_LABEL.en, MAIN_PACKAGE_LABEL.th),
-              )}
-            </option>
-          </select>
-        </SelectShell>
-        {packageHint && (
-          <p className="mt-1.5 text-[11px] font-medium text-amber-700">
-            {L("Please select the main package", "กรุณาเลือกแพ็คเกจหลัก")}
-          </p>
-        )}
-      </label>
-
-      {/* Extra dropdown — site-plan only; BOQ / calc are included in main package */}
+      {/* Main package is selected by default — only the optional site-plan extra is shown below */}
       <label className="mt-3 block">
         <FieldHeader>{L("Additional options", "ตัวเลือกเพิ่มเติม")}</FieldHeader>
         <SelectShell>
@@ -237,7 +195,7 @@ export function ListingPurchasePanel({
       <div className="relative z-10 mt-4 space-y-2.5">
         <button
           type="button"
-          onClick={() => requirePackage(onAddToCart)}
+          onClick={() => onAddToCart(selection)}
           disabled={inCart || !canPurchase}
           className="relative flex min-h-12 w-full cursor-pointer items-center justify-center rounded-xl border border-slate-300 text-sm font-semibold text-[#1e3a5f] transition hover:border-[#1e40af]/40 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -249,7 +207,7 @@ export function ListingPurchasePanel({
         </button>
         <button
           type="button"
-          onClick={() => requirePackage(onBuyNow)}
+          onClick={() => onBuyNow(selection)}
           disabled={!canPurchase}
           className="relative flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#1e40af] text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
         >
