@@ -12,7 +12,12 @@ import { getListings } from "@/lib/store/db";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamicParams = true;
-export const revalidate = 3600;
+
+/**
+ * Programmatic landing pages fetch the full catalogue at runtime rather than
+ * prerendering it, because the listing payload is too large for static export.
+ */
+export const dynamic = "force-dynamic";
 
 type PageProps = { params: Promise<{ slug: string }> };
 

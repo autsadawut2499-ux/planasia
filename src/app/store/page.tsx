@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { buildStoreIndexMetadata } from "@/lib/seo/metadata";
-import { getListings } from "@/lib/store/db";
 import StorePageClient from "./StorePageClient";
 
 type PageProps = {
@@ -14,11 +13,10 @@ function firstParam(value: string | string[] | undefined): string | null {
 }
 
 /**
- * ISR catalogue: cached HTML with on-demand bust via revalidateStoreSurfaces.
- * Filter query strings get their own canonical so sitemap category URLs are not
- * consolidated away as duplicates of /store.
+ * SSR catalogue: the full listing payload is too large for static prerendering.
+ * StorePageClient fetches the catalogue client-side to keep the initial HTML lean.
  */
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const sp = await searchParams;
@@ -29,13 +27,10 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   });
 }
 
-export default async function StorePage() {
-  // SSR listings so /store paints with real cards (no skeleton flicker).
-  const initialListings = await getListings();
-
+export default function StorePage() {
   return (
     <Suspense fallback={<div className="page-canvas min-h-screen" />}>
-      <StorePageClient initialListings={initialListings} />
+      <StorePageClient />
     </Suspense>
   );
 }
