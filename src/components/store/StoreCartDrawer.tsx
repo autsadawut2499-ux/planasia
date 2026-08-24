@@ -28,6 +28,7 @@ import {
   SITE_PLAN_ADDON_PRICE,
   computeCheckoutTotal,
 } from "@/lib/store/cart-pricing";
+import { isSitePlanInfoComplete } from "@/lib/store/site-plan-info";
 import {
   defaultDocumentLanguage,
   localizationSurchargeThb,
@@ -196,15 +197,24 @@ export function StoreCartDrawer({
     ],
   );
 
+  const sitePlanActive = useMemo(
+    () => isSitePlanInfoComplete(preCheckout.sitePlanInfo),
+    [preCheckout.sitePlanInfo],
+  );
+  const effectiveAddons = useMemo(
+    () => (sitePlanActive ? addons : addons.filter((a) => a !== "site-plan")),
+    [addons, sitePlanActive],
+  );
+
   const checkoutPricing = useMemo(
     () =>
       computeCheckoutTotal(
         items,
-        addons,
+        effectiveAddons,
         localizationSurchargeThb(preCheckout.targetCountry),
         addonPrices,
       ),
-    [items, addons, preCheckout.targetCountry, addonPrices],
+    [items, effectiveAddons, preCheckout.targetCountry, addonPrices],
   );
 
   /** Add-on fees as separate summary lines (not folded into the base plan price). */
@@ -218,7 +228,7 @@ export function StoreCartDrawer({
         tone: "green",
       });
     }
-    if (addons.includes("hardcopy-3sets") && HARDCOPY_3SETS_PRICE > 0) {
+    if (effectiveAddons.includes("hardcopy-3sets") && HARDCOPY_3SETS_PRICE > 0) {
       lines.push({
         label: thai
           ? "เอกสารรูปเล่ม A3 ×3 (รวมในแพ็คเกจหลัก)"
@@ -227,7 +237,7 @@ export function StoreCartDrawer({
         tone: "muted",
       });
     }
-    if (addons.includes("site-plan")) {
+    if (effectiveAddons.includes("site-plan")) {
       lines.push({
         label: sitePlanDocumentLabel(thai),
         amount: anchorListing
@@ -235,7 +245,7 @@ export function StoreCartDrawer({
           : SITE_PLAN_ADDON_PRICE,
       });
     }
-    if (addons.includes("boq-bundle")) {
+    if (effectiveAddons.includes("boq-bundle")) {
       lines.push({
         label: boqDocumentLabel(thai),
         amount: anchorListing
@@ -243,7 +253,7 @@ export function StoreCartDrawer({
           : BOQ_BUNDLE_PRICE,
       });
     }
-    if (addons.includes("calc-sheet")) {
+    if (effectiveAddons.includes("calc-sheet")) {
       lines.push({
         label: calcDocumentLabel(thai),
         amount: anchorListing
@@ -282,7 +292,7 @@ export function StoreCartDrawer({
         headers: { "Content-Type": "application/json", ...viewerHeaders() },
         body: JSON.stringify({
           items,
-          addons,
+          addons: effectiveAddons,
           method: activeMethod,
           countryCode: country.code,
           visitorCountryCode: geoCountryCode,
@@ -300,7 +310,7 @@ export function StoreCartDrawer({
           shippingAddress: requiresShipping
             ? preCheckout.shippingAddress
             : undefined,
-          sitePlanInfo: requiresSitePlan
+          sitePlanInfo: sitePlanActive
             ? preCheckout.sitePlanInfo
             : undefined,
         }),
@@ -470,11 +480,11 @@ export function StoreCartDrawer({
                 {!canPay && !previewLoading ? (
                   <p className="mb-2 text-center text-[11px] text-text-muted">
                 {L(
-                  requiresShipping || requiresSitePlan
-                    ? "Complete required fields (shipping / site plan), accept the Terms & Refund Policy, and confirm the review"
+                  requiresShipping
+                    ? "Complete the shipping address, accept the Terms & Refund Policy, and confirm the review"
                     : "Accept the Terms & Refund Policy and confirm the review to enable payment",
-                  requiresShipping || requiresSitePlan
-                    ? "กรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน"
+                  requiresShipping
+                    ? "กรอกที่อยู่จัดส่ง ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน"
                     : "ยอมรับข้อกำหนด และยืนยันการตรวจสอบด้านบน จึงจะชำระเงินได้",
                 )}
                   </p>

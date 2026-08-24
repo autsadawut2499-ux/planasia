@@ -29,6 +29,7 @@ import { defaultDocumentLanguage } from "@/lib/store/document-languages";
 import { formatMoney as formatMoneyInCurrency } from "@/lib/currency";
 import { defaultPaymentMethod } from "@/lib/payments/methods";
 import { isListingPurchasable } from "@/lib/store/listing-purchase";
+import { isSitePlanInfoComplete } from "@/lib/store/site-plan-info";
 import { useBilingual } from "@/components/landing/useBilingual";
 import {
   boqDocumentLabel,
@@ -296,6 +297,11 @@ export function StoreCheckoutModal({
     country.code,
   ]);
 
+  const sitePlanActive = useMemo(
+    () => isSitePlanInfoComplete(selections.sitePlanInfo),
+    [selections.sitePlanInfo],
+  );
+
   const checkoutExtraLines = useMemo(() => {
     const lines: { label: string; amount: number }[] = [];
     if (hardcopy && HARDCOPY_3SETS_PRICE > 0) {
@@ -318,7 +324,7 @@ export function StoreCheckoutModal({
         amount: resolveCalcPrice(listing),
       });
     }
-    if (sitePlan) {
+    if (sitePlan && sitePlanActive) {
       lines.push({
         label: thai ? "เขียนแผนผังบริเวณ" : "Site plan drafting",
         amount: listing.sitePlanAddonPrice ?? 1000,
@@ -351,11 +357,11 @@ export function StoreCheckoutModal({
     if (!canPay) {
       setError(
         thai
-          ? requiresShipping || requiresSitePlan
-            ? "กรุณากรอกข้อมูลที่จำเป็น (ที่อยู่จัดส่ง / แผนผังบริเวณ) และยอมรับข้อกำหนด/นโยบายคืนเงิน"
+          ? requiresShipping
+            ? "กรุณากรอกที่อยู่จัดส่ง และยอมรับข้อกำหนด/นโยบายคืนเงิน"
             : "กรุณายอมรับข้อกำหนด/นโยบายคืนเงิน"
-          : requiresShipping || requiresSitePlan
-            ? "Please complete required fields (shipping / site plan) and accept the Terms & Refund Policy"
+          : requiresShipping
+            ? "Please complete the shipping address and accept the Terms & Refund Policy"
             : "Please accept the Terms & Refund Policy",
       );
       return;
@@ -367,7 +373,7 @@ export function StoreCheckoutModal({
         ...(hardcopy ? (["hardcopy-3sets"] as const) : []),
         ...(boq ? (["boq-bundle"] as const) : []),
         ...(calcSheet ? (["calc-sheet"] as const) : []),
-        ...(sitePlan ? (["site-plan"] as const) : []),
+        ...(sitePlan && sitePlanActive ? (["site-plan"] as const) : []),
       ];
       const res = await fetch("/api/store/purchase", {
         method: "POST",
@@ -392,7 +398,7 @@ export function StoreCheckoutModal({
           shippingAddress: requiresShipping
             ? selections.shippingAddress
             : undefined,
-          sitePlanInfo: requiresSitePlan ? selections.sitePlanInfo : undefined,
+          sitePlanInfo: sitePlanActive ? selections.sitePlanInfo : undefined,
           uiLocale,
         }),
       });
@@ -528,11 +534,11 @@ export function StoreCheckoutModal({
               {!canPay ? (
                 <p className="mt-2 text-center text-[11px] text-text-muted">
               {thai
-                ? requiresShipping || requiresSitePlan
-                  ? "กรอกข้อมูลที่จำเป็น และยอมรับข้อกำหนด จึงจะกดชำระเงินได้"
+                ? requiresShipping
+                  ? "กรอกที่อยู่จัดส่ง และยอมรับข้อกำหนด จึงจะกดชำระเงินได้"
                   : "ยอมรับข้อกำหนดด้านบน จึงจะกดชำระเงินได้"
-                : requiresShipping || requiresSitePlan
-                  ? "Complete required fields and accept the terms to enable payment"
+                : requiresShipping
+                  ? "Complete the shipping address and accept the terms to enable payment"
                   : "Accept the terms above to enable payment"}
                 </p>
               ) : null}

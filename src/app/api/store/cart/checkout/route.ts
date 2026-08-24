@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   const items = (body.items as CartLineItem[]) ?? [];
   const requestedAddons = ((body.addons as UpsellAddonId[]) ?? []).filter(isUpsellAddonId);
   // Main product is always a printed/bound document set; force shipping.
-  const addons = [...new Set([...requestedAddons, "hardcopy-3sets"])] as UpsellAddonId[];
+  const rawAddons = [...new Set([...requestedAddons, "hardcopy-3sets"])] as UpsellAddonId[];
   const countryCode = THAI_DOMESTIC_MARKET
     ? "TH"
     : String(body.countryCode ?? "TH").toUpperCase();
@@ -80,14 +80,20 @@ export async function POST(request: NextRequest) {
   const documentLanguage = THAI_DOMESTIC_MARKET
     ? "th"
     : resolveCheckoutDocumentLanguage(body.documentLanguage, targetCountry);
-  const wantsHardcopy = addons.includes("hardcopy-3sets");
-  const wantsSitePlan = addons.includes("site-plan");
+  const wantsHardcopy = rawAddons.includes("hardcopy-3sets");
+  const requestedSitePlan = rawAddons.includes("site-plan");
   const shippingAddress = wantsHardcopy
     ? normalizeShippingAddress(body.shippingAddress)
     : undefined;
-  const sitePlanInfo = wantsSitePlan
+  const rawSitePlanInfo = requestedSitePlan
     ? normalizeSitePlanInfo(body.sitePlanInfo)
     : undefined;
+  const sitePlanInfo = isSitePlanInfoComplete(rawSitePlanInfo)
+    ? rawSitePlanInfo
+    : undefined;
+  const addons = sitePlanInfo
+    ? rawAddons
+    : rawAddons.filter((a) => a !== "site-plan");
 
   if (!items.length) {
     return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -100,15 +106,7 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  if (wantsSitePlan && !isSitePlanInfoComplete(sitePlanInfo)) {
-    return NextResponse.json(
-      {
-        error:
-          "กรุณากรอกข้อมูลแผนผังบริเวณให้ครบ (จังหวัด อำเภอ เลขโฉนดที่ดิน)",
-      },
-      { status: 400 },
-    );
-  }
+  // Site-plan is optional: if the buyer did not complete the info, it is simply excluded.
 
   const viewer = viewerEarly;
   const visible = await getListings(viewer);

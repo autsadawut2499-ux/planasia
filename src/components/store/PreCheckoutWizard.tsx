@@ -48,7 +48,7 @@ export interface PreCheckoutSelections {
   /** Optional — used for SMS receipt / shipping updates when provided. */
   buyerPhone: string;
   shippingAddress: ShippingAddress;
-  /** Required when site-plan addon is selected. */
+  /** Optional — filled when the buyer wants the site-plan drafting add-on. */
   sitePlanInfo: SitePlanInfo;
   /** Required: buyer acknowledges digital-goods ToS + refund policy. */
   acceptedDigitalTerms: boolean;
@@ -60,7 +60,7 @@ export interface PreCheckoutValidOptions {
    * (e.g. hardcopy / printed sets). Shipping address becomes required.
    */
   requiresShipping?: boolean;
-  /** True when the order includes the site-plan (แผนผังบริเวณ) add-on. */
+  /** True when the site-plan (แผนผังบริเวณ) fields should be revealed. */
   requiresSitePlan?: boolean;
 }
 
@@ -111,9 +111,7 @@ export function isPreCheckoutValid(
   if (opts?.requiresShipping && !isShippingAddressComplete(s.shippingAddress)) {
     return false;
   }
-  if (opts?.requiresSitePlan && !isSitePlanInfoComplete(s.sitePlanInfo)) {
-    return false;
-  }
+  // Site-plan is optional; payment is not blocked if the buyer leaves it empty.
   if (!s.acceptedDigitalTerms) return false;
   return true;
 }
@@ -563,18 +561,18 @@ export function PreCheckoutWizard({
             className="text-sm font-bold text-text-primary"
           >
             {thai
-              ? `${stepSitePlan}. ข้อมูลแผนผังบริเวณ`
-              : `${stepSitePlan}. Site plan information`}
+              ? `${stepSitePlan}. แผนผังบริเวณ (ตัวเลือกเสริม)`
+              : `${stepSitePlan}. Site plan (optional add-on)`}
           </h3>
           <p className="mt-0.5 text-xs text-text-secondary">
             {thai
-              ? "จำเป็นเมื่อเลือกบริการเขียนแผนผังบริเวณ — ใช้จัดทำเอกสารสำหรับที่ดินของคุณ"
-              : "Required when site-plan drafting is selected — used to prepare your land documents"}
+              ? "กรอกข้อมูลด้านล่างเฉพาะเมื่อต้องการใช้บริการเขียนแผนผังบริเวณ หากไม่ต้องการสามารถข้ามแล้วกดชำระเงินได้เลย"
+              : "Fill in below only if you want the site-plan drafting add-on. You may skip this and pay right away."}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs font-medium text-text-secondary">
-                จังหวัด *
+                จังหวัด
               </span>
               <select
                 value={sitePlan.provinceId}
@@ -601,7 +599,7 @@ export function PreCheckoutWizard({
             </label>
             <label className="block">
               <span className="text-xs font-medium text-text-secondary">
-                อำเภอ / เขต *
+                อำเภอ / เขต
               </span>
               <select
                 value={sitePlan.districtId}
@@ -633,7 +631,7 @@ export function PreCheckoutWizard({
             </label>
             <label className="block sm:col-span-2">
               <span className="text-xs font-medium text-text-secondary">
-                {thai ? "เลขโฉนดที่ดิน *" : "Land title deed number *"}
+                {thai ? "เลขโฉนดที่ดิน" : "Land title deed number"}
               </span>
               <input
                 type="text"
@@ -647,11 +645,11 @@ export function PreCheckoutWizard({
               />
             </label>
           </div>
-          {!isSitePlanInfoComplete(sitePlan) && (
+          {sitePlan.provinceId && !isSitePlanInfoComplete(sitePlan) && (
             <p className="mt-2 text-[11px] font-medium text-amber-800">
               {thai
-                ? "กรุณาเลือกจังหวัด อำเภอ และกรอกเลขโฉนดที่ดินให้ครบ"
-                : "Please complete province, district, and land title deed number"}
+                ? "หากต้องการเพิ่มแผนผังบริเวณ กรุณาเลือกจังหวัด อำเภอ และกรอกเลขโฉนดที่ดินให้ครบ หรือล้างข้อมูลเพื่อข้าม"
+                : "To add the site-plan add-on, complete province, district, and land title deed number, or clear the fields to skip"}
             </p>
           )}
         </section>
