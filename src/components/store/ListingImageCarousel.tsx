@@ -156,7 +156,7 @@ export function ListingImageCarousel({
             type="button"
             onClick={() => go(-1)}
             aria-label="Previous image"
-            className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/80 bg-white/95 text-slate-700 shadow-md transition active:scale-95 hover:bg-white hover:text-[#1e40af] sm:left-5 sm:h-10 sm:w-10"
+            className="absolute left-2 top-1/2 z-0 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/80 bg-white/95 text-slate-700 shadow-md transition active:scale-95 hover:bg-white hover:text-[#1e40af] sm:left-5 sm:h-10 sm:w-10"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={2.25} />
           </button>
@@ -164,12 +164,12 @@ export function ListingImageCarousel({
             type="button"
             onClick={() => go(1)}
             aria-label="Next image"
-            className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/80 bg-white/95 text-slate-700 shadow-md transition active:scale-95 hover:bg-white hover:text-[#1e40af] sm:right-5 sm:h-10 sm:w-10"
+            className="absolute right-2 top-1/2 z-0 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/80 bg-white/95 text-slate-700 shadow-md transition active:scale-95 hover:bg-white hover:text-[#1e40af] sm:right-5 sm:h-10 sm:w-10"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={2.25} />
           </button>
 
-          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-black/40 px-1.5 py-1 backdrop-blur-sm sm:bottom-5 sm:gap-1 sm:px-2.5 sm:py-1.5">
+          <div className="absolute bottom-3 left-1/2 z-0 flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-black/40 px-1.5 py-1 backdrop-blur-sm sm:bottom-5 sm:gap-1 sm:px-2.5 sm:py-1.5">
             {urls.map((_, i) => (
               <button
                 key={i}
@@ -190,7 +190,7 @@ export function ListingImageCarousel({
             ))}
           </div>
 
-          <p className="absolute right-2.5 top-2.5 z-10 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white backdrop-blur-sm sm:right-5 sm:top-5">
+          <p className="absolute right-2.5 top-2.5 z-0 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white backdrop-blur-sm sm:right-5 sm:top-5">
             {safeIndex + 1} / {total}
           </p>
         </>
