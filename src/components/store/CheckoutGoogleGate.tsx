@@ -39,8 +39,8 @@ export function CheckoutGoogleGate({
       </h3>
       <p className="mt-1 text-xs leading-relaxed text-text-secondary">
         {thai
-          ? "เข้าสู่ระบบเพื่อบันทึกใบเสร็จและลิงก์ดาวน์โหลดในบัญชี — ไม่บังคับ สามารถสั่งซื้อได้เลย"
-          : "Sign in to save the receipt and download links to your account — optional, you can place an order without signing in."}
+          ? "เข้าสู่ระบบเพื่อบันทึกใบเสร็จและติดตามการจัดส่งในบัญชี — ไม่บังคับ สามารถสั่งซื้อได้เลย"
+          : "Sign in to save the receipt and track your shipment in your account — optional, you can place an order without signing in."}
       </p>
       <button
         type="button"

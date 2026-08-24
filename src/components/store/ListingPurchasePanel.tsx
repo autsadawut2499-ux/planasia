@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Download, ShieldCheck } from "lucide-react";
+import { ChevronDown, Printer, ShieldCheck } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useBilingual } from "@/components/landing/useBilingual";
 import {
@@ -253,7 +253,7 @@ export function ListingPurchasePanel({
           disabled={!canPurchase}
           className="relative flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#1e40af] text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
         >
-          <Download className="h-4 w-4" />
+          <Printer className="h-4 w-4" />
           {!canPurchase ? L("Unavailable", "ยังไม่เปิดขาย") : translate("store.buyNow")}
         </button>
       </div>

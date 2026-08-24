@@ -87,17 +87,16 @@ export function StoreCartProvider({ children }: { children: ReactNode }) {
           ...prev,
           listingToCartItem(listing, {
             price: opts?.price,
-            format: opts?.format,
+            format: "pdf",
           }),
         ];
       });
-      if (opts?.addons?.length) {
-        setAddons((prev) => {
-          const next = new Set(prev);
-          for (const id of opts.addons!) next.add(id);
-          return [...next];
-        });
-      }
+      setAddons((prev) => {
+        const next = new Set(prev);
+        next.add("hardcopy-3sets");
+        for (const id of opts?.addons ?? []) next.add(id);
+        return [...next];
+      });
       setDrawerOpen(true);
     },
     [],

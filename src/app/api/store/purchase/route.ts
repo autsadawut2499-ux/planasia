@@ -12,7 +12,6 @@ import {
   resolveCheckoutDocumentLanguage,
 } from "@/lib/store/document-languages";
 import {
-  CAD_DWG_SURCHARGE,
   computeAddonTotal,
   isUpsellAddonId,
   type UpsellAddonId,
@@ -39,7 +38,8 @@ import {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const listingId = body.listingId as string;
-  const format = (body.format as "pdf" | "cad") ?? "pdf";
+  // All orders are printed/bound PDF document sets — CAD downloads are not sold.
+  const format = "pdf" as const;
   const countryCode = THAI_DOMESTIC_MARKET
     ? "TH"
     : String(body.countryCode ?? "TH").toUpperCase();
@@ -63,10 +63,12 @@ export async function POST(request: NextRequest) {
   const documentLanguage = THAI_DOMESTIC_MARKET
     ? "th"
     : resolveCheckoutDocumentLanguage(body.documentLanguage, targetCountry);
-  const addons = (Array.isArray(body.addons) ? body.addons : []).filter(
+  const requestedAddons = (Array.isArray(body.addons) ? body.addons : []).filter(
     (a: unknown): a is UpsellAddonId => isUpsellAddonId(a),
   );
-  const wantsHardcopy = addons.includes("hardcopy-3sets");
+  // Main product is always a printed/bound document set; force shipping.
+  const addons = [...new Set([...requestedAddons, "hardcopy-3sets"])] as UpsellAddonId[];
+  const wantsHardcopy = true;
   const wantsSitePlan = addons.includes("site-plan");
   const shippingAddress = wantsHardcopy
     ? normalizeShippingAddress(body.shippingAddress)
@@ -133,12 +135,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Plan files not ready" }, { status: 422 });
     }
   }
-  if (format === "cad" && !listing.hasCadFiles && !planDocumentId) {
-    return NextResponse.json(
-      { error: "CAD files are not available for this listing" },
-      { status: 422 },
-    );
-  }
   if (addons.includes("calc-sheet") && !listing.hasCalcSheets) {
     return NextResponse.json(
       { error: "Calculation sheets are not available for this listing" },
@@ -152,10 +148,9 @@ export async function POST(request: NextRequest) {
     calcPrice: listing.calcPrice,
     sitePlanPrice: listing.sitePlanAddonPrice,
   });
-  const cadSurcharge = format === "cad" ? CAD_DWG_SURCHARGE : 0;
   const amountThb = Math.max(
     0,
-    Math.round(listing.price + cadSurcharge + languageSurcharge + addonTotal),
+    Math.round(listing.price + languageSurcharge + addonTotal),
   );
 
   const orderId = createCartOrderId();
@@ -167,12 +162,12 @@ export async function POST(request: NextRequest) {
         planId: planCode,
         planDocumentId,
         name: listing.name,
-        price: Math.max(0, Math.round(listing.price + cadSurcharge)),
+        price: Math.max(0, Math.round(listing.price)),
         format,
       },
     ],
     addons,
-    subtotal: Math.max(0, Math.round(listing.price + cadSurcharge)),
+    subtotal: Math.max(0, Math.round(listing.price)),
     discount: 0,
     addonTotal,
     languageSurcharge,

@@ -4,7 +4,7 @@ import { CheckCircle2, X } from "lucide-react";
 
 /** Exact customer-facing success copy after SlipMate verification. */
 export const ORDER_SUCCESS_MESSAGE_TH =
-  "การสั่งซื้อสำเร็จ เจ้าหน้าที่ จะติดต่อกลับภายใน 24 ชั่วโมง เอกสารของคุณจะถูกส่งภายใน 3-5 วัน";
+  "การสั่งซื้อสำเร็จ เจ้าหน้าที่จะติดต่อกลับภายใน 24 ชั่วโมง ชุดเอกสารจะถูกพิมพ์ เข้าเล่ม และจัดส่งภายใน 2-3 วันทำการ";
 
 /**
  * Centered success modal shown after bank-transfer slip verification succeeds.

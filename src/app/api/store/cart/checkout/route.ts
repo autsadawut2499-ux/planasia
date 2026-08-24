@@ -43,7 +43,9 @@ import {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const items = (body.items as CartLineItem[]) ?? [];
-  const addons = ((body.addons as UpsellAddonId[]) ?? []).filter(isUpsellAddonId);
+  const requestedAddons = ((body.addons as UpsellAddonId[]) ?? []).filter(isUpsellAddonId);
+  // Main product is always a printed/bound document set; force shipping.
+  const addons = [...new Set([...requestedAddons, "hardcopy-3sets"])] as UpsellAddonId[];
   const countryCode = THAI_DOMESTIC_MARKET
     ? "TH"
     : String(body.countryCode ?? "TH").toUpperCase();

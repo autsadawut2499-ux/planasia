@@ -295,12 +295,10 @@ export default function StoreListingPageClient({
     setCheckoutOpen(true);
   };
 
-  const handlePurchaseSuccess = (downloadToken: string) => {
+  const handlePurchaseSuccess = () => {
     track(listing.id, "purchase", { source: "detail" });
     setCheckoutOpen(false);
     toastSuccess(translate("store.purchaseSuccess"));
-    const fmt = purchaseSelection?.format ?? "pdf";
-    window.open(`/api/download?token=${downloadToken}&format=${fmt}`, "_blank");
   };
 
   const activeFloorUrl = floorUrls[floorIndex] || "";
@@ -652,7 +650,7 @@ export default function StoreListingPageClient({
               }}
               className="relative z-10 flex min-h-12 min-w-0 flex-[1.35] items-center justify-center gap-1.5 rounded-xl bg-[#1e40af] px-3 text-[11px] font-semibold leading-tight text-white active:bg-[#1d4ed8] sm:px-5 sm:text-sm"
             >
-              <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+              <Printer className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
               <span className="truncate">
                 {!canPurchase ? L("Unavailable", "ยังไม่เปิดขาย") : L("Choose package", "เลือกแพ็กเกจ")}
               </span>

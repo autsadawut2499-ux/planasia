@@ -43,9 +43,9 @@ export interface PreCheckoutSelections {
   /** @deprecated Hardcopy package removed from pre-checkout UI. Always false. */
   hardcopyAddon: boolean;
   buyerName: string;
-  /** Optional — used for email receipt / download links when provided. */
+  /** Optional — used for email receipt / shipping updates when provided. */
   buyerEmail: string;
-  /** Optional — used for SMS receipt / download links when provided. */
+  /** Optional — used for SMS receipt / shipping updates when provided. */
   buyerPhone: string;
   shippingAddress: ShippingAddress;
   /** Required when site-plan addon is selected. */
@@ -677,8 +677,9 @@ export function PreCheckoutWizard({
                 <Link href="/refund" target="_blank" className="font-semibold text-[#1e40af] underline">
                   นโยบายการคืนเงิน
                 </Link>{" "}
-                — สินค้าเป็นไฟล์ดิจิทัล เมื่อดาวน์โหลดแบบแปลนสำเร็จแล้ว
-                จะไม่คืนเงินเพราะเปลี่ยนใจ คืนเงินได้เฉพาะไฟล์เสีย/ชำรุดจริงและแก้ไขไม่ได้
+                — สินค้าเป็นชุดเอกสารแบบพิมพ์เขียวรูปเล่ม PDF จำนวน 3 ชุด
+                จัดส่งทางไปรษณีย์/ขนส่ง ผลิตตามคำสั่งซื้อ เมื่อกระบวนการพิมพ์เริ่มต้นขึ้นแล้ว
+                จะไม่สามารถเปลี่ยนหรือคืนเงินได้ ยกเว้นกรณีชุดเอกสารชำรุด/เสียหายจากการขนส่ง
               </>
             ) : (
               <>
@@ -690,9 +691,9 @@ export function PreCheckoutWizard({
                 <Link href="/refund" target="_blank" className="font-semibold text-[#1e40af] underline">
                   Refund Policy
                 </Link>
-                . These are digital goods — once a blueprint is successfully downloaded, no refunds
-                for change of mind. Refunds only if the file is genuinely corrupted or defective and
-                cannot be fixed.
+                . The product is a printed and bound blueprint PDF document set (3 sets)
+                shipped by post/courier. Made to order — once printing begins, no exchanges or
+                refunds except for documents damaged during shipping.
               </>
             )}
           </span>
