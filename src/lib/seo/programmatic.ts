@@ -58,7 +58,7 @@ function buildPresets(): PlanLandingPreset[] {
           slug: `baan-${storey.key}-${style.key}-${budget.key}`,
           titleTh: `แบบบ้าน${storey.th} ${style.th} ${budget.th}`,
           titleEn: `${style.en} ${storey.en} house plans (${budget.en})`,
-          descriptionTh: `รวมแบบบ้าน${storey.th}สไตล์${style.th} ${budget.th} พร้อมไฟล์ PDF แปลนพิมพ์เขียว หน่วยเมตร ดาวน์โหลดได้ทันทีหลังชำระเงิน`,
+          descriptionTh: `รวมแบบบ้าน${storey.th}สไตล์${style.th} ${budget.th} พร้อมไฟล์ PDF แปลนพิมพ์เขียว หน่วยเมตร จัดส่งชุดเอกสารรูปเล่ม 2-3 วันทำการ`,
           descriptionEn: `Curated ${style.en} ${storey.en} house plans (${budget.en}) with instant PDF blueprint download, metric units.`,
           filter: { floors: storey.floors, style: style.key, budgetMax: budget.max },
         });
@@ -78,7 +78,7 @@ function buildPresets(): PlanLandingPreset[] {
       slug: `plan-baan-${storey.key}-pdf`,
       titleTh: `แปลนบ้าน${storey.th} พร้อมไฟล์ PDF`,
       titleEn: `${storey.en} house floor plans with PDF`,
-      descriptionTh: `แปลนบ้าน${storey.th}พร้อมไฟล์ PDF พิมพ์เขียวครบชุด ดาวน์โหลดทันที รองรับหน่วยเมตร`,
+      descriptionTh: `แปลนบ้าน${storey.th}พร้อมไฟล์ PDF พิมพ์เขียวครบชุด จัดส่งชุดเอกสารรูปเล่ม 2-3 วันทำการ รองรับหน่วยเมตร`,
       descriptionEn: `${storey.en} floor plans delivered as ready-to-print PDF blueprints, metric units.`,
       filter: { floors: storey.floors },
     });

@@ -21,7 +21,7 @@ const POLICY_LINKS = [
   {
     href: "/refund",
     label: "นโยบายการคืนสินค้า",
-    hint: "ไม่รับคืนหลังดำเนินการคำสั่งซื้อ",
+    hint: "ไม่เปลี่ยน/คืนหลังพิมพ์ ยกเว้นชำรุดจากขนส่ง",
   },
   {
     href: "/privacy",
@@ -41,7 +41,7 @@ const POLICY_LINKS = [
   {
     href: "/shipping",
     label: "นโยบายการจัดส่งสินค้า",
-    hint: "การส่งมอบไฟล์ดิจิทัลทันที",
+    hint: "การจัดส่งชุดเอกสารรูปเล่ม 2-3 วันทำการ",
   },
 ] as const;
 
@@ -108,8 +108,8 @@ export function SiteFooter({ variant: _variant = "light" }: SiteFooterProps) {
         <div className="flex flex-col items-center text-center lg:col-span-4 lg:items-start lg:text-left">
           <BrandLogo variant="dark" centered className="w-full lg:w-auto" />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
-            ตลาดกลางแบบบ้านและแปลนพิมพ์เขียวดิจิทัล
-            — ดาวน์โหลดไฟล์ได้ทันทีหลังชำระเงิน
+            ตลาดกลางแบบบ้านและชุดแปลนพิมพ์เขียวรูปเล่ม
+            — จัดส่งเอกสาร 3 ชุดสำหรับยื่นขออนุญาตก่อสร้าง
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2.5 lg:justify-start">
             <Link
@@ -245,7 +245,7 @@ export function SiteFooter({ variant: _variant = "light" }: SiteFooterProps) {
               ? copyright
               : `© ${year} ${storeName}. All Rights Reserved.`}
             <span className="mt-1 block text-[11px] text-slate-600 md:mt-0 md:ml-2 md:inline">
-              สงวนลิขสิทธิ์ — แบบบ้านและไฟล์ดิจิทัลทั้งหมด
+              สงวนลิขสิทธิ์ — แบบบ้านและชุดเอกสารรูปเล่มทั้งหมด
             </span>
           </p>
 

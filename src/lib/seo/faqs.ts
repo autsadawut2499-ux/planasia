@@ -11,7 +11,7 @@ export function buildListingFaqs(listing: StoreListing): Array<{ question: strin
   return [
     {
       question: `แบบบ้าน "${listing.name}" ราคาเท่าไหร่?`,
-      answer: `ไฟล์แบบแปลน (PDF) ราคา ${priceText} ดาวน์โหลดได้ทันทีหลังชำระเงินสำเร็จ`,
+      answer: `ชุดเอกสารแบบแปลน (PDF) ราคา ${priceText} จัดส่งถึงที่อยู่ภายใน 2-3 วันทำการ`,
     },
     {
       question: "ได้รับไฟล์รูปแบบใด?",

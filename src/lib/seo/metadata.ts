@@ -285,7 +285,7 @@ export function buildAboutMetadata(page: AboutPage): Metadata {
 
 export function buildAboutIndexMetadata(): Metadata {
   const title = `บริการลูกค้า | ${SITE_NAME}`;
-  const description = "ติดต่อทีมงาน คำถามที่พบบ่อย การสั่งซื้อ ดาวน์โหลด และนโยบายการคืนเงิน";
+  const description = "ติดต่อทีมงาน คำถามที่พบบ่อย การสั่งซื้อ การจัดส่งชุดเอกสาร และนโยบายการคืนเงิน";
   const canonical = absoluteUrl("/about");
   return {
     title,
