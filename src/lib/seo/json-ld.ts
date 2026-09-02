@@ -92,7 +92,7 @@ export function buildListingProductJsonLd(
     image: images,
     sku: listing.planId,
     mpn: listing.planId,
-    category: listing.collection ?? listing.style,
+    category: listing.style || listing.collection || "HousePlan",
     brand: { "@type": "Brand", name: ORG_NAME },
     offers: {
       "@type": "Offer",

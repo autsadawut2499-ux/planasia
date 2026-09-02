@@ -83,17 +83,13 @@ export function scoreContent(
     }
   }
 
-  if (filters.style) {
-    const match = listing.style?.toLowerCase() === filters.style.toLowerCase();
+  const styleTarget = (filters.style || filters.collection || "").toLowerCase();
+  if (styleTarget) {
+    const listingStyle = (listing.style || "").toLowerCase();
+    const listingCollection = ((listing as { collection?: string }).collection || "").toLowerCase();
+    const match = listingStyle === styleTarget || listingCollection === styleTarget;
     parts.push(match ? 1 : 0);
     if (match) reasons.push("style");
-  }
-
-  if (filters.collection) {
-    const listingCollection = (listing as { collection?: string }).collection;
-    const match = listingCollection?.toLowerCase() === filters.collection.toLowerCase();
-    parts.push(match ? 1 : 0);
-    if (match) reasons.push("collection");
   }
 
   if (parts.length === 0) return { score: 0, reasons: [] };

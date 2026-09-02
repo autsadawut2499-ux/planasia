@@ -29,7 +29,7 @@ import { useStoreBrowseOptional } from "@/context/StoreBrowseContext";
 import { useStoreCartOptional } from "@/context/StoreCartContext";
 import { useSiteConfigOptional } from "@/context/SiteConfigContext";
 import { useBilingual } from "@/components/landing/useBilingual";
-import { COLLECTIONS } from "@/lib/store/taxonomy";
+import { ALL_STYLES } from "@/lib/store/taxonomy";
 import { PUBLIC_SELLER_SELF_LISTING_ENABLED } from "@/lib/features/public-seller";
 import { CollectionsMegaMenuPanel } from "@/components/landing/CollectionsMegaMenu";
 import { SITE_VALUE_PROPOSITION } from "@/lib/seo/site-copy";
@@ -64,10 +64,10 @@ export function LandingHeader() {
   // Store — direct link to the marketplace (no dropdown).
   const storeLabel = L("Store", "Store");
 
-  // คอลเลคชั่น — existing categories pulled from the shared taxonomy.
-  const collectionItems: NavItem[] = COLLECTIONS.map((c) => ({
-    href: `/store?collection=${c.id}`,
-    label: L(c.en, c.th),
+  // คอลเลคชั่น — now unified under the style taxonomy.
+  const styleItems: NavItem[] = ALL_STYLES.map((s) => ({
+    href: `/store?style=${s.id}`,
+    label: L(s.en, s.th),
   }));
 
   const planIncludesLabel = L("What the Plan Includes", "แบบประกอบด้วยอะไรบ้าง");
@@ -82,7 +82,7 @@ export function LandingHeader() {
       label: storeLabel,
       children: [
         { href: "/store", label: L("All house plans", "แบบบ้านทั้งหมด") },
-        ...collectionItems,
+        ...styleItems,
       ],
     },
     { href: "/whats-included", label: planIncludesLabel },
@@ -277,7 +277,7 @@ export function LandingHeader() {
 
         <nav aria-label={L("Main navigation", "เมนูหลัก")} className="site-header-nav">
           <NavLink href="/store" label={storeLabel} />
-          <NavDropdown label={L("Collections", "คอลเลคชั่น")} items={collectionItems} mega="collections" />
+          <NavDropdown label={L("Styles", "สไตล์")} items={styleItems} mega="collections" />
           <NavLink href="/whats-included" label={planIncludesLabel} />
           <NavLink href="/articles" label={articlesLabel} />
           <NavLink href="/loan-consultation" label={loanConsultLabel} />

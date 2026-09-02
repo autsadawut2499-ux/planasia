@@ -21,8 +21,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const sp = await searchParams;
   return buildStoreIndexMetadata({
-    style: firstParam(sp.style),
-    collection: firstParam(sp.collection),
+    style: firstParam(sp.style) ?? firstParam(sp.collection),
     search: firstParam(sp.search) ?? firstParam(sp.q),
   });
 }

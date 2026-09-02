@@ -196,8 +196,10 @@ export function scoreSoftConstraints(
     for (const site of sites) {
       if (site === "narrow-lot" || site === "small-footprint") {
         const narrow =
+          listing.style === "small" ||
           listing.collection === "small" ||
           haystack.includes("narrow") ||
+          haystack.includes("small") ||
           haystack.includes("หน้าแคบ") ||
           haystack.includes("ขนาดเล็ก") ||
           (listing.widthMeters != null && listing.widthMeters <= 8);

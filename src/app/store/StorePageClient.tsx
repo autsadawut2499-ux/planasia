@@ -54,6 +54,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
     const areaMin = Number(searchParams.get("areaMin"));
     const areaMax = Number(searchParams.get("areaMax"));
     const style = (searchParams.get("style") ?? "").trim().toLowerCase();
+    // Legacy "collection" URL param is folded into the unified style filter.
     const collection = (searchParams.get("collection") ?? "").trim().toLowerCase();
     const province = (searchParams.get("province") ?? "").trim().toLowerCase();
     const priceMin = Number(searchParams.get("priceMin"));
@@ -67,8 +68,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
         Number.isFinite(livingRooms) && livingRooms > 0 ? livingRooms : f.livingRooms,
       floors: floors === 1 || floors === 2 ? floors : f.floors,
       parking: Number.isFinite(parking) && parking > 0 ? parking : f.parking,
-      style: style || f.style,
-      collection: collection || f.collection,
+      style: style || collection || f.style,
       province: province || f.province,
       priceMin: Number.isFinite(priceMin) && priceMin > 0 ? priceMin : f.priceMin,
       priceMax: Number.isFinite(priceMax) && priceMax > 0 ? priceMax : f.priceMax,
@@ -134,7 +134,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       filters.priceMax > 0 ||
       areaRange.min > 0 ||
       areaRange.max > 0;
-    if (!hasHard && !filters.style && !filters.collection) return null;
+    if (!hasHard && !filters.style) return null;
 
     const hard = filtersToHardConstraints({
       beds: filters.beds || undefined,
@@ -151,7 +151,7 @@ function StorePageContent({ initialListings = [] }: StorePageClientProps) {
       soft: {
         styleTags: filters.style ? [filters.style] : undefined,
         siteConstraints:
-          filters.collection === "small" ? ["narrow-lot", "small-footprint"] : undefined,
+          filters.style === "small" ? ["narrow-lot", "small-footprint"] : undefined,
         keywords: searchQuery.trim() ? [searchQuery.trim()] : undefined,
       },
       limit: 8,

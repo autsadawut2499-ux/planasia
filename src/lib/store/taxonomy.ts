@@ -86,6 +86,39 @@ export const STYLES: TaxonomyItem[] = [
  */
 export const PLAN_TYPES: TaxonomyItem[] = [];
 
+/**
+ * Unified style options shown in the storefront filter.
+ * Non-residential building types keep their collection-style labels so
+ * "แบบบ้าน…" is not forced onto warehouses, commercial, resort, etc.
+ */
+const STYLE_BASES: Array<Omit<TaxonomyItem, "en" | "th"> & { en: string; th: string }> = [
+  { id: "modern", en: "Modern", th: "โมเดิร์น" },
+  { id: "contemporary", en: "Contemporary", th: "คอนเทมโพรารี" },
+  { id: "minimal", en: "Minimal", th: "มินิมอล" },
+  { id: "tropical", en: "Tropical", th: "ทรอปิคอล" },
+  { id: "nordic", en: "Nordic / Scandinavian", th: "นอร์ดิก / สแกนดิเนเวียน" },
+  { id: "loft", en: "Loft", th: "ลอฟท์" },
+  { id: "classic", en: "Classic", th: "คลาสสิก" },
+  { id: "muji", en: "Muji / Japanese", th: "มูจิ / ญี่ปุ่น" },
+  { id: "industrial", en: "Industrial", th: "อินดัสเทรียล" },
+  { id: "single-storey", en: "Single-Storey Houses", th: "บ้านชั้นเดียว" },
+  { id: "two-storey", en: "Two-Storey Houses", th: "บ้านสองชั้น" },
+  { id: "small", en: "Small / Narrow Houses", th: "บ้านขนาดเล็ก / หน้าแคบ" },
+  { id: "commercial", en: "Commercial Building", th: "อาคารพาณิชย์ / ตึกแถว" },
+  { id: "warehouse", en: "Warehouse / Factory", th: "โกดัง / โรงงาน" },
+  { id: "resort", en: "Resort / Bungalow", th: "รีสอร์ท / บังกะโล" },
+  { id: "custom", en: "Custom / Other", th: "อื่นๆ / ตามสั่ง" },
+];
+
+export const ALL_STYLES: TaxonomyItem[] = STYLE_BASES.map((item) => {
+  const isBuildingType = ["commercial", "warehouse", "resort"].includes(item.id);
+  return {
+    ...item,
+    en: formatCollectionTitleEn(item.en),
+    th: isBuildingType ? formatCollectionTitleTh(item.th) : withBanBaanPrefix(item.th),
+  };
+});
+
 export function findTaxonomyItem(items: TaxonomyItem[], id: string): TaxonomyItem | undefined {
   return items.find((i) => i.id === id);
 }

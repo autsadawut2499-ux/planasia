@@ -3,7 +3,7 @@ import { getSiteUrl } from "@/lib/seo/site-url";
 import { listingStorePath } from "@/lib/seo/slug";
 import { getAllPlanPresets } from "@/lib/seo/programmatic";
 import { getAllListingsForSitemap } from "@/lib/store/db";
-import { COLLECTIONS, STYLES } from "@/lib/store/taxonomy";
+import { ALL_STYLES } from "@/lib/store/taxonomy";
 import { ABOUT_PAGES } from "@/lib/content/about";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isListingPubliclyVisible } from "@/lib/store/listing-purchase";
@@ -13,8 +13,8 @@ import { listArticles } from "@/lib/supabase/articles";
  *  Also busted on-demand via `revalidateStoreSurfaces` / `revalidateArticleSurfaces` → `/sitemap.xml`. */
 export const revalidate = 900;
 
-function storeCategoryUrl(base: string, key: "style" | "collection", id: string): string {
-  const params = new URLSearchParams({ [key]: id });
+function storeCategoryUrl(base: string, id: string): string {
+  const params = new URLSearchParams({ style: id });
   return `${base}/store?${params.toString()}`;
 }
 
@@ -37,15 +37,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  const styleCategories = STYLES.filter((s) => !s.comingSoon).map((style) => ({
-    url: storeCategoryUrl(base, "style", style.id),
-    lastModified: now,
-    changeFrequency: "daily" as const,
-    priority: 0.75,
-  }));
-
-  const collectionCategories = COLLECTIONS.filter((c) => !c.comingSoon).map((collection) => ({
-    url: storeCategoryUrl(base, "collection", collection.id),
+  const styleCategories = ALL_STYLES.filter((s) => !s.comingSoon).map((style) => ({
+    url: storeCategoryUrl(base, style.id),
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.75,
@@ -62,7 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: base, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/store`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     ...styleCategories,
-    ...collectionCategories,
     { url: `${base}/home-building`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/whats-included`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/loan-consultation`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },

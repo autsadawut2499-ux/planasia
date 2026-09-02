@@ -263,8 +263,8 @@ ${JSON.stringify(
     baths: listing.baths,
     floors: listing.floors,
     area: listing.area,
-    style: listing.style,
-    collection: listing.collection,
+    // Legacy collection folded into style for SEO generation.
+    style: listing.style || listing.collection,
     province: listing.province,
     widthMeters: listing.widthMeters,
     lengthMeters: listing.lengthMeters,

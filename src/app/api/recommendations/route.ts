@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
     lengthMeters: numberParam(params, "lengthMeters"),
     budgetMin: numberParam(params, "budgetMin"),
     budgetMax: numberParam(params, "budgetMax"),
-    style: params.get("style") || undefined,
-    collection: params.get("collection") || undefined,
+    // Legacy "collection" query param is folded into the unified style filter.
+    style: params.get("style") || params.get("collection") || undefined,
   };
 
   const excludeIds = (params.get("exclude") ?? "")

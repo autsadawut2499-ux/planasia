@@ -138,8 +138,9 @@ function cleanFilters(raw: RecommendationFilters | undefined): RecommendationFil
   if (typeof raw.style === "string" && raw.style.trim()) {
     out.style = raw.style.trim();
   }
+  // Legacy "collection" intent is folded into the unified style filter.
   if (typeof raw.collection === "string" && raw.collection.trim()) {
-    out.collection = raw.collection.trim();
+    out.style = out.style || raw.collection.trim();
   }
   return out;
 }

@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { parseAreaSqm } from "@/lib/format";
 import { PROVINCES_BY_REGION } from "@/lib/geo/th-provinces";
-import { COLLECTIONS, STYLES } from "@/lib/store/taxonomy";
+import { ALL_STYLES } from "@/lib/store/taxonomy";
 import type { StoreListing } from "@/lib/store/db";
 
 export interface StoreFiltersState {
@@ -19,7 +19,6 @@ export interface StoreFiltersState {
   /** 0 = any; 3 = 3+ parking spaces */
   parking: number;
   style: string;
-  collection: string;
   province: string;
   /** Listing sale price floor (THB). 0 = any. */
   priceMin: number;
@@ -34,7 +33,6 @@ export const DEFAULT_STORE_FILTERS: StoreFiltersState = {
   livingRooms: 0,
   parking: 0,
   style: "",
-  collection: "",
   province: "",
   priceMin: 0,
   priceMax: 0,
@@ -78,7 +76,7 @@ interface StoreFiltersProps {
 
 /**
  * Framed search-filter sidebar for /store.
- * Options map to draftsman listing fields: style, collection, area, beds, baths, livingRooms, floors, parking.
+ * Options map to draftsman listing fields: style, area, beds, baths, livingRooms, floors, parking.
  */
 export function StoreFilters({
   filters,
@@ -113,12 +111,14 @@ export function StoreFilters({
 
   const counts = useMemo(() => {
     const style = new Map<string, number>();
-    const collection = new Map<string, number>();
     for (const item of listings) {
       if (item.style) style.set(item.style, (style.get(item.style) ?? 0) + 1);
-      if (item.collection) collection.set(item.collection, (collection.get(item.collection) ?? 0) + 1);
+      // Legacy collection values are folded into the unified style filter.
+      if (item.collection && item.collection !== item.style) {
+        style.set(item.collection, (style.get(item.collection) ?? 0) + 1);
+      }
     }
-    return { style, collection };
+    return { style };
   }, [listings]);
 
   const hasActive =
@@ -128,7 +128,6 @@ export function StoreFilters({
     filters.livingRooms > 0 ||
     filters.parking > 0 ||
     !!filters.style ||
-    !!filters.collection ||
     !!filters.province ||
     filters.priceMin > 0 ||
     filters.priceMax > 0 ||
@@ -168,31 +167,13 @@ export function StoreFilters({
             value={filters.style}
             options={[
               { id: "", label: translate("store.any") },
-              ...STYLES.map((s) => ({
+              ...ALL_STYLES.map((s) => ({
                 id: s.id,
                 label: thai ? s.th : s.en,
                 count: counts.style.get(s.id),
               })),
             ]}
             onChange={(style) => onChange({ style })}
-          />
-        </FilterGroup>
-
-        <FilterGroup
-          label={thai ? "ประเภทแบบบ้าน" : translate("store.filterCollection")}
-          hint={thai ? "ชั้นเดียว / สองชั้น / ขนาดเล็ก ฯลฯ" : "Plan type / collection"}
-        >
-          <ChipList
-            value={filters.collection}
-            options={[
-              { id: "", label: translate("store.any") },
-              ...COLLECTIONS.map((c) => ({
-                id: c.id,
-                label: thai ? c.th : c.en,
-                count: counts.collection.get(c.id),
-              })),
-            ]}
-            onChange={(collection) => onChange({ collection })}
           />
         </FilterGroup>
 
@@ -376,12 +357,10 @@ export function listingMatchesStoreFilters(
   }
 
   const itemStyle = (item.style ?? "").trim().toLowerCase();
-  const filterStyle = filters.style.trim().toLowerCase();
-  if (filterStyle && itemStyle !== filterStyle) return false;
-
   const itemCollection = (item.collection ?? "").trim().toLowerCase();
-  const filterCollection = filters.collection.trim().toLowerCase();
-  if (filterCollection && itemCollection !== filterCollection) return false;
+  const filterStyle = filters.style.trim().toLowerCase();
+  // Unified style filter matches either the style or the legacy collection field.
+  if (filterStyle && filterStyle !== itemStyle && filterStyle !== itemCollection) return false;
 
   const itemProvince = (item.province ?? "").trim().toLowerCase();
   const filterProvince = filters.province.trim().toLowerCase();

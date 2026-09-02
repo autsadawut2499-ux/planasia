@@ -158,29 +158,24 @@ export function buildStoreIndexMetadata(opts?: {
   collection?: string | null;
   search?: string | null;
 }): Metadata {
-  const style = opts?.style?.trim() || "";
-  const collection = opts?.collection?.trim() || "";
+  // Legacy "collection" query param is folded into the unified style filter.
+  const style = opts?.style?.trim() || opts?.collection?.trim() || "";
   const search = opts?.search?.trim() || "";
 
   const params = new URLSearchParams();
   if (style) params.set("style", style);
-  if (collection) params.set("collection", collection);
   // Search queries are personalised filters — keep canonical on clean /store to avoid thin URLs.
   const query = params.toString();
   const canonical = absoluteUrl(query ? `/store?${query}` : "/store");
 
   const title = style
     ? `แบบบ้านสไตล์ ${style} | ${SITE_NAME}`
-    : collection
-      ? `คอลเลกชัน ${collection} | ${SITE_NAME}`
-      : search
-        ? `ค้นหาแบบบ้าน | ${SITE_NAME}`
-        : `ร้านแบบบ้าน | ${SITE_NAME}`;
+    : search
+      ? `ค้นหาแบบบ้าน | ${SITE_NAME}`
+      : `ร้านแบบบ้าน | ${SITE_NAME}`;
   const description = style
     ? `เลือกชมแบบบ้านสไตล์ ${style} บน Planasia — ภาพ 3D แปลน และดาวน์โหลดไอเดียดีไซน์`
-    : collection
-      ? `คอลเลกชันแบบบ้าน ${collection} บน Planasia — คัดสรรสำหรับสร้างบ้านจริง`
-      : "เลือกชมคอนเซปต์บ้านที่สร้างร่วมกับ AI สไตล์โมเดิร์น ทรอปิคอล และมินิมอล พร้อมภาพ 3D และดาวน์โหลดไอเดียดีไซน์";
+    : "เลือกชมคอนเซปต์บ้านที่สร้างร่วมกับ AI สไตล์โมเดิร์น ทรอปิคอล และมินิมอล พร้อมภาพ 3D และดาวน์โหลดไอเดียดีไซน์";
 
   return {
     title,

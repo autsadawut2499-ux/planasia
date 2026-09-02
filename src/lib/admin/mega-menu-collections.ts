@@ -15,7 +15,7 @@ export interface MegaMenuCollectionCard {
   imageUrl: string;
   titleEn: string;
   titleTh: string;
-  /** Internal path e.g. /store?collection=single-storey */
+  /** Internal path e.g. /store?style=single-storey */
   href: string;
   /** When false, hidden on the storefront but kept in admin. */
   enabled: boolean;
@@ -28,7 +28,7 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
     titleTh: formatCollectionTitleTh("บ้านชั้นเดียว"),
     imageUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80",
-    href: "/store?collection=single-storey",
+    href: "/store?style=single-storey",
     enabled: true,
   },
   {
@@ -37,7 +37,7 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
     titleTh: formatCollectionTitleTh("บ้านสองชั้น"),
     imageUrl:
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=400&q=80",
-    href: "/store?collection=two-storey",
+    href: "/store?style=two-storey",
     enabled: true,
   },
   {
@@ -46,7 +46,7 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
     titleTh: formatCollectionTitleTh("บ้านเล็ก / หน้าแคบ"),
     imageUrl:
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=400&q=80",
-    href: "/store?collection=small",
+    href: "/store?style=small",
     enabled: true,
   },
   {
@@ -55,7 +55,7 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
     titleTh: formatCollectionTitleTh("อาคารพาณิชย์"),
     imageUrl:
       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80",
-    href: "/store?collection=commercial",
+    href: "/store?style=commercial",
     enabled: true,
   },
   {
@@ -64,7 +64,7 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
     titleTh: formatCollectionTitleTh("โกดัง / โรงงาน"),
     imageUrl:
       "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=80",
-    href: "/store?collection=warehouse",
+    href: "/store?style=warehouse",
     enabled: true,
   },
   {
@@ -73,7 +73,7 @@ export const DEFAULT_MEGA_MENU_COLLECTIONS: MegaMenuCollectionCard[] = [
     titleTh: formatCollectionTitleTh("รีสอร์ท / บังกะโล"),
     imageUrl:
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=400&q=80",
-    href: "/store?collection=resort",
+    href: "/store?style=resort",
     enabled: true,
   },
 ];
@@ -106,7 +106,7 @@ export function normalizeMegaMenuCollections(
     const href =
       rawHref && rawHref !== "/store"
         ? rawHref
-        : byId?.href || `/store?collection=${encodeURIComponent(id)}`;
+        : byId?.href || `/store?style=${encodeURIComponent(id)}`;
 
     const rawEn = (raw.titleEn ?? raw.en ?? "").trim();
     const rawTh = (raw.titleTh ?? raw.th ?? "").trim();

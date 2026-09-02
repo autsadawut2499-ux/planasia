@@ -4,7 +4,7 @@
 
 import type { RecommendationFilters } from "@/lib/recommend/types";
 import type { HardConstraints, SoftConstraints } from "@/lib/search/house-search";
-import { STYLES } from "@/lib/store/taxonomy";
+import { ALL_STYLES } from "@/lib/store/taxonomy";
 
 export function filtersToHardConstraints(
   filters: RecommendationFilters | undefined,
@@ -55,10 +55,13 @@ export function intentToSoftConstraints(input: {
   for (const tag of input.styleTags ?? []) {
     if (tag.trim()) styleTags.add(tag.trim());
   }
-  if (input.filters?.style?.trim()) {
-    styleTags.add(input.filters.style.trim());
-    const id = input.filters.style.trim().toLowerCase();
-    const tax = STYLES.find((s) => s.id === id || s.en.toLowerCase().includes(id));
+  // Legacy "collection" filter is folded into the unified style filter.
+  for (const filterKey of ["style", "collection"] as const) {
+    const raw = input.filters?.[filterKey]?.trim();
+    if (!raw) continue;
+    styleTags.add(raw);
+    const id = raw.toLowerCase();
+    const tax = ALL_STYLES.find((s) => s.id === id || s.en.toLowerCase().includes(id));
     if (tax) styleTags.add(tax.id);
   }
 
@@ -71,7 +74,7 @@ export function intentToSoftConstraints(input: {
 
   const sites = input.siteConstraints ?? [];
   const inferredSites = [...sites];
-  if (input.filters?.collection === "small") {
+  if (input.filters?.style === "small" || input.filters?.collection === "small") {
     inferredSites.push("narrow-lot", "small-footprint");
   }
   if (input.filters?.widthMeters && input.filters.widthMeters <= 8) {

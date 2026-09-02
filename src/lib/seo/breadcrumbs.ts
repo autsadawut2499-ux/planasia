@@ -1,32 +1,25 @@
 import type { StoreListing } from "@/lib/store/listing-types";
 import { listingStorePath } from "@/lib/seo/slug";
+import { ALL_STYLES, findTaxonomyItem } from "@/lib/store/taxonomy";
 
 export interface BreadcrumbItem {
   name: string;
   path: string;
 }
 
-const COLLECTION_LABELS: Record<string, string> = {
-  commercial: "อาคารพาณิชย์",
-  shophouse: "ตึกแถว",
-  warehouse: "โกดังสินค้า",
-  factory: "โรงงาน",
-  resort: "รีสอร์ท / บังกะโล",
-};
+function styleLabel(id: string): string {
+  return findTaxonomyItem(ALL_STYLES, id)?.th ?? id;
+}
 
-/** Home > (Collection|Style) > Plan name. */
+/** Home > Style > Plan name. Legacy collection is folded into style. */
 export function listingBreadcrumbItems(listing: StoreListing): BreadcrumbItem[] {
   const items: BreadcrumbItem[] = [{ name: "หน้าแรก", path: "/" }];
 
-  if (listing.collection) {
+  const styleId = (listing.style || listing.collection || "").trim();
+  if (styleId) {
     items.push({
-      name: COLLECTION_LABELS[listing.collection] ?? listing.collection,
-      path: `/store?collection=${encodeURIComponent(listing.collection)}`,
-    });
-  } else if (listing.style) {
-    items.push({
-      name: listing.style,
-      path: `/store?style=${encodeURIComponent(listing.style)}`,
+      name: styleLabel(styleId),
+      path: `/store?style=${encodeURIComponent(styleId)}`,
     });
   }
 
