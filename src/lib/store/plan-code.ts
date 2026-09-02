@@ -62,10 +62,11 @@ export function listingDisplayName(listing: {
   planCode?: string | null;
   planId?: string | null;
 }): string {
+  const name = (listing.name ?? "").trim();
+  if (name) return name;
   const code = (listing.planCode || listing.planId || "").trim();
   if (code) return buildAutoListingName(listing.style, code);
-  const fallback = (listing.name ?? "").trim();
-  return fallback || styleLabelForListingName(listing.style);
+  return styleLabelForListingName(listing.style);
 }
 
 /**
