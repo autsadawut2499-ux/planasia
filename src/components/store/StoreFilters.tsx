@@ -366,9 +366,17 @@ export function listingMatchesStoreFilters(
     }
   }
 
-  if (filters.style && item.style !== filters.style) return false;
-  if (filters.collection && item.collection !== filters.collection) return false;
-  if (filters.province && item.province !== filters.province) return false;
+  const itemStyle = (item.style ?? "").trim().toLowerCase();
+  const filterStyle = filters.style.trim().toLowerCase();
+  if (filterStyle && itemStyle !== filterStyle) return false;
+
+  const itemCollection = (item.collection ?? "").trim().toLowerCase();
+  const filterCollection = filters.collection.trim().toLowerCase();
+  if (filterCollection && itemCollection !== filterCollection) return false;
+
+  const itemProvince = (item.province ?? "").trim().toLowerCase();
+  const filterProvince = filters.province.trim().toLowerCase();
+  if (filterProvince && itemProvince !== filterProvince) return false;
 
   // Spec: price <= max (and optional min floor)
   if (filters.priceMin && item.price < filters.priceMin) return false;
