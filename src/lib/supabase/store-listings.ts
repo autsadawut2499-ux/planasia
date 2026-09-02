@@ -89,14 +89,14 @@ function rowToListing(row: StoreListingRow): StoreListing {
     tagline: row.tagline ?? undefined,
     pitch: row.pitch ?? undefined,
     highlights: row.highlights ?? [],
-    beds: row.beds,
-    baths: row.baths,
+    beds: Number(row.beds),
+    baths: Number(row.baths),
     livingRooms:
       row.living_rooms != null && Number.isFinite(Number(row.living_rooms))
         ? Number(row.living_rooms)
         : undefined,
     parking: row.parking != null ? Number(row.parking) : undefined,
-    floors: row.floors as 1 | 2,
+    floors: (Number(row.floors) as 1 | 2) || 1,
     area: row.area,
     style: row.style,
     collection: row.collection ?? undefined,

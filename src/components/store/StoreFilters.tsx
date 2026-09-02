@@ -347,18 +347,27 @@ export function listingMatchesStoreFilters(
   filters: StoreFiltersState,
   areaRange: { min: number; max: number },
 ): boolean {
-  if (filters.floors && item.floors !== filters.floors) return false;
+  // Coerce numeric fields in case Supabase returns them as strings.
+  const itemFloors = Number(item.floors);
+  const filterFloors = Number(filters.floors);
+  if (filterFloors && itemFloors !== filterFloors) return false;
 
   // Minimum beds / baths / living rooms
-  if (filters.beds && item.beds < filters.beds) return false;
-  if (filters.baths && item.baths < filters.baths) return false;
+  const itemBeds = Number(item.beds);
+  const filterBeds = Number(filters.beds);
+  if (filterBeds && itemBeds < filterBeds) return false;
+
+  const itemBaths = Number(item.baths);
+  const filterBaths = Number(filters.baths);
+  if (filterBaths && itemBaths < filterBaths) return false;
+
   if (filters.livingRooms) {
-    const living = item.livingRooms ?? 0;
+    const living = Number(item.livingRooms ?? 0);
     if (living < filters.livingRooms) return false;
   }
 
   if (filters.parking) {
-    const parking = item.parking ?? 0;
+    const parking = Number(item.parking ?? 0);
     if (filters.parking >= 3) {
       if (parking < 3) return false;
     } else if (parking !== filters.parking) {
