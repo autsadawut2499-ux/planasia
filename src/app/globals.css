@@ -614,15 +614,15 @@
     }
   }
 
-  /* Listing grids — matches PopularPlans: 2-up → 4-up on desktop */
+  /* Listing grids — sequential catalog: 1-up mobile → 2-up tablet → 3-up desktop */
   .store-card-grid {
-    @apply mx-auto grid w-full min-w-0 gap-5;
+    @apply mx-auto grid w-full min-w-0 gap-4;
     grid-template-columns: minmax(0, 1fr);
   }
 
   @media (min-width: 640px) {
     .store-card-grid {
-      gap: 1.5rem;
+      gap: 1.25rem;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
@@ -630,7 +630,7 @@
   @media (min-width: 1024px) {
     .store-card-grid {
       gap: 1.5rem;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 

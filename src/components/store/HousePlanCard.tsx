@@ -44,11 +44,12 @@ export function HousePlanCard({
   const localized = useStoreListingCopy(item);
   const detailHref = listingStorePath(item.slug);
   const specs = buildPlanCardSpecs(item);
-  const primarySpecs = specs.slice(0, 4);
-  const secondarySpecs = specs.slice(4);
+  const primarySpecs = specs.slice(0, 5);
+  const secondarySpecs = specs.slice(5);
   const sale = resolveListingSale(item);
   const favorited = browse ? browse.isFavorite(item.id) : false;
   const canFavorite = favoritable && Boolean(browse);
+  const sequenceNumber = index + 1;
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -103,12 +104,19 @@ export function HousePlanCard({
       <div className="store-card__body">
         <div className="store-card-title-row relative z-0">
           <div className="min-w-0 flex-1">
-            <p className="store-card-kicker truncate text-[11px] font-semibold leading-none text-[#64748b]">
-              {L("House model", "แบบบ้าน")}
-            </p>
-            <p className="store-card-plan-id mt-1.5 truncate text-sm font-bold leading-tight text-[#1e3a5f] md:text-base">
-              {localized.name}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-bold text-[#1e40af] tabular-nums">
+                {sequenceNumber}.
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="store-card-kicker truncate text-[11px] font-semibold leading-none text-[#64748b]">
+                  {L("House model", "แบบบ้าน")}
+                </p>
+                <p className="store-card-plan-id mt-1.5 truncate text-sm font-bold leading-tight text-[#1e3a5f] md:text-base">
+                  {localized.name}
+                </p>
+              </div>
+            </div>
             {(item.tagline?.trim() || localized.description?.trim()) && (
               <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-[#64748b] md:text-xs">
                 {item.tagline?.trim() || localized.description.trim()}
